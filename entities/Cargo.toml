@@ -1,0 +1,11 @@
+[package]
+name = "entities"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+chrono = { version = "0.4.22" }
+sea-orm = { version = "^0.9.0", features = [ "sqlx-postgres", "runtime-actix-rustls","sea-orm-macros"] }
+serde = { version = "1", features = ["derive"] }
