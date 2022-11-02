@@ -1,5 +1,11 @@
+
+
+
+
 [workspace]
 members = [
     "./entities",
-    "./mock"
+    "./mock",
+    "./migration_helper",
+    "./api"
 ]
