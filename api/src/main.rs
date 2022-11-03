@@ -45,10 +45,17 @@ async fn main() -> anyhow::Result<()> {
                 },
                 ..Default::default()
             })
-            .service(api::user::get_users)
-            .service(api::user::add_user)
-            .service(api::user::delete_user)
-            .service(api::user::update_user)
+            .service(
+                web::scope("/api/v1")
+                    //user services
+                    .wrap(util::middleware::Auth)
+                    .service(api::user::get_users)
+                    .service(api::user::add_user)
+                    .service(api::user::delete_user)
+                    .service(api::user::update_user)
+                    //login services
+                    .service(api::auth::login),
+            )
             .with_json_spec_at("/api/spec/v2/spec.json")
             .build()
             .app_data(web::Data::new(db.clone()))

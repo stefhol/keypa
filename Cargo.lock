@@ -276,6 +276,8 @@ dependencies = [
  "dotenv",
  "entities",
  "env_logger",
+ "futures",
+ "futures-util",
  "itertools",
  "jsonwebtoken",
  "log",

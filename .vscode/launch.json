@@ -11,6 +11,8 @@
             "cargo": {
                 "args": [
                     "build",
+                    "--bin",
+                    "api"
                 ]
             },
             "args": []

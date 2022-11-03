@@ -29,3 +29,5 @@ itertools = "0.10.3"
 paperclip = { version = "0.7", features = ["actix4"] }
 uuid = "1.2.1"
 thiserror = "1.0.37"
+futures = "0.3.25"
+futures-util = "0.3.25"

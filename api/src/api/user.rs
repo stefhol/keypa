@@ -1,9 +1,9 @@
 use crate::crud;
 use crate::crud::user::{ChangeUser, CreateUser, GetUser};
 use crate::util::error::MyError;
+
 use actix_web::web::Data;
-use actix_web::HttpResponse;
-use paperclip::actix::{api_v2_operation, delete, get, post, AcceptedJson, NoContent};
+use paperclip::actix::{api_v2_operation, delete, get, post, AcceptedJson};
 use paperclip::actix::{put, CreatedJson};
 use sea_orm::DatabaseConnection;
 
@@ -20,6 +20,7 @@ pub async fn get_users(
     db: Data<DatabaseConnection>,
 ) -> actix_web::Result<AcceptedJson<Vec<GetUser>>, MyError> {
     let users = crud::user::get_all_user(db.get_ref()).await;
+
     return if let Ok(users) = users {
         Ok(AcceptedJson(users))
     } else {
@@ -79,7 +80,7 @@ pub async fn delete_user(
     db: Data<DatabaseConnection>,
 ) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
     let user = crud::user::delete_user(db.get_ref(), id.into_inner()).await;
-    return if let Ok(users) = user {
+    return if let Ok(_users) = user {
         Ok(paperclip::actix::NoContent)
     } else {
         Err(MyError::Unauthorized)

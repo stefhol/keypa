@@ -17,4 +17,5 @@ where
     Deserialize::deserialize(deserializer).map(Some)
 }
 pub mod error;
+pub mod middleware;
 pub mod user;
