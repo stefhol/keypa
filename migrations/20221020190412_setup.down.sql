@@ -1,7 +1,11 @@
 drop table if exists tbl_key_user_history;
+
+drop table if exists tbl_request_comment;
 drop table if exists tbl_request;
 
 drop table if exists tbl_key_group_key;
+drop table if exists tbl_keycard_history;
+drop table if exists tbl_keycard;
 
 drop table if exists tbl_key_group;
 

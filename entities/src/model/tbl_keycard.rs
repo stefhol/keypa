@@ -4,39 +4,32 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_door")]
+#[sea_orm(table_name = "tbl_keycard")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub door_id: Uuid,
-    pub name: String,
-    pub room_id: Option<Uuid>,
+    pub keycard_id: Uuid,
+    pub user_id: Uuid,
+    pub active: bool,
+    pub active_until: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_room::Entity",
-        from = "Column::RoomId",
-        to = "super::tbl_room::Column::RoomId",
+        belongs_to = "super::tbl_user::Entity",
+        from = "Column::UserId",
+        to = "super::tbl_user::Column::UserId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblRoom,
-    #[sea_orm(has_many = "super::tbl_key::Entity")]
-    TblKey,
+    TblUser,
     #[sea_orm(has_many = "super::tbl_keycard_history::Entity")]
     TblKeycardHistory,
 }
 
-impl Related<super::tbl_room::Entity> for Entity {
+impl Related<super::tbl_user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRoom.def()
-    }
-}
-
-impl Related<super::tbl_key::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKey.def()
+        Relation::TblUser.def()
     }
 }
 

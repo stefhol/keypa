@@ -10,8 +10,8 @@ pub struct Model {
     pub key_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
     pub user_id: Uuid,
-    pub lent_at: Option<DateTime>,
     pub due_at: Option<DateTime>,
+    pub lent_at: Option<DateTime>,
     pub lent: Option<bool>,
     pub active_at: Option<Time>,
     pub active_duration: Option<i32>,

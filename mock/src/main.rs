@@ -1,8 +1,11 @@
 use anyhow;
+
+use chrono::{NaiveDateTime, Utc};
 use dotenv;
 use entities::model::{
     tbl_building, tbl_door, tbl_key, tbl_key_group, tbl_key_group_key, tbl_key_user_history,
-    tbl_leader, tbl_request, tbl_role, tbl_room, tbl_user, tbl_worker,
+    tbl_keycard, tbl_keycard_history, tbl_leader, tbl_request, tbl_request_comment, tbl_role,
+    tbl_room, tbl_user, tbl_worker,
 };
 use fake::faker::address::raw::BuildingNumber;
 use fake::faker::barcode::zh_tw::Isbn13;
@@ -18,7 +21,8 @@ use fake::faker::name::raw::*;
 use fake::locales::*;
 use fake::{self, Fake};
 use rand::Rng;
-use sea_orm::{ActiveModelTrait, ActiveValue, Database, EntityTrait};
+use sea_orm::prelude::DateTimeUtc;
+use sea_orm::{ActiveModelTrait, ActiveValue, Database, EntityTrait, IntoActiveModel};
 use tracing::log::info;
 
 #[tokio::main]
@@ -95,6 +99,26 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let users = tbl_user::Entity::find().all(&db).await?;
+
+    for user in &users {
+        let mut active_until: Option<NaiveDateTime> = None;
+        let mut active = false;
+        if rng.gen_ratio(2, 5) {
+            active = rng.gen_bool(0.5);
+            let due_date: DateTimeUtc =
+                DateTimeAfter(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
+            active_until = Some(due_date.naive_utc());
+        };
+        tbl_keycard::ActiveModel {
+            user_id: ActiveValue::Set(user.user_id.to_owned()),
+            active_until: ActiveValue::Set(active_until),
+            active: ActiveValue::Set(active),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+    }
+    let keycards = tbl_keycard::Entity::find().all(&db).await?;
     //insert workers
     for worker in users.iter().filter(|f| {
         f.role_id.unwrap()
@@ -127,14 +151,13 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let leaders = tbl_leader::Entity::find().all(&db).await?;
-    for worker in workers {
+    for worker in &workers {
         if leaders.iter().any(|f| f.worker_id == worker.worker_id) {
             //worker is leader skip
             continue;
         }
-        let mut worker: tbl_worker::ActiveModel = worker.into();
-        worker.leader_id =
-            ActiveValue::Set(Some(leaders[rng.gen_range(0..leaders.len())].leader_id));
+        let mut worker: tbl_worker::ActiveModel = worker.clone().into();
+        worker.boss_id = ActiveValue::Set(Some(leaders[rng.gen_range(0..leaders.len())].leader_id));
         worker.update(&db).await?;
     }
     for _ in 0..4 {
@@ -251,13 +274,64 @@ async fn main() -> anyhow::Result<()> {
             accept: ActiveValue::Set(Some(accept && !reject)),
             pending: ActiveValue::Set(Some(accept == reject)),
             reject: ActiveValue::Set(Some(!accept && reject)),
-            description: ActiveValue::Set(Sentence(0..3).fake_with_rng(&mut rng)),
+            description: ActiveValue::Set(Sentence(0..10).fake_with_rng(&mut rng)),
             key_group_id: ActiveValue::Set(
                 key_groups[rng.gen_range(0..key_groups.len())]
                     .key_group_id
                     .to_owned(),
             ),
             requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+    }
+    let requests = tbl_request::Entity::find().all(&db).await?;
+    for _ in 0..500 {
+        let request = &requests[rng.gen_range(0..requests.len())];
+        let user_who_writes_comment;
+        //get the user or a random worker
+        if rng.gen_bool(0.5) {
+            let user = request.requester_id.to_owned();
+            user_who_writes_comment = Some(user);
+        } else {
+            let worker = workers[rng.gen_range(0..workers.len())].user_id.to_owned();
+            user_who_writes_comment = Some(worker)
+        }
+        let written_at: DateTimeUtc =
+            DateTimeAfter(DateTimeUtc::from_utc(request.created_at, Utc)).fake_with_rng(&mut rng);
+        if let Some(commenter) = user_who_writes_comment {
+            tbl_request_comment::ActiveModel {
+                request_id: ActiveValue::Set(request.request_id.to_owned()),
+                user_id: ActiveValue::Set(commenter),
+                comment: ActiveValue::Set(Sentence(1..20).fake_with_rng(&mut rng)),
+                written_at: ActiveValue::Set(written_at.naive_utc()),
+                ..Default::default()
+            }
+            .insert(&db)
+            .await?;
+            //update changed_at in request
+            let mut request = request.clone().into_active_model();
+            request.changed_at = ActiveValue::Set(written_at.naive_utc());
+            request.update(&db).await?;
+        }
+    }
+    for _ in 0..1000 {
+        let keycard = &keycards[rng.gen_range(0..keycards.len())];
+        let door = &doors[rng.gen_range(0..doors.len())];
+        let mut used_at: chrono::DateTime<chrono::Utc> =
+            DateTimeBefore(chrono::Utc::now()).fake_with_rng(&mut rng);
+        if let Some(val) = keycard.active_until {
+            // active_until smaller than now time
+            // to prevent assigning historie values into the future
+            if val < used_at.naive_utc() {
+                used_at = DateTimeBefore(DateTimeUtc::from_utc(val, Utc)).fake_with_rng(&mut rng);
+            }
+        }
+        tbl_keycard_history::ActiveModel {
+            keycard_id: ActiveValue::Set(keycard.keycard_id.to_owned()),
+            door_id: ActiveValue::Set(door.door_id.to_owned()),
+            used_at: ActiveValue::Set(used_at.naive_utc()),
             ..Default::default()
         }
         .insert(&db)

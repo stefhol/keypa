@@ -17,7 +17,7 @@ jobs:
     container:
       image: clux/muslrust
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Link to predefined musl toolchain
       run: |
           ln -s /root/.cargo $HOME/.cargo
@@ -33,7 +33,7 @@ jobs:
         mkdir ./builds
         cp ./api ./builds/api
         cp ./mock ./builds/mock
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: Build test
         path: ./target/x86_64-unknown-linux-musl/release/builds
