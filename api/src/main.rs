@@ -20,7 +20,7 @@ use sea_orm::Database;
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
+        .filter_level(log::LevelFilter::Error)
         .is_test(true)
         .init();
     let database_url = dotenv::var("DATABASE_URL")?;

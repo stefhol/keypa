@@ -11,6 +11,10 @@ pub enum CrudError {
     NotFound,
     #[error("Error in Uuid Conversion")]
     UuidError(#[from] uuid::Error),
+    #[error("Error in Dotenv Retrieval")]
+    DotenvError(#[from] dotenv::Error),
+    #[error("Error in JsonWebToken Generation")]
+    JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
     #[error("invalid input: {0}")]
     InvalidInput(String),
 }

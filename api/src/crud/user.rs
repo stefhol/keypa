@@ -1,7 +1,10 @@
-use entities::model::{tbl_role, tbl_user};
+use entities::model::{tbl_admin, tbl_role, tbl_user};
 use itertools::Itertools;
 use paperclip::actix::Apiv2Schema;
-use sea_orm::{ActiveModelTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait};
+use sea_orm::{
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait,
+    QueryFilter,
+};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 use uuid::Uuid;
@@ -52,20 +55,34 @@ pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudE
         .await?;
     Ok(model.iter().map(|f| GetUser::from(f)).collect_vec())
 }
+pub async fn get_user_by_email(
+    db: &DatabaseConnection,
+    email: &str,
+) -> Result<Option<tbl_user::Model>, CrudError> {
+    let model = tbl_user::Entity::find()
+        .filter(tbl_user::Column::Email.eq(email))
+        .one(db)
+        .await?;
+    Ok(model)
+}
 pub async fn get_single_user(
     db: &DatabaseConnection,
-    uuid: uuid::Uuid,
+    user_id: &str,
 ) -> Result<Option<GetUser>, CrudError> {
-    let model = tbl_user::Entity::find_by_id(uuid)
+    let user_id = Uuid::parse_str(user_id)?;
+    let model = tbl_user::Entity::find_by_id(user_id)
         .find_also_related(tbl_role::Entity)
+        .filter(tbl_user::Column::IsActive.eq(true))
         .one(db)
         .await?;
     Ok(model.map(|f| GetUser::from(&f)))
 }
-pub async fn delete_user(db: &DatabaseConnection, uuid: String) -> Result<DeleteResult, CrudError> {
-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(&uuid)?)
-        .one(db)
-        .await?;
+pub async fn delete_user(
+    db: &DatabaseConnection,
+    user_id: &str,
+) -> Result<DeleteResult, CrudError> {
+    let user_id = Uuid::parse_str(user_id)?;
+    let model = tbl_user::Entity::find_by_id(user_id).one(db).await?;
     if let Some(model) = model {
         info!("{:#?}", model);
         return Ok(model.delete(db).await?);
@@ -76,9 +93,9 @@ pub async fn delete_user(db: &DatabaseConnection, uuid: String) -> Result<Delete
 pub async fn update_user(
     db: &DatabaseConnection,
     user: ChangeUser,
-    id: String,
+    id: &str,
 ) -> Result<GetUser, CrudError> {
-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(&id)?)
+    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(id)?)
         .one(db)
         .await?;
     if let Some(model) = model {
@@ -102,4 +119,14 @@ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<Ge
     }
     let user: GetUser = (&(user, role)).into();
     return Ok(user);
+}
+pub async fn is_admin_by_user_id(
+    user_id: Uuid,
+    db: &DatabaseConnection,
+) -> Result<bool, CrudError> {
+    let admin = tbl_admin::Entity::find()
+        .filter(tbl_admin::Column::UserId.eq(user_id))
+        .one(db)
+        .await?;
+    return Ok(admin.is_some());
 }

@@ -13,6 +13,10 @@ use anyhow::anyhow;
 use futures::FutureExt;
 use futures_util::future::LocalBoxFuture;
 
+use crate::util::crypto;
+
+use super::crypto::Claims;
+
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
 //    next service in chain as parameter.
@@ -30,9 +34,35 @@ impl Auth {
 }
 #[derive(Clone, Debug)]
 pub enum AuthenticationResult {
-    Authenticated,
+    Authenticated(Claims),
     NotAuthenticated,
 }
+impl AuthenticationResult {
+    pub fn to_sercurity_level(&self) -> SecurityLevel {
+        return if let AuthenticationResult::Authenticated(val) = self {
+            return if val.is_admin {
+                SecurityLevel::Admin
+            } else if val.is_leader {
+                SecurityLevel::Leader
+            } else if val.is_worker {
+                SecurityLevel::Worker
+            } else {
+                SecurityLevel::User
+            };
+        } else {
+            SecurityLevel::External
+        };
+    }
+}
+#[derive(Clone, PartialOrd, PartialEq)]
+pub enum SecurityLevel {
+    External = 0,
+    User = 1,
+    Worker = 2,
+    Leader = 3,
+    Admin = 4,
+}
+
 pub type AuthenticationInfo = Rc<AuthenticationResult>;
 // Middleware factory is `Transform` trait
 // `S` - type of the next service
@@ -72,14 +102,15 @@ where
     fn call(&self, req: ServiceRequest) -> Self::Future {
         println!("Requested: {}", req.path());
         if let Some(cookie) = req.cookie("token") {
-            if cookie.http_only() == Some(true) {
-                //TODO: Change to real value
-                req.extensions_mut()
-                    .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::Authenticated));
+            if let Ok(val) = crypto::authorize(cookie.value()) {
+                req.extensions_mut().insert::<AuthenticationInfo>(Rc::new(
+                    AuthenticationResult::Authenticated(val),
+                ));
             } else {
                 req.extensions_mut()
                     .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::NotAuthenticated));
             }
+            //TODO: Change to real value
         } else {
             req.extensions_mut()
                 .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::NotAuthenticated));
