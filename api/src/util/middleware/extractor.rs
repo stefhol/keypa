@@ -1,11 +1,9 @@
 use actix_web::{Error, FromRequest, HttpMessage};
 use anyhow::anyhow;
-use paperclip::actix::Apiv2Schema;
 use std::future::{ready, Ready};
 
 use super::AuthenticationInfo;
-#[derive(Clone, Debug, Apiv2Schema)]
-#[openapi(empty)]
+#[derive(Clone, Debug)]
 pub struct Authenticated(AuthenticationInfo);
 
 impl FromRequest for Authenticated {

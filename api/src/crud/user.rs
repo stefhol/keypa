@@ -1,12 +1,12 @@
 use entities::model::{tbl_admin, tbl_role, tbl_user};
 use itertools::Itertools;
-use paperclip::actix::Apiv2Schema;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait,
     QueryFilter,
 };
 use serde::{Deserialize, Serialize};
 use tracing::info;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::util::{
@@ -16,14 +16,14 @@ use crate::util::{
 };
 
 use super::role::GetRole;
-#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
+#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct GetUser {
-    pub user_id: String,
+    pub user_id: Uuid,
     pub name: String,
     pub role: Option<GetRole>,
     pub email: String,
 }
-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct ChangeUser {
     pub name: Option<String>,
     #[serde(default, deserialize_with = "deserialize_some")]
@@ -31,7 +31,7 @@ pub struct ChangeUser {
     pub email: Option<String>,
 }
 
-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
+#[derive(Serialize, Deserialize, Debug, ToSchema)]
 pub struct CreateUser {
     pub name: String,
     pub role: Option<String>,
@@ -41,7 +41,7 @@ pub struct CreateUser {
 impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
     fn from((user, role): &(tbl_user::Model, Option<tbl_role::Model>)) -> Self {
         Self {
-            user_id: user.user_id.to_string(),
+            user_id: user.user_id.clone(),
             name: user.name.to_string(),
             role: role.to_owned().map(|f| GetRole::from(&f)),
             email: user.email.to_owned(),
@@ -67,21 +67,24 @@ pub async fn get_user_by_email(
 }
 pub async fn get_single_user(
     db: &DatabaseConnection,
-    user_id: &str,
-) -> Result<Option<GetUser>, CrudError> {
-    let user_id = Uuid::parse_str(user_id)?;
+    user_id: &Uuid,
+) -> Result<GetUser, CrudError> {
+    let user_id = user_id.clone();
     let model = tbl_user::Entity::find_by_id(user_id)
         .find_also_related(tbl_role::Entity)
         .filter(tbl_user::Column::IsActive.eq(true))
         .one(db)
         .await?;
-    Ok(model.map(|f| GetUser::from(&f)))
+    match model {
+        Some(model) => Ok(GetUser::from(&model)),
+        None => Err(CrudError::NotFound),
+    }
 }
 pub async fn delete_user(
     db: &DatabaseConnection,
-    user_id: &str,
+    user_id: &Uuid,
 ) -> Result<DeleteResult, CrudError> {
-    let user_id = Uuid::parse_str(user_id)?;
+    let user_id = user_id.clone();
     let model = tbl_user::Entity::find_by_id(user_id).one(db).await?;
     if let Some(model) = model {
         info!("{:#?}", model);
@@ -93,9 +96,9 @@ pub async fn delete_user(
 pub async fn update_user(
     db: &DatabaseConnection,
     user: ChangeUser,
-    id: &str,
+    user_id: &Uuid,
 ) -> Result<GetUser, CrudError> {
-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(id)?)
+    let model = tbl_user::Entity::find_by_id(user_id.clone())
         .one(db)
         .await?;
     if let Some(model) = model {
@@ -121,10 +124,10 @@ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<Ge
     return Ok(user);
 }
 pub async fn is_admin_by_user_id(
-    user_id: &str,
+    user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<bool, CrudError> {
-    let user_id = Uuid::parse_str(user_id)?;
+    let user_id = user_id.clone();
     let admin = tbl_admin::Entity::find_by_id(user_id).one(db).await?;
     return Ok(admin.is_some());
 }

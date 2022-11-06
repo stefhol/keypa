@@ -119,17 +119,21 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let keycards = tbl_keycard::Entity::find().all(&db).await?;
-    let users_filtered:Vec<tbl_user::Model>= users.iter().filter(|f| {
-        f.role_id.unwrap()
-            == roles
-                .iter()
-                .find(|f| f.name == "Angestellter")
-                .unwrap()
-                .role_id
-    }).map(|f|f.to_owned()).collect::<>();
+    let users_filtered: Vec<tbl_user::Model> = users
+        .iter()
+        .filter(|f| {
+            f.role_id.unwrap()
+                == roles
+                    .iter()
+                    .find(|f| f.name == "Angestellter")
+                    .unwrap()
+                    .role_id
+        })
+        .map(|f| f.to_owned())
+        .collect();
     //insert workers
     for user in users_filtered {
-        println!("{:#?}",user);
+        println!("{:#?}", user);
         tbl_worker::ActiveModel {
             user_id: ActiveValue::Set(user.user_id.to_owned()),
             ..Default::default()
