@@ -65,7 +65,7 @@ create table if not exists tbl_admin(
 create table if not exists tbl_door(
     door_id uuid primary key DEFAULT uuid_generate_v4(),
     name varchar(255) not null,
-    room_id uuid,
+    room_id uuid not null,
     foreign key (room_id) references tbl_room(room_id)
 );
 create table if not exists tbl_key(
@@ -79,6 +79,8 @@ create table if not exists tbl_key(
 --group of keys
 create table if not exists tbl_key_group(
     key_group_id uuid primary key DEFAULT uuid_generate_v4(),
+    owner_id uuid not null,
+    foreign key (owner_id) references tbl_user(user_id),
     name varchar(255) not null,
     description text
 );

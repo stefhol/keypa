@@ -117,7 +117,20 @@ async fn main() -> anyhow::Result<()> {
         }
         .insert(&db)
         .await?;
+
+        for _ in 0..rng.gen_range(1..4) {
+            let sentence: String = Sentence(0..5).fake_with_rng(&mut rng);
+            tbl_key_group::ActiveModel {
+                name: ActiveValue::Set(Industry(EN).fake_with_rng(&mut rng)),
+                description: ActiveValue::Set(Some(sentence)),
+                owner_id: ActiveValue::Set(user.user_id.clone()),
+                ..Default::default()
+            }
+            .insert(&db)
+            .await?;
+        }
     }
+    let key_groups = tbl_key_group::Entity::find().all(&db).await?;
     let keycards = tbl_keycard::Entity::find().all(&db).await?;
     let users_filtered: Vec<tbl_user::Model> = users
         .iter()
@@ -187,7 +200,7 @@ async fn main() -> anyhow::Result<()> {
     for room in &rooms {
         tbl_door::ActiveModel {
             name: ActiveValue::Set(BsNoun().fake_with_rng(&mut rng)),
-            room_id: ActiveValue::Set(Some(room.room_id)),
+            room_id: ActiveValue::Set(room.room_id),
             ..Default::default()
         }
         .insert(&db)
@@ -196,9 +209,7 @@ async fn main() -> anyhow::Result<()> {
     for _ in 0..200 {
         tbl_door::ActiveModel {
             name: ActiveValue::Set(BsNoun().fake_with_rng(&mut rng)),
-            room_id: ActiveValue::Set(Some(
-                rooms[rng.gen_range(0..rooms.len())].room_id.to_owned(),
-            )),
+            room_id: ActiveValue::Set(rooms[rng.gen_range(0..rooms.len())].room_id.to_owned()),
             ..Default::default()
         }
         .insert(&db)
@@ -217,17 +228,6 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let keys = tbl_key::Entity::find().all(&db).await?;
-    for _ in 0..20 {
-        let sentence: String = Sentence(0..2).fake_with_rng(&mut rng);
-        tbl_key_group::ActiveModel {
-            name: ActiveValue::Set(Industry(EN).fake_with_rng(&mut rng)),
-            description: ActiveValue::Set(Some(sentence)),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-    }
-    let key_groups = tbl_key_group::Entity::find().all(&db).await?;
 
     for group in &key_groups {
         for _ in 0..rng.gen_range(0..20) {

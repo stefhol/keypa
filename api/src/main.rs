@@ -5,7 +5,7 @@ pub mod util;
 use std::net::Ipv4Addr;
 
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_web::{web::{self}, App, HttpServer};
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;
@@ -33,7 +33,17 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::worker::update_worker,
         api::worker::delete_worker,
         api::worker::get_worker,
-        api::worker::get_self,
+        api::worker::get_self_worker,
+        //key
+        api::key::get_self_key,
+        //key_group
+        api::key_group::add_key_into_key_group,
+        api::key_group::delete_key_from_key_group,
+        api::key_group::get_key_group,
+        api::key_group::get_keys_of_key_group,
+        api::key_group::get_self_key_group,
+        api::key_group::add_key_group,
+        api::key_group::upate_key_group,
     ),
     components(schemas(
         api::auth::Login,
@@ -43,6 +53,10 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::user::GetUser,
         crud::worker::GetWorker,
         crud::worker::CreateWorker,
+        crud::key::GetKey,
+        crud::key_group::CreateKeyGroup,
+        crud::key_group::GetKeyGroup,
+        
     ))
 )]
 struct ApiDoc;
@@ -95,7 +109,18 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::worker::update_worker)
                     .service(api::worker::delete_worker)
                     .service(api::worker::get_worker)
-                    .service(api::worker::get_self),
+                    .service(api::worker::get_self_worker)
+                    //key
+                    .service(api::key::get_self_key)
+                    //key_group
+                    .service(api::key_group::add_key_into_key_group)
+                    .service(api::key_group::delete_key_from_key_group)
+                    .service(api::key_group::get_key_group)
+                    .service(api::key_group::get_self_key_group)
+                    .service(api::key_group::get_keys_of_key_group)
+                    .service(api::key_group::add_key_group)
+                    .service(api::key_group::upate_key_group)
+                ,
             )
             .app_data(web::Data::new(db.clone()))
             .wrap(Cors::permissive())

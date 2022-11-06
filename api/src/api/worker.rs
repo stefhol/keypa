@@ -122,11 +122,11 @@ pub async fn get_worker(
 )
 )]
 #[get("/self/worker")]
-pub async fn get_self(
+pub async fn get_self_worker(
     db: Data<DatabaseConnection>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
-    auth.has_high_enough_security_level(SecurityLevel::Leader)?;
+    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
     let user_id = auth.try_get_user_id()?;
     let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await?;
     Ok(HttpResponse::Ok().json(worker))    

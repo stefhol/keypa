@@ -30,12 +30,14 @@ pub enum Relation {
     TblLeader,
     #[sea_orm(has_many = "super::tbl_admin::Entity")]
     TblAdmin,
-    #[sea_orm(has_many = "super::tbl_request::Entity")]
-    TblRequest,
+    #[sea_orm(has_many = "super::tbl_key_group::Entity")]
+    TblKeyGroup,
     #[sea_orm(has_many = "super::tbl_keycard::Entity")]
     TblKeycard,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
+    #[sea_orm(has_many = "super::tbl_request::Entity")]
+    TblRequest,
     #[sea_orm(has_many = "super::tbl_key_user_history::Entity")]
     TblKeyUserHistory,
     #[sea_orm(has_many = "super::tbl_worker::Entity")]
@@ -60,9 +62,9 @@ impl Related<super::tbl_admin::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_request::Entity> for Entity {
+impl Related<super::tbl_key_group::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblKeyGroup.def()
     }
 }
 
@@ -75,6 +77,12 @@ impl Related<super::tbl_keycard::Entity> for Entity {
 impl Related<super::tbl_request_comment::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequestComment.def()
+    }
+}
+
+impl Related<super::tbl_request::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRequest.def()
     }
 }
 
