@@ -121,12 +121,10 @@ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<Ge
     return Ok(user);
 }
 pub async fn is_admin_by_user_id(
-    user_id: Uuid,
+    user_id: &str,
     db: &DatabaseConnection,
 ) -> Result<bool, CrudError> {
-    let admin = tbl_admin::Entity::find()
-        .filter(tbl_admin::Column::UserId.eq(user_id))
-        .one(db)
-        .await?;
+    let user_id = Uuid::parse_str(user_id)?;
+    let admin = tbl_admin::Entity::find_by_id(user_id).one(db).await?;
     return Ok(admin.is_some());
 }

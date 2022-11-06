@@ -47,14 +47,23 @@ async fn main() -> anyhow::Result<()> {
             })
             .service(
                 web::scope("/api/v1")
-                    //user services
                     .wrap(util::middleware::Auth)
+                    //user services
                     .service(api::user::get_users)
                     .service(api::user::add_user)
                     .service(api::user::delete_user)
                     .service(api::user::update_user)
+                    .service(api::user::get_single_user)
+                    .service(api::user::get_self)
                     //login services
-                    .service(api::auth::login),
+                    .service(api::auth::login)
+                    .service(api::auth::register)
+                    //woker services
+                    .service(api::worker::add_worker)
+                    .service(api::worker::update_worker)
+                    .service(api::worker::delete_worker)
+                    .service(api::worker::get_worker)
+                    .service(api::worker::get_self),
             )
             .with_json_spec_at("/api/spec/v2/spec.json")
             .build()

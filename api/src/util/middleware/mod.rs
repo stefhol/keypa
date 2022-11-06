@@ -5,13 +5,13 @@ use std::{
 
 use actix_web::{
     body::MessageBody,
-    cookie::{time::Duration, Cookie},
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    Error, HttpMessage, HttpResponse,
+    Error, HttpMessage,
 };
-use anyhow::anyhow;
+
 use futures::FutureExt;
 use futures_util::future::LocalBoxFuture;
+use paperclip::actix::Apiv2Schema;
 
 use crate::util::crypto;
 
@@ -32,7 +32,8 @@ impl Auth {
         Auth
     }
 }
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Apiv2Schema)]
+#[openapi(empty)]
 pub enum AuthenticationResult {
     Authenticated(Claims),
     NotAuthenticated,
@@ -52,6 +53,19 @@ impl AuthenticationResult {
         } else {
             SecurityLevel::External
         };
+    }
+    pub fn try_get_user_id(&self) -> Option<String> {
+        match self {
+            AuthenticationResult::Authenticated(val) => Some(val.sub.to_string()),
+            _ => None,
+        }
+    }
+    ///Returns true if user_id in auth token and provided user_id is the same
+    pub fn compare_user_id(&self, user_id: &str) -> bool {
+        match self.try_get_user_id() {
+            Some(id) => &id == user_id,
+            None => false,
+        }
     }
 }
 #[derive(Clone, PartialOrd, PartialEq)]
@@ -101,7 +115,7 @@ where
 
     fn call(&self, req: ServiceRequest) -> Self::Future {
         println!("Requested: {}", req.path());
-        if let Some(cookie) = req.cookie("token") {
+        if let Some(cookie) = req.cookie("bearer") {
             if let Ok(val) = crypto::authorize(cookie.value()) {
                 req.extensions_mut().insert::<AuthenticationInfo>(Rc::new(
                     AuthenticationResult::Authenticated(val),
@@ -117,14 +131,8 @@ where
         }
         let fut = self.service.call(req);
         async move {
-            let mut res = fut.await?;
-            return if let Ok(_) = add_token(res.response_mut()) {
-                Ok(res)
-            } else {
-                Err(actix_web::error::ErrorInternalServerError(anyhow!(
-                    "Error in Authentication"
-                )))
-            };
+            let res = fut.await?;
+            Ok(res)
         }
         .boxed_local()
     }
@@ -132,12 +140,12 @@ where
     forward_ready!(service);
 }
 pub mod extractor;
-fn add_token<B>(res: &mut HttpResponse<B>) -> anyhow::Result<()> {
-    res.add_cookie(
-        &Cookie::build("token", "value")
-            .max_age(Duration::hours(8))
-            .http_only(true)
-            .finish(),
-    )?;
-    Ok(())
-}
+// fn add_token<B>(res: &mut HttpResponse<B>) -> anyhow::Result<()> {
+//     res.add_cookie(
+//         &Cookie::build("token", "value")
+//             .max_age(Duration::hours(8))
+//             .http_only(true)
+//             .finish(),
+//     )?;
+//     Ok(())
+// }

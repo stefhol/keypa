@@ -19,18 +19,19 @@ pub enum CrudError {
     InvalidInput(String),
 }
 #[api_v2_errors(
-    code = 400,
     code = 401,
-    description = "Unauthorized: Can't read session from header",
-    code = 500
+    description = "Unauthorized: Can't access",
+    code = 404,
+    description = "Can't find ressource"
 )]
 #[derive(Debug, Error)]
 pub enum MyError {
     Unauthorized = 401,
+    NotFound = 400,
 }
 impl Display for MyError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "Unauthorized")
     }
 }
 impl ResponseError for MyError {

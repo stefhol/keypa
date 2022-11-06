@@ -17,4 +17,5 @@ pub mod tbl_request_comment;
 pub mod tbl_role;
 pub mod tbl_room;
 pub mod tbl_user;
+pub mod tbl_user_temp;
 pub mod tbl_worker;

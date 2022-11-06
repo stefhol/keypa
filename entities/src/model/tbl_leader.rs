@@ -7,20 +7,27 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "tbl_leader")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub leader_id: Uuid,
-    pub worker_id: Uuid,
+    pub user_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_worker::Entity",
-        from = "Column::WorkerId",
-        to = "super::tbl_worker::Column::WorkerId",
+        belongs_to = "super::tbl_user::Entity",
+        from = "Column::UserId",
+        to = "super::tbl_user::Column::UserId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
+    TblUser,
+    #[sea_orm(has_many = "super::tbl_worker::Entity")]
     TblWorker,
+}
+
+impl Related<super::tbl_user::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblUser.def()
+    }
 }
 
 impl Related<super::tbl_worker::Entity> for Entity {

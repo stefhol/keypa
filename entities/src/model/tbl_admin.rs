@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "tbl_admin")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub admin_id: Uuid,
     pub user_id: Uuid,
 }
 

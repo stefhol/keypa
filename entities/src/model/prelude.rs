@@ -15,4 +15,5 @@ pub use super::tbl_request_comment::Entity as TblRequestComment;
 pub use super::tbl_role::Entity as TblRole;
 pub use super::tbl_room::Entity as TblRoom;
 pub use super::tbl_user::Entity as TblUser;
+pub use super::tbl_user_temp::Entity as TblUserTemp;
 pub use super::tbl_worker::Entity as TblWorker;

@@ -12,6 +12,7 @@ pub struct Model {
     pub role_id: Option<Uuid>,
     pub is_active: bool,
     pub email: String,
+    pub picture_url: Option<String>,
     pub password: String,
 }
 
@@ -25,18 +26,20 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblRole,
-    #[sea_orm(has_many = "super::tbl_worker::Entity")]
-    TblWorker,
+    #[sea_orm(has_many = "super::tbl_leader::Entity")]
+    TblLeader,
     #[sea_orm(has_many = "super::tbl_admin::Entity")]
     TblAdmin,
-    #[sea_orm(has_many = "super::tbl_keycard::Entity")]
-    TblKeycard,
     #[sea_orm(has_many = "super::tbl_request::Entity")]
     TblRequest,
+    #[sea_orm(has_many = "super::tbl_keycard::Entity")]
+    TblKeycard,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
     #[sea_orm(has_many = "super::tbl_key_user_history::Entity")]
     TblKeyUserHistory,
+    #[sea_orm(has_many = "super::tbl_worker::Entity")]
+    TblWorker,
 }
 
 impl Related<super::tbl_role::Entity> for Entity {
@@ -45,9 +48,9 @@ impl Related<super::tbl_role::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_worker::Entity> for Entity {
+impl Related<super::tbl_leader::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblWorker.def()
+        Relation::TblLeader.def()
     }
 }
 
@@ -57,15 +60,15 @@ impl Related<super::tbl_admin::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_keycard::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeycard.def()
-    }
-}
-
 impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequest.def()
+    }
+}
+
+impl Related<super::tbl_keycard::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblKeycard.def()
     }
 }
 
@@ -78,6 +81,12 @@ impl Related<super::tbl_request_comment::Entity> for Entity {
 impl Related<super::tbl_key_user_history::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeyUserHistory.def()
+    }
+}
+
+impl Related<super::tbl_worker::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblWorker.def()
     }
 }
 

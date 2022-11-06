@@ -1,17 +1,13 @@
-use std::str::FromStr;
-
-use actix_web::cookie::Cookie;
-
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use sea_orm::{prelude::Uuid, DatabaseConnection};
-use serde::{Deserialize, Serialize};
+use paperclip::actix::Apiv2Schema;
 
-use crate::crud;
+use serde::{Deserialize, Serialize};
 
 use super::error::CrudError;
 const TOKEN_MAX_AGE: i64 = 8 * 60 * 60; //8Hours
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
+#[openapi(empty)]
 pub struct Claims {
     pub sub: String,
     pub is_admin: bool,
@@ -54,26 +50,4 @@ pub fn authorize(token: &str) -> anyhow::Result<Claims> {
         &Validation::new(Algorithm::HS512),
     )?;
     Ok(decoded.claims)
-}
-pub async fn is_admin(cookie: &Option<Cookie<'_>>, db: &DatabaseConnection) -> bool {
-    if let Some(cookie) = cookie {
-        let claim = self::authorize(cookie.value());
-        if let Ok(claim) = claim {
-            if let Ok(sub) = Uuid::from_str(&claim.sub) {
-                return crud::user::is_admin_by_user_id(sub, db)
-                    .await
-                    .unwrap_or(false);
-            }
-        }
-    }
-    false
-}
-pub fn is_self(cookie: Option<Cookie>, id: &str) -> bool {
-    if let Some(cookie) = cookie {
-        let claim = self::authorize(cookie.value());
-        if let Ok(claim) = claim {
-            return &claim.sub == id;
-        }
-    }
-    false
 }
