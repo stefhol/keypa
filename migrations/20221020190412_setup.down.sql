@@ -25,3 +25,6 @@ drop table if exists tbl_building;
 drop table if exists tbl_worker;
 drop table if exists tbl_user;
 drop table if exists tbl_role;
+drop trigger if exists tbl_user_temp_delete_row_trigger on tbl_user_temp;
+drop function if exists tbl_user_temp_delete_row_function;
+drop table if exists tbl_user_temp;

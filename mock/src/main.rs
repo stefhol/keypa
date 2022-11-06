@@ -119,17 +119,19 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let keycards = tbl_keycard::Entity::find().all(&db).await?;
-    //insert workers
-    for worker in users.iter().filter(|f| {
+    let users_filtered:Vec<tbl_user::Model>= users.iter().filter(|f| {
         f.role_id.unwrap()
             == roles
                 .iter()
                 .find(|f| f.name == "Angestellter")
                 .unwrap()
                 .role_id
-    }) {
+    }).map(|f|f.to_owned()).collect::<>();
+    //insert workers
+    for user in users_filtered {
+        println!("{:#?}",user);
         tbl_worker::ActiveModel {
-            user_id: ActiveValue::Set(worker.user_id.to_owned()),
+            user_id: ActiveValue::Set(user.user_id.to_owned()),
             ..Default::default()
         }
         .insert(&db)
@@ -137,14 +139,9 @@ async fn main() -> anyhow::Result<()> {
     }
     let workers = tbl_worker::Entity::find().all(&db).await?;
     //select leaders out of workers
-    for _ in 0..3 {
+    for idx in 0..3 {
         tbl_leader::ActiveModel {
-            worker_id: ActiveValue::Set(
-                workers
-                    .get(rng.gen_range(0..workers.len()))
-                    .unwrap()
-                    .worker_id,
-            ),
+            user_id: ActiveValue::Set(workers.get(idx).unwrap().user_id),
             ..Default::default()
         }
         .insert(&db)
@@ -152,12 +149,13 @@ async fn main() -> anyhow::Result<()> {
     }
     let leaders = tbl_leader::Entity::find().all(&db).await?;
     for worker in &workers {
-        if leaders.iter().any(|f| f.worker_id == worker.worker_id) {
+        if leaders.iter().any(|f| f.user_id == worker.user_id) {
             //worker is leader skip
             continue;
         }
         let mut worker: tbl_worker::ActiveModel = worker.clone().into();
-        worker.boss_id = ActiveValue::Set(Some(leaders[rng.gen_range(0..leaders.len())].leader_id));
+        worker.boss_user_id =
+            ActiveValue::Set(Some(leaders[rng.gen_range(0..leaders.len())].user_id));
         worker.update(&db).await?;
     }
     for _ in 0..4 {

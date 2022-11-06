@@ -15,21 +15,21 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_key_group_key::Entity")]
-    TblKeyGroupKey,
     #[sea_orm(has_many = "super::tbl_request::Entity")]
     TblRequest,
-}
-
-impl Related<super::tbl_key_group_key::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeyGroupKey.def()
-    }
+    #[sea_orm(has_many = "super::tbl_key_group_key::Entity")]
+    TblKeyGroupKey,
 }
 
 impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequest.def()
+    }
+}
+
+impl Related<super::tbl_key_group_key::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblKeyGroupKey.def()
     }
 }
 

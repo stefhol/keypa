@@ -16,6 +16,7 @@ where
 {
     Deserialize::deserialize(deserializer).map(Some)
 }
+pub mod crypto;
 pub mod error;
 pub mod middleware;
 pub mod user;
