@@ -13,9 +13,10 @@ use log::info;
 
 use sea_orm::Database;
 
-use utoipa::OpenApi;
+use utoipa::{OpenApi, openapi::{Server, Info}};
 #[derive(OpenApi)]
 #[openapi(
+    
     paths(
         //login
         api::auth::login,
@@ -52,7 +53,13 @@ async fn main() -> anyhow::Result<()> {
         .is_test(true)
         .init();
     // Make instance variable of ApiDoc so all worker threads gets the same instance.
-    let openapi = ApiDoc::openapi();
+    let mut openapi = ApiDoc::openapi();
+    
+    openapi.servers = Some(vec![
+       Server::new(format!("{}:{}",Ipv4Addr::UNSPECIFIED, 8080))
+    ]);
+    openapi.info = Info::new("KeyPa", "0.0.1");
+
     let database_url = dotenv::var("DATABASE_URL")?;
     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
     let err = migration_helper::create_database(database_url, db_name).await;
