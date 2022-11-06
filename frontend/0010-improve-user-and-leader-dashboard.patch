@@ -1,0 +1,1248 @@
+From decc0547f4a93d2fc2b97b635f89322275a03332 Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Sun, 13 Nov 2022 17:44:31 +0100
+Subject: [PATCH 10/11] improve user and leader dashboard
+
+---
+ Cargo.lock                                   |  12 ++
+ api/Cargo.toml                               |   3 +-
+ api/src/api/{key.rs => door.rs}              |   8 +-
+ api/src/api/mod.rs                           |   2 +-
+ api/src/api/user.rs                          |   2 +-
+ api/src/api/worker.rs                        |  45 +------
+ api/src/crud/access.rs                       |  46 +++++++-
+ api/src/crud/user.rs                         | 118 ++++++++++++++++---
+ api/src/crud/worker.rs                       |  94 ++++++---------
+ api/src/main.rs                              |  10 +-
+ frontend/src/Components/table/Table.tsx      |  33 ++++--
+ frontend/src/index.css                       |   4 +-
+ frontend/src/main.tsx                        |  39 +++++-
+ frontend/src/routes/dashboard/Dashboard.tsx  |  24 ++--
+ frontend/src/routes/leader/ChangeWorker.tsx  |  73 ++++++++++++
+ frontend/src/routes/leader/LeaderBase.tsx    |  15 +++
+ frontend/src/routes/leader/ShowAllUsers.tsx  |  18 +++
+ frontend/src/routes/login/Login.tsx          |   2 +-
+ frontend/src/routes/user/UseChange.tsx       |  24 ++++
+ frontend/src/routes/user/User.tsx            |  46 ++++++++
+ frontend/src/routes/user/UserBase.tsx        |  11 ++
+ frontend/src/routes/user/keys/Key.tsx        |  21 ++--
+ frontend/src/routes/user/request/Request.tsx |  38 ++++--
+ frontend/src/util/Rest.ts                    |  17 ++-
+ frontend/src/util/intefaces/Request.ts       |  23 +++-
+ 25 files changed, 535 insertions(+), 193 deletions(-)
+ rename api/src/api/{key.rs => door.rs} (77%)
+ create mode 100644 frontend/src/routes/leader/ChangeWorker.tsx
+ create mode 100644 frontend/src/routes/leader/LeaderBase.tsx
+ create mode 100644 frontend/src/routes/leader/ShowAllUsers.tsx
+ create mode 100644 frontend/src/routes/user/UseChange.tsx
+ create mode 100644 frontend/src/routes/user/User.tsx
+ create mode 100644 frontend/src/routes/user/UserBase.tsx
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 92ba6f3..afe5f00 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -271,6 +271,7 @@ dependencies = [
+  "actix-cors",
+  "actix-web",
+  "anyhow",
++ "async-recursion",
+  "async-trait",
+  "chrono",
+  "dotenv",
+@@ -301,6 +302,17 @@ version = "0.7.2"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "8da52d66c7071e2e3fa2a1e5c6d088fec47b593032b254f5e980de8ea54454d6"
+ 
++[[package]]
++name = "async-recursion"
++version = "1.0.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "2cda8f4bcc10624c4e85bc66b3f452cca98cfa5ca002dc83a16aad2367641bea"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "syn",
++]
++
+ [[package]]
+ name = "async-stream"
+ version = "0.3.3"
+diff --git a/api/Cargo.toml b/api/Cargo.toml
+index c4060dd..57df414 100644
+--- a/api/Cargo.toml
++++ b/api/Cargo.toml
+@@ -30,4 +30,5 @@ utoipa-swagger-ui = { version = "2.0.1", features = ["actix-web"] }
+ uuid = "1.2.1"
+ thiserror = "1.0.37"
+ futures = "0.3.25"
+-futures-util = "0.3.25"
+\ No newline at end of file
++futures-util = "0.3.25"
++async-recursion = "1.0.0"
+\ No newline at end of file
+diff --git a/api/src/api/key.rs b/api/src/api/door.rs
+similarity index 77%
+rename from api/src/api/key.rs
+rename to api/src/api/door.rs
+index 84a0d32..73edb31 100644
+--- a/api/src/api/key.rs
++++ b/api/src/api/door.rs
+@@ -11,7 +11,7 @@ use crate::{
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body=[GetKey]),
++    (status = 200, body=[GetCompleteBuilding]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -19,13 +19,13 @@ use crate::{
+     (status = 500),
+ )
+ )]
+-#[get("/self/keys")]
+-pub async fn get_self_key(
++#[get("/self/doors")]
++pub async fn get_self_door(
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::User)?;
+     let user_id = &auth.try_get_user_id()?;
+-    let keys = crud::access::get_doors_of_user_id(user_id, db.get_ref()).await?;
++    let keys = crud::access::get_building_with_only_authorized_doors(user_id, &db).await?;
+     Ok(HttpResponse::Ok().json(keys))
+ }
+diff --git a/api/src/api/mod.rs b/api/src/api/mod.rs
+index cff2a79..ee1bafe 100644
+--- a/api/src/api/mod.rs
++++ b/api/src/api/mod.rs
+@@ -1,7 +1,7 @@
+ pub mod auth;
+ pub mod building;
++pub mod door;
+ pub mod door_group;
+-pub mod key;
+ pub mod request;
+ pub mod user;
+ pub mod worker;
+diff --git a/api/src/api/user.rs b/api/src/api/user.rs
+index cda7f9a..2398004 100644
+--- a/api/src/api/user.rs
++++ b/api/src/api/user.rs
+@@ -46,7 +46,7 @@ pub async fn get_single_user(
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+-    let users = crud::user::get_single_user(db.get_ref(), &user_id).await?;
++    let users = crud::user::get_single_user(&db, &user_id).await?;
+     Ok(HttpResponse::Ok().json(users))
+ }
+ #[utoipa::path(
+diff --git a/api/src/api/worker.rs b/api/src/api/worker.rs
+index d59070e..00d716d 100644
+--- a/api/src/api/worker.rs
++++ b/api/src/api/worker.rs
+@@ -6,7 +6,7 @@ use crate::util::middleware::extractor::Authenticated;
+ use crate::util::middleware::SecurityLevel;
+ 
+ use actix_web::web::{Data, Path};
+-use actix_web::{delete, get, post, put, HttpResponse};
++use actix_web::{delete, post, put, HttpResponse};
+ use sea_orm::DatabaseConnection;
+ use uuid::Uuid;
+ #[utoipa::path(
+@@ -86,46 +86,3 @@ pub async fn delete_worker(
+     crud::worker::delete_worker_with_user_id(&user_id, db.get_ref()).await?;
+     Ok(HttpResponse::Ok().finish())
+ }
+-#[utoipa::path(
+-    context_path = "/api/v1",
+-    responses(
+-    (status = 200, body = GetWorker),
+-    (status = 400),
+-    (status = 401),
+-    (status = 404),
+-    (status = 406),
+-    (status = 500),
+-)
+-)]
+-#[get("/users/{user_id}/worker")]
+-pub async fn get_worker(
+-    user_id: actix_web::web::Path<Uuid>,
+-    db: Data<DatabaseConnection>,
+-    auth: Authenticated,
+-) -> actix_web::Result<HttpResponse, CrudError> {
+-    auth.has_high_enough_security_level(SecurityLevel::Leader)?;
+-    
+-    let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await?;
+-    Ok(HttpResponse::Ok().json(worker))
+-}
+-#[utoipa::path(
+-    context_path = "/api/v1",
+-    responses(
+-    (status = 200, body = GetWorker),
+-    (status = 400),
+-    (status = 401),
+-    (status = 404),
+-    (status = 406),
+-    (status = 500),
+-)
+-)]
+-#[get("/self/worker")]
+-pub async fn get_self_worker(
+-    db: Data<DatabaseConnection>,
+-    auth: Authenticated,
+-) -> actix_web::Result<HttpResponse, CrudError> {
+-    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+-    let user_id = auth.try_get_user_id()?;
+-    let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await?;
+-    Ok(HttpResponse::Ok().json(worker))    
+-}
+diff --git a/api/src/crud/access.rs b/api/src/crud/access.rs
+index f7eed91..1c56865 100644
+--- a/api/src/crud/access.rs
++++ b/api/src/crud/access.rs
+@@ -1,11 +1,13 @@
+ use entities::model::tbl_door;
++use itertools::Itertools;
+ use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
+ 
+ use uuid::Uuid;
+ 
+-use crate::util::error::CrudError;
+-
++use super::building::{GetCompleteBuilding, GetCompleteRoom};
+ use super::door::GetDoor;
++use crate::crud;
++use crate::util::error::CrudError;
+ 
+ pub async fn get_doors_of_user_id(
+     user_id: &Uuid,
+@@ -18,7 +20,9 @@ pub async fn get_doors_of_user_id(
+             join tbl_door_group on tbl_user.user_id = tbl_door_group.owner_id
+             join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
+             join tbl_door on tbl_door_to_group_door.door_id = tbl_door.door_id
+-            where user_id = $1"#,
++            join tbl_door_user_access on tbl_door.door_id = tbl_door_user_access.door_id
++            where tbl_door_user_access.is_active = true and
++            tbl_user.user_id = $1"#,
+             vec![user_id.clone().into()],
+         ))
+         .all(db)
+@@ -26,3 +30,39 @@ pub async fn get_doors_of_user_id(
+ 
+     Ok(values.iter().map(|f| f.into()).collect())
+ }
++pub async fn get_building_with_only_authorized_doors(
++    user_id: &Uuid,
++    db: &DatabaseConnection,
++) -> Result<Vec<GetCompleteBuilding>, CrudError> {
++    let buildings = crud::building::get_building_complex(db).await?;
++    let authorized_doors = get_doors_of_user_id(user_id, db).await?;
++    let mut filtered_buildings = vec![];
++    for builing in buildings {
++        let mut rooms = vec![];
++        for room in builing.rooms {
++            if authorized_doors
++                .iter()
++                .map(|f| f.room_id)
++                .contains(&room.room_id)
++            {
++                let mut doors = vec![];
++                for door in room.doors {
++                    if authorized_doors
++                        .iter()
++                        .map(|f| f.door_id)
++                        .contains(&door.door_id)
++                    {
++                        doors.push(door.clone())
++                    }
++                }
++                rooms.push(GetCompleteRoom { doors, ..room })
++            }
++        }
++        if rooms.len() > 0 {
++            filtered_buildings.push(GetCompleteBuilding { rooms, ..builing })
++        }
++    }
++
++    Ok(filtered_buildings)
++    // Ok(values.iter().map(|f| f.into()).collect())
++}
+diff --git a/api/src/crud/user.rs b/api/src/crud/user.rs
+index 18d0ea9..b246967 100644
+--- a/api/src/crud/user.rs
++++ b/api/src/crud/user.rs
+@@ -1,5 +1,7 @@
++use crate::crud;
++use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
++use async_recursion::async_recursion;
+ use entities::model::{tbl_admin, tbl_role, tbl_user};
+-use itertools::Itertools;
+ use sea_orm::{
+     ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+ };
+@@ -7,15 +9,26 @@ use serde::{Deserialize, Serialize};
+ use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+-use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
+-
+-use super::role::GetRole;
++use super::{role::GetRole, worker::GetSmallWorker};
+ #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+ pub struct GetUser {
+     pub user_id: Uuid,
+     pub name: String,
+     pub role: Option<GetRole>,
+     pub email: String,
++    pub worker: Option<GetSmallWorker>,
++    pub is_leader: Option<bool>,
++    pub is_admin: Option<bool>,
++}
++#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
++pub struct GetUserSmall {
++    pub user_id: Uuid,
++    pub name: String,
++    pub role: Option<GetRole>,
++    pub email: String,
++    pub is_worker: Option<bool>,
++    pub is_leader: Option<bool>,
++    pub is_admin: Option<bool>,
+ }
+ #[derive(Serialize, Deserialize, Debug, ToSchema)]
+ pub struct ChangeUser {
+@@ -42,16 +55,48 @@ impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
+             name: user.name.to_string(),
+             role: role.to_owned().map(|f| GetRole::from(&f)),
+             email: user.email.to_owned(),
++            is_admin: None,
++            is_leader: None,
++            worker: None,
++        }
++    }
++}
++impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUserSmall {
++    fn from((user, role): &(tbl_user::Model, Option<tbl_role::Model>)) -> Self {
++        Self {
++            user_id: user.user_id.clone(),
++            name: user.name.to_string(),
++            role: role.to_owned().map(|f| GetRole::from(&f)),
++            email: user.email.to_owned(),
++            is_admin: None,
++            is_leader: None,
++            is_worker: None,
++        }
++    }
++}
++impl From<&GetUser> for GetUserSmall {
++    fn from(user: &GetUser) -> Self {
++        let user = user.clone();
++        Self {
++            user_id: user.user_id,
++            name: user.name,
++            role: user.role,
++            email: user.email,
++            is_worker: Some(user.worker.is_some()),
++            is_leader: user.is_leader,
++            is_admin: user.is_admin,
+         }
+     }
+ }
++
+ pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudError> {
+-    let model = tbl_user::Entity::find()
+-        .find_also_related(tbl_role::Entity)
+-        .filter(tbl_user::Column::IsActive.eq(true))
+-        .all(db)
+-        .await?;
+-    Ok(model.iter().map(|f| GetUser::from(f)).collect_vec())
++    let users = get_raw_all_user(db).await?;
++    let mut user_vec = vec![];
++    for user in users {
++        let user = fill_single_user(&user, db).await?;
++        user_vec.push(user);
++    }
++    Ok(user_vec)
+ }
+ pub async fn get_user_by_email(
+     db: &DatabaseConnection,
+@@ -64,19 +109,29 @@ pub async fn get_user_by_email(
+         .await?;
+     Ok(model)
+ }
++#[async_recursion]
+ pub async fn get_single_user(
+     db: &DatabaseConnection,
+     user_id: &Uuid,
+ ) -> Result<GetUser, CrudError> {
+-    let user_id = user_id.clone();
+-    let model = tbl_user::Entity::find_by_id(user_id)
+-        .find_also_related(tbl_role::Entity)
+-        .filter(tbl_user::Column::IsActive.eq(true))
+-        .one(db)
+-        .await?;
+-    match model {
+-        Some(model) => Ok(GetUser::from(&model)),
+-        None => Err(CrudError::NotFound),
++    let user = get_raw_single_user(user_id, db).await?;
++    let user = fill_single_user(&user, db).await?;
++
++    Ok(user)
++}
++pub async fn fill_single_user(
++    user: &GetUser,
++    db: &DatabaseConnection,
++) -> Result<GetUser, CrudError> {
++    let mut user = user.clone();
++    user.is_admin = Some(is_admin_by_user_id(&user.user_id, db).await?);
++    user.is_leader = Some(crud::worker::is_leader_by_user_id(&user.user_id, db).await?);
++    match crud::worker::get_worker_by_user_id(db, &user.user_id).await {
++        Ok(worker) => {
++            user.worker = Some(worker);
++            Ok(user)
++        }
++        Err(_) => Ok(user),
+     }
+ }
+ pub async fn delete_user(db: &DatabaseConnection, user_id: &Uuid) -> Result<(), CrudError> {
+@@ -92,6 +147,31 @@ pub async fn delete_user(db: &DatabaseConnection, user_id: &Uuid) -> Result<(),
+         None => return Err(CrudError::NotFound),
+     }
+ }
++async fn get_raw_single_user(
++    user_id: &Uuid,
++    db: &DatabaseConnection,
++) -> Result<GetUser, CrudError> {
++    let user = tbl_user::Entity::find_by_id(user_id.clone())
++        .find_also_related(tbl_role::Entity)
++        .filter(tbl_user::Column::IsActive.eq(true))
++        .one(db)
++        .await?;
++    match &user {
++        Some(user) => Ok(user.into()),
++        None => Err(CrudError::NotFound),
++    }
++}
++async fn get_raw_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudError> {
++    Ok(tbl_user::Entity::find()
++        .find_also_related(tbl_role::Entity)
++        .filter(tbl_user::Column::IsActive.eq(true))
++        .all(db)
++        .await?
++        .iter()
++        .map(|f| f.into())
++        .collect())
++}
++
+ pub async fn update_user(
+     db: &DatabaseConnection,
+     change_user: ChangeUser,
+diff --git a/api/src/crud/worker.rs b/api/src/crud/worker.rs
+index e7ab293..4e7e60f 100644
+--- a/api/src/crud/worker.rs
++++ b/api/src/crud/worker.rs
+@@ -1,77 +1,61 @@
++use crate::crud;
++use crate::util::error::CrudError;
+ use entities::model::{tbl_leader, tbl_worker};
+ use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait};
+ use serde::{Deserialize, Serialize};
+ use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+-use crate::util::error::CrudError;
+-
+-use super::{
+-    role::GetRole,
+-    user::{get_single_user, GetUser},
+-};
+-#[derive(Serialize, Deserialize, Debug, ToSchema)]
+-pub struct GetWorker {
+-    pub user_id: Uuid,
+-    pub name: String,
+-    pub role: Option<GetRole>,
+-    pub email: String,
+-    #[serde(skip_serializing)]
+-    //only for internal use
+-    boss_id: Option<Uuid>,
++use super::user::GetUserSmall;
+ 
+-    pub boss: Option<GetUser>,
++#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
++pub struct GetSmallWorker {
++    user_id: Uuid,
++    pub boss: Option<GetUserSmall>,
+ }
+-
+-pub async fn get_worker_by_user_id(
+-    db: &DatabaseConnection,
+-    user_id: &Uuid,
+-) -> Result<GetWorker, CrudError> {
+-    let temp_worker = __get_worker_by_user_id(db, user_id).await?;
+-    if let Some(boss_id) = &temp_worker.boss_id {
+-        let boss_id = boss_id.clone();
+-        let boss_model = tbl_leader::Entity::find_by_id(boss_id).one(db).await?;
+-        let mut boss = None;
+-        if let Some(boss_model) = boss_model {
+-            let user_boss_model = __get_worker_by_user_id(db, &boss_model.user_id).await?;
+-
+-            boss = Some(GetUser {
+-                user_id: user_boss_model.user_id.clone(),
+-                email: user_boss_model.email,
+-                name: user_boss_model.name,
+-                role: user_boss_model.role,
+-            });
++impl From<&tbl_worker::Model> for GetSmallWorker {
++    fn from(worker: &tbl_worker::Model) -> Self {
++        Self {
++            user_id: worker.user_id,
++            boss: None,
+         }
+-        return Ok(GetWorker {
+-            boss,
+-            ..temp_worker
+-        });
+     }
+-    Ok(temp_worker)
+ }
+-/// Private function that gets a Worker without Boss struct
+-async fn __get_worker_by_user_id(
++pub async fn get_worker_by_user_id(
+     db: &DatabaseConnection,
+     user_id: &Uuid,
+-) -> Result<GetWorker, CrudError> {
+-    let user_model = get_single_user(db, user_id).await?;
+-    let worker_model = tbl_worker::Entity::find_by_id(user_id.clone())
++) -> Result<GetSmallWorker, CrudError> {
++    let worker = tbl_worker::Entity::find_by_id(user_id.clone())
+         .one(db)
+         .await?;
+-
+-    if let Some(worker_model) = worker_model {
+-        let worker = GetWorker {
+-            email: user_model.email,
+-            role: user_model.role,
+-            name: user_model.name,
+-            user_id: user_model.user_id,
+-            boss_id: worker_model.boss_user_id.map(|f| f.clone()),
+-            boss: None,
++    if let Some(worker) = worker {
++        return match worker.boss_user_id {
++            Some(boss_id) => {
++                let leader_user = get_leader_by_user_id(db, &boss_id).await?;
++                Ok(GetSmallWorker {
++                    boss: Some(leader_user),
++                    ..(&worker).into()
++                })
++            }
++            None => Ok((&worker).into()),
+         };
+-        return Ok(worker);
+     }
+     Err(CrudError::NotFound)
+ }
++pub async fn get_leader_by_user_id(
++    db: &DatabaseConnection,
++    user_id: &Uuid,
++) -> Result<GetUserSmall, CrudError> {
++    let user = GetUserSmall::from(&crud::user::get_single_user(db, user_id).await?);
++    let is_admin = crud::user::is_admin_by_user_id(user_id, db).await?;
++    let is_worker = crud::worker::is_worker_by_user_id(user_id, db).await?;
++    Ok(GetUserSmall {
++        is_leader: Some(true),
++        is_admin: Some(is_admin),
++        is_worker: Some(is_worker),
++        ..user
++    })
++}
+ 
+ pub async fn is_leader_by_user_id(
+     user_id: &Uuid,
+diff --git a/api/src/main.rs b/api/src/main.rs
+index 2ade562..8e1c85c 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -32,10 +32,8 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
+         api::worker::add_worker,
+         api::worker::update_worker,
+         api::worker::delete_worker,
+-        api::worker::get_worker,
+-        api::worker::get_self_worker,
+         //key
+-        api::key::get_self_key,
++        api::door::get_self_door,
+         //key_group
+         api::door_group::add_key_into_key_group,
+         api::door_group::delete_key_from_key_group,
+@@ -59,7 +57,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
+         crud::room::GetRoom,
+         crud::building::GetBuilding,
+         crud::user::GetUser,
+-        crud::worker::GetWorker,
++        crud::worker::GetSmallWorker,
+         crud::worker::CreateWorker,
+         crud::door_group::CreateKeyGroup,
+         crud::door_group::ChangeKeyGroup,
+@@ -120,10 +118,8 @@ async fn main() -> anyhow::Result<()> {
+                     .service(api::worker::add_worker)
+                     .service(api::worker::update_worker)
+                     .service(api::worker::delete_worker)
+-                    .service(api::worker::get_worker)
+-                    .service(api::worker::get_self_worker)
+                     //key
+-                    .service(api::key::get_self_key)
++                    .service(api::door::get_self_door)
+                     //key_group
+                     .service(api::door_group::add_key_into_key_group)
+                     .service(api::door_group::delete_key_from_key_group)
+diff --git a/frontend/src/Components/table/Table.tsx b/frontend/src/Components/table/Table.tsx
+index 96252b4..130869d 100644
+--- a/frontend/src/Components/table/Table.tsx
++++ b/frontend/src/Components/table/Table.tsx
+@@ -31,6 +31,9 @@ const defaultColumn: Partial<ColumnDef<{}>> = {
+                 }
+                 else if (isValid(new Date(initialValue as string))) {
+                     return <>{format(new Date(initialValue as string), 'dd.MM.yyyy hh:mm')} </>
++                } else if (typeof initialValue === "object") {
++                    //@ts-ignore
++                    return <>{initialValue?.name || "x"}</>
+                 }
+                 else {
+                     return <>{initialValue}</>
+@@ -39,8 +42,8 @@ const defaultColumn: Partial<ColumnDef<{}>> = {
+ 
+     },
+ }
+-const createBasicColumns = (obj: {}) => {
+-    const columns = []
++export const createBasicColumns = (obj: {}) => {
++    const columns = [] as ColumnDef<{}>[]
+     for (const key in obj) {
+         if (Object.prototype.hasOwnProperty.call(obj, key)) {
+             //@ts-ignore
+@@ -58,15 +61,15 @@ const createBasicColumns = (obj: {}) => {
+ 
+ interface ITableProps {
+     data?: {}[]
+-    columns: ColumnDef<{}>
++    columns: ColumnDef<{}>[]
+     onTableRowClick: (index: number) => void
+ }
+ export const Table: React.FC<ITableProps> = (props) => {
+-    const data = React.useMemo(() => props.data || [{}], [props.data])
+-
++    const data = React.useMemo(() => props.data || [], [props.data])
++    const columns = React.useMemo(() => props.columns || [], [props.columns])
+     const table = useReactTable({
+         data,
+-        columns: createBasicColumns(data[0]),
++        columns: columns,
+         defaultColumn: defaultColumn,
+         getCoreRowModel: getCoreRowModel(),
+     })
+@@ -74,9 +77,14 @@ export const Table: React.FC<ITableProps> = (props) => {
+     return (
+         <table>
+             <thead>
++                <tr><td colSpan={100}>
++                    Suche: <input></input>
++                </td></tr>
+                 {table.getHeaderGroups().map(headerGroup => (
+                     <tr key={headerGroup.id}>
++                        <th key="edit"></th>
+                         {headerGroup.headers.map(header => (
++
+                             <th key={header.id}>
+                                 {header.isPlaceholder
+                                     ? null
+@@ -92,10 +100,16 @@ export const Table: React.FC<ITableProps> = (props) => {
+             <tbody>
+                 {table.getRowModel().rows.map(row => (
+                     <tr key={row.id}
+-                        onClick={
+-                            () => props.onTableRowClick(row.index)
+-                        }
+                     >
++                        <td>
++                            <button
++                                onClick={(e) => {
++                                    e.preventDefault()
++                                    props.onTableRowClick(row.index)
++
++                                }}
++                            >Ändern</button>
++                        </td>
+                         {row.getVisibleCells().map(cell => (
+                             <td key={cell.id}>
+                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
+@@ -107,6 +121,7 @@ export const Table: React.FC<ITableProps> = (props) => {
+             <tfoot>
+                 {table.getFooterGroups().map(footerGroup => (
+                     <tr key={footerGroup.id}>
++                        <th key="edit"></th>
+                         {footerGroup.headers.map(header => (
+                             <th key={header.id}>
+                                 {header.isPlaceholder
+diff --git a/frontend/src/index.css b/frontend/src/index.css
+index 69318ef..3eefe1a 100644
+--- a/frontend/src/index.css
++++ b/frontend/src/index.css
+@@ -20,7 +20,9 @@ a {
+   color          : #646cff;
+   text-decoration: inherit;
+ }
+-
++details>* {
++  margin-left: 1rem;
++}
+ main {
+   max-width     : 50rem;
+   padding-top   : 5rem;
+diff --git a/frontend/src/main.tsx b/frontend/src/main.tsx
+index 3ab1e01..09b0c4c 100644
+--- a/frontend/src/main.tsx
++++ b/frontend/src/main.tsx
+@@ -16,6 +16,12 @@ import { Dashboard } from './routes/dashboard/Dashboard';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+ import { Request } from './routes/user/request/Request';
+ import { Header } from './Components/Ui/Header';
++import { LeaderBase } from './routes/leader/LeaderBase';
++import { ChangeWorker } from './routes/leader/ChangeWorker';
++import { UserBase } from './routes/user/UserBase';
++import { ShowAllUsers } from './routes/leader/ShowAllUsers';
++import { User } from './routes/user/User';
++import { UserChange as UserChange } from './routes/user/UseChange';
+ const router = createBrowserRouter([
+   {
+     path: "/",
+@@ -35,9 +41,38 @@ const router = createBrowserRouter([
+         element: <Dashboard />,
+       },
+       {
+-        path: "/request",
+-        element: <Request />,
++        path: "user",
++        element: <UserBase />,
++        children: [
++          {
++            path: "",
++            element: <User />
++          },
++          {
++            path: "request",
++            element: <Request />
++          },
++          {
++            path: "account",
++            element: <UserChange />
++          }
++        ]
+       },
++      {
++        path: "leader",
++        element: <LeaderBase />,
++        children: [
++          {
++            path: "",
++            element: <ShowAllUsers />
++
++          },
++          {
++            path: "change-worker/:userId",
++            element: <ChangeWorker />
++          }
++        ]
++      }
+     ]
+   }
+ 
+diff --git a/frontend/src/routes/dashboard/Dashboard.tsx b/frontend/src/routes/dashboard/Dashboard.tsx
+index fdc1fad..732f1c8 100644
+--- a/frontend/src/routes/dashboard/Dashboard.tsx
++++ b/frontend/src/routes/dashboard/Dashboard.tsx
+@@ -4,13 +4,12 @@ import { } from "@tanstack/react-table"
+ import { Table } from "../../Components/table/Table"
+ import { Building } from "../../util/intefaces/Buildings"
+ import { Keys } from "../../util/intefaces/Keys"
+-import { Key } from "../user/keys/Key"
+-const getData = async () => {
+-    return await Rest.getSelfRequests()
+-}
++import { AuthorizedBuildings } from "../user/keys/Key"
++import { ChangeWorker } from "../leader/ChangeWorker"
++
+ export interface DashboardProps { }
+ export const Dashboard: React.FC<DashboardProps> = (props) => {
+-
++    const { data: userData } = useQuery(["self", "user"], Rest.getSelf)
+ 
+ 
+     const onTableRowClick = (index: number) => {
+@@ -19,12 +18,15 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
+     }
+     return (<>
+         <main>
+-            <article>
+-                <a href="request">
+-                    Neuen Schluessel anfordern
+-                </a>
+-            </article>
+-            <Key />
++            <a href="user">
++                Nutzerbereich
++            </a><br />
++            <a href="worker">
++                Verwaltungsmitarbeiterbereich
++            </a><br />
++            <a href="leader">
++                Verwaltungsvorgesetzterbereich
++            </a><br />
+         </main>
+     </>)
+ }
+diff --git a/frontend/src/routes/leader/ChangeWorker.tsx b/frontend/src/routes/leader/ChangeWorker.tsx
+new file mode 100644
+index 0000000..d865567
+--- /dev/null
++++ b/frontend/src/routes/leader/ChangeWorker.tsx
+@@ -0,0 +1,73 @@
++import { useQuery } from "@tanstack/react-query";
++import React from "react";
++import { useParams } from "react-router-dom";
++import { User } from "../../util/intefaces/Request";
++import { Rest } from "../../util/Rest";
++
++export interface ChangeWorkerProps { }
++const getUser = async ({ queryKey }: { queryKey: string[] }) => {
++    const userId = queryKey[1]
++    return await Rest.getSingleUser(userId)
++}
++export const ChangeWorker: React.FC<ChangeWorkerProps> = (props) => {
++    let { userId } = useParams();
++    const [boss, setBoss] = React.useState("Rainer Winkler");
++    const { data } = useQuery(["user", userId as string], getUser)
++    const [isWorker, setIsWorker] = React.useState(true)
++
++    return (<>
++        <h1>Nutzer anpassen</h1>
++        {data &&
++            <><h2>Informationen</h2>
++                <p>
++                    Name: {data.name}<br />
++                    Email: {data.email}<br />
++                    Berufsbezeichnung: {data.role.name} <br />
++                    Ist momentan Verwaltungsmitarbeiter:
++                    {data.worker ? "Ja" : "Nein"}
++                </p>
++                <h2>Daten anpassen</h2>
++                <WorkerForm data={data} />
++            </>
++        }
++    </>)
++}
++export interface WorkerFormProps { data: User }
++export const WorkerForm: React.FC<WorkerFormProps> = (props) => {
++    const [isLeader, setIsLeader] = React.useState(props.data.is_leader);
++    const [isWorker, setIsWorker] = React.useState(!!props.data.worker);
++    const [boss, setBoss] = React.useState(props?.data?.worker?.boss?.name || "");
++    return (<>
++        <form>
++            <h3>
++                Arbeiter Daten:
++            </h3>
++            <label>
++                Ist Arbeiter:
++                <input
++                    checked={isWorker}
++                    type="checkbox"
++                    onChange={(e) => setIsWorker(prev => !prev)}
++                />
++            </label>
++            <label>
++                Vorgesetzter:
++                <input
++                    value={boss}
++                    onChange={(e) => setBoss(e.target.value)}
++                />
++            </label>
++            <h3>
++                Vorgesetzter Daten:
++            </h3>
++            Ist Vorgesetzter:
++            <input
++                checked={isLeader}
++                type="checkbox"
++                onChange={(e) => setIsLeader(prev => !prev)}
++            />
++            <br />
++            <button>Absenden</button>
++        </form>
++    </>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/leader/LeaderBase.tsx b/frontend/src/routes/leader/LeaderBase.tsx
+new file mode 100644
+index 0000000..7e539dd
+--- /dev/null
++++ b/frontend/src/routes/leader/LeaderBase.tsx
+@@ -0,0 +1,15 @@
++import { useQuery } from "@tanstack/react-query"
++import { Outlet, useNavigate } from "react-router-dom"
++import { createBasicColumns, Table } from "../../Components/table/Table"
++import { Rest } from "../../util/Rest"
++import React from 'react'
++export interface LeaderBaseProps { }
++export const LeaderBase: React.FC<LeaderBaseProps> = (props) => {
++    const navigate = useNavigate()
++    const { data: userData } = useQuery(["users"], Rest.getUsers)
++    const columns = React.useMemo(() => createBasicColumns(userData?.[0] || {}), [userData])
++    return (<main>
++
++        <Outlet />
++    </main>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/leader/ShowAllUsers.tsx b/frontend/src/routes/leader/ShowAllUsers.tsx
+new file mode 100644
+index 0000000..18cf1be
+--- /dev/null
++++ b/frontend/src/routes/leader/ShowAllUsers.tsx
+@@ -0,0 +1,18 @@
++import { useQuery } from "@tanstack/react-query"
++import { Outlet, useNavigate } from "react-router-dom"
++import { createBasicColumns, Table } from "../../Components/table/Table"
++import { Rest } from "../../util/Rest"
++import React from 'react'
++
++export interface ShowAllUsersProps { }
++export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
++    const navigate = useNavigate()
++    const { data: userData } = useQuery(["users"], Rest.getUsers)
++    const columns = React.useMemo(() => createBasicColumns(userData?.[0] || {}), [userData])
++    return (<>
++        <h1>Alle Nutzer</h1>
++        {
++            userData &&
++            <Table data={userData} onTableRowClick={(e) => { navigate(`change-worker/${userData[e].user_id}`) }} columns={columns} />
++        }</>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/login/Login.tsx b/frontend/src/routes/login/Login.tsx
+index ffc7afe..115bd23 100644
+--- a/frontend/src/routes/login/Login.tsx
++++ b/frontend/src/routes/login/Login.tsx
+@@ -8,7 +8,7 @@ export interface LoginRequest {
+ }
+ export interface LoginProps { }
+ export const Login: React.FC<LoginProps> = (props) => {
+-    const [name, setName] = React.useState("una_ad@yahoo.com");
++    const [name, setName] = React.useState("aric_architecto@gmail.com");
+     const [password, setPassword] = React.useState("1234");
+     const [error, setError] = React.useState("");
+     const navigate = useNavigate()
+diff --git a/frontend/src/routes/user/UseChange.tsx b/frontend/src/routes/user/UseChange.tsx
+new file mode 100644
+index 0000000..b475ee8
+--- /dev/null
++++ b/frontend/src/routes/user/UseChange.tsx
+@@ -0,0 +1,24 @@
++import { useQuery } from "@tanstack/react-query"
++import { useNavigate } from "react-router-dom"
++import { Rest } from "../../util/Rest"
++
++export interface UserChangeProps { }
++export const UserChange: React.FC<UserChangeProps> = (props) => {
++    const { data } = useQuery(["self", "user"], Rest.getSelf)
++    const navigate = useNavigate()
++    return (<>
++        <h1>Account</h1>
++        {data &&
++            <>
++                <p>
++                    Name: {data.name}<br />
++                    Email: {data.email}<br />
++                    Berufsbezeichnung: {data.role.name} <br />
++                    Ist momentan Verwaltungsmitarbeiter:
++                    {data.worker ? "Ja" : "Nein"}
++                </p>
++                <button onClick={(e) => navigate("/")}>Inaktiv schalten</button>
++            </>
++        }
++    </>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/user/User.tsx b/frontend/src/routes/user/User.tsx
+new file mode 100644
+index 0000000..dde6254
+--- /dev/null
++++ b/frontend/src/routes/user/User.tsx
+@@ -0,0 +1,46 @@
++import { useNavigate } from "react-router-dom"
++import { AuthorizedBuildings } from "./keys/Key"
++
++export interface UserProps { }
++export const User: React.FC<UserProps> = (props) => {
++    const navigate = useNavigate()
++
++    return (<>
++        <h1>
++            Nutzerbereich
++        </h1>
++        <button onClick={(e) => {
++            e.preventDefault()
++            navigate("request")
++        }}>Neue Zugaenge anfragen</button>
++        <button onClick={(e) => {
++            e.preventDefault()
++            navigate("account")
++        }}>Account</button>
++        <AuthorizedBuildings />
++
++
++        <h2>Meine Schluesselkarten</h2>
++        <table>
++            <thead>
++                <tr><th>Kartenummer </th><th>Aktiv</th><th>Gueltig bis.</th></tr>
++            </thead>
++            <tbody>
++                <tr>
++                    <td>1.</td>
++                    <td>x</td>
++                    <td>
++                        02.11.2023
++                    </td>
++                </tr>
++                <tr>
++                    <td>2.</td>
++                    <td></td>
++                    <td>
++                        02.11.2020
++                    </td>
++                </tr>
++            </tbody>
++        </table>
++    </>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/user/UserBase.tsx b/frontend/src/routes/user/UserBase.tsx
+new file mode 100644
+index 0000000..72e640c
+--- /dev/null
++++ b/frontend/src/routes/user/UserBase.tsx
+@@ -0,0 +1,11 @@
++import { Outlet, useNavigate } from "react-router-dom"
++import { AuthorizedBuildings, BuildingFC } from "./keys/Key"
++
++export interface UserBaseProps { }
++export const UserBase: React.FC<UserBaseProps> = (props) => {
++    const navigate = useNavigate()
++    return (<main>
++
++        <Outlet />
++    </main>)
++}
+\ No newline at end of file
+diff --git a/frontend/src/routes/user/keys/Key.tsx b/frontend/src/routes/user/keys/Key.tsx
+index d2cd59f..284f9ba 100644
+--- a/frontend/src/routes/user/keys/Key.tsx
++++ b/frontend/src/routes/user/keys/Key.tsx
+@@ -1,25 +1,20 @@
+ import { useQuery } from "@tanstack/react-query"
+-import { json } from "react-router-dom"
+-import { TreeData, TreeView } from "../../../Components/tree-view/TreeView"
+-import { Building } from "../../../util/intefaces/Buildings"
+-import { Keys } from "../../../util/intefaces/Keys"
++import { TreeData } from "../../../Components/tree-view/TreeView"
+ import { Rest } from "../../../util/Rest"
+ import { prepareData } from "../request/Request"
+ 
+ export interface KeyProps { }
+-export const Key: React.FC<KeyProps> = (props) => {
+-    const { data: keys } = useQuery(["self", "keys"], Rest.getSelfKeys)
+-    const { data: building } = useQuery(["buildings"], Rest.getBuildings)
++export const AuthorizedBuildings: React.FC<KeyProps> = (props) => {
++    const { data: keys } = useQuery(["self", "doors"], Rest.getSelfDoors)
+     return (<>
++        <h2>Meine Zugänge</h2>
+         {
+-            (keys && building) &&
+-            <BuildingFC value={prepareData(building)} />
++            (keys && keys) &&
++            <BuildingFC value={prepareData(keys)} />
+         }
+     </>)
+ }
+-const filterNotOwned = (keys: Keys[] = [], building: Building[] = []): Building[] => {
+-    return building.filter(val => val.rooms.filter(val => val.doors.filter(door => keys.find(key => key.door_id === door.door_id)).length > 0).length > 0);
+-}
++
+ export interface BuildingFCProps {
+     value: TreeData[]
+ }
+@@ -29,7 +24,7 @@ export const BuildingFC: React.FC<BuildingFCProps> = (props) => {
+         {
+             props.value.map((val, idx) => (<>{
+                 val.children && val.children.length > 0 ?
+-                    <details key={idx}>
++                    <details key={idx} open>
+                         <summary >
+ 
+                             {val.name}
+diff --git a/frontend/src/routes/user/request/Request.tsx b/frontend/src/routes/user/request/Request.tsx
+index d936271..71f9c5c 100644
+--- a/frontend/src/routes/user/request/Request.tsx
++++ b/frontend/src/routes/user/request/Request.tsx
+@@ -9,6 +9,7 @@ const getData = async () => {
+ export interface RequestProps { }
+ export const Request: React.FC<RequestProps> = (props) => {
+     const [description, setDescription] = React.useState("");
++    const [until, setUntil] = React.useState("");
+     const selection = React.useRef({ getCurrentSelection: () => Selection }) as unknown as SelectionRef;
+     const { data } = useQuery(["buildings"], getData)
+     const [keygroup, setKeygroup] = React.useState("");
+@@ -24,13 +25,7 @@ export const Request: React.FC<RequestProps> = (props) => {
+     // requester_id: string;
+     return (<>
+ 
+-        <main>
+-            <button onClick={(e) => {
+-                e.preventDefault()
+-                console.log(selection.current.getCurrentSelection());
+-            }}>
+-                Absenden
+-            </button>
++        <h1>Neue Anfrage</h1>
+             <form>
+ 
+                 <label>
+@@ -38,10 +33,22 @@ export const Request: React.FC<RequestProps> = (props) => {
+                     <br />
+ 
+                     <textarea
+-                        style={{ minWidth: 200, minHeight: 100 }}
++                    style={{ minWidth: "15rem", minHeight: 100 }}
+                         value={description}
+                         onChange={e => setDescription(e.target.value)}
+                     />
++            </label><br />
++            <label>
++                Bis wann
++                <br />
++
++                <input
++                    type={'date'}
++                    value={until}
++                    onChange={(e) => {
++                        setUntil(e.target.value)
++                    }}
++                />
+                 </label>
+                 <br />
+                 <label>
+@@ -50,10 +57,15 @@ export const Request: React.FC<RequestProps> = (props) => {
+                     {data &&
+                         <TreeView selectionRef={selection} data={prepareData(data)} />
+                     }
+-                </label>
+-
+-            </form>
+-        </main>
++            </label>
++            <br />
++            <button onClick={(e) => {
++                e.preventDefault()
++                console.log(selection.current.getCurrentSelection());
++            }}>
++                Absenden
++            </button>
++        </form>
+     </>)
+ }
+ 
+@@ -70,7 +82,7 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
+         ret.push({
+             name: `Stockwerk: ${floor}`,
+             children: data.filter(val => val.floor == floor).map((val, idx) => ({
+-                name: `Raum: ${floor}${idx}`,
++                name: `Raum: ${val.name}`,
+                 children: []
+             }))
+         })
+diff --git a/frontend/src/util/Rest.ts b/frontend/src/util/Rest.ts
+index 69b5977..beaec24 100644
+--- a/frontend/src/util/Rest.ts
++++ b/frontend/src/util/Rest.ts
+@@ -1,6 +1,7 @@
+ import { LoginRequest } from "../routes/login/Login"
+ import { Building } from "./intefaces/Buildings"
+ import { Keys } from "./intefaces/Keys"
++import { User } from "./intefaces/Request"
+ 
+ //@ts-ignore
+ const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
+@@ -12,8 +13,20 @@ export class Rest {
+     static sendLogout = async () => {
+         return await this.quickFetch("logout", "GET")
+     }
+-    static getSelfKeys = async () => {
+-        return await this.quickFetchJson<Keys[]>("self/keys", "GET")
++    static getSelfDoors = async () => {
++        return await this.quickFetchJson<Building[]>("self/doors", "GET")
++    }
++    static getSelf = async () => {
++        return await this.quickFetchJson<User>("self", "GET")
++    }
++    static getUsers = async () => {
++        return await this.quickFetchJson<User[]>("users", "GET")
++    }
++    static getSingleUser = async (userId: string) => {
++        return await this.quickFetchJson<User>(`users/${userId}`, "GET")
++    }
++    static getSingleWoker = async (userId: string) => {
++        return await this.quickFetchJson<User>(`users/${userId}`, "GET")
+     }
+     static getBuildings = async () => {
+         return await this.quickFetchJson<Building[]>("buildings", "GET")
+diff --git a/frontend/src/util/intefaces/Request.ts b/frontend/src/util/intefaces/Request.ts
+index 8527921..d739a7e 100644
+--- a/frontend/src/util/intefaces/Request.ts
++++ b/frontend/src/util/intefaces/Request.ts
+@@ -22,15 +22,26 @@ export interface Comment {
+     written_at: string;
+ }
+ 
+-export interface User {
+-    email: string;
+-    name: string;
+-    role: Role;
+-    user_id: string;
+-}
+ 
+ export interface Role {
+     description: string;
+     name: string;
+     role_id: string;
+ }
++
++export interface User {
++    user_id: string;
++    name: string;
++    role: Role;
++    email: string;
++    worker: Worker;
++    is_leader: boolean;
++    is_admin: boolean;
++}
++
++
++
++export interface Worker {
++    user_id: string;
++    boss: null;
++}
+-- 
+2.37.0 (Apple Git-136)
+

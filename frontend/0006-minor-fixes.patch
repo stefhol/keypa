@@ -1,0 +1,578 @@
+From 9560445b20e39028ce6458eac7943e215a82d628 Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Mon, 7 Nov 2022 01:51:46 +0100
+Subject: [PATCH 06/11] minor fixes
+
+---
+ api/src/api/key.rs             |  2 +-
+ api/src/api/key_group.rs       | 21 +++++++-----
+ api/src/api/user.rs            |  8 ++---
+ api/src/api/worker.rs          |  6 ++--
+ api/src/crud/key.rs            | 44 +++++++++++++++++++++---
+ api/src/crud/key_group.rs      | 29 ++++++++++------
+ api/src/crud/user.rs           | 62 +++++++++++++++++++++-------------
+ api/src/main.rs                |  4 +++
+ api/src/util/convert_active.rs | 19 +++++++++++
+ api/src/util/mod.rs            |  2 +-
+ api/src/util/user.rs           | 52 ----------------------------
+ 11 files changed, 141 insertions(+), 108 deletions(-)
+ create mode 100644 api/src/util/convert_active.rs
+ delete mode 100644 api/src/util/user.rs
+
+diff --git a/api/src/api/key.rs b/api/src/api/key.rs
+index 6c4067a..4e55a27 100644
+--- a/api/src/api/key.rs
++++ b/api/src/api/key.rs
+@@ -11,7 +11,7 @@ use crate::{
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body=[Vec<GetKey>]),
++    (status = 200, body=[GetKey]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+diff --git a/api/src/api/key_group.rs b/api/src/api/key_group.rs
+index ee2d8d2..cd2c90d 100644
+--- a/api/src/api/key_group.rs
++++ b/api/src/api/key_group.rs
+@@ -9,7 +9,10 @@ use utoipa::IntoParams;
+ use uuid::Uuid;
+ 
+ use crate::{
+-    crud::{self, key_group::CreateKeyGroup},
++    crud::{
++        self,
++        key_group::{ChangeKeyGroup, CreateKeyGroup},
++    },
+     util::{
+         error::CrudError,
+         middleware::{extractor::Authenticated, SecurityLevel},
+@@ -23,7 +26,7 @@ pub struct UserQuery {
+     params(UserQuery),
+     context_path = "/api/v1",
+     responses(
+-    (status = 200),
++    (status = 200 ,body = [GetKeyGroup]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -62,7 +65,7 @@ pub struct KeyGroupQuery {
+     (status = 500),
+ )
+ )]
+-#[put("/key-group/{key_group_id}")]
++#[post("/key-group/{key_group_id}")]
+ pub async fn add_key_into_key_group(
+     key_group_id: Path<Uuid>,
+     query: Query<KeyGroupQuery>,
+@@ -100,7 +103,7 @@ pub async fn delete_key_from_key_group(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [Vec<GetKey>]),
++    (status = 200, body = [GetKey]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -122,7 +125,7 @@ pub async fn get_keys_of_key_group(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [Vec<GetKeyGroup>]),
++    (status = 200, body = [GetKeyGroup]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -142,8 +145,9 @@ pub async fn get_self_key_group(
+ }
+ #[utoipa::path(
+     context_path = "/api/v1",
++    request_body = CreateKeyGroup,
+     responses(
+-    (status = 200, body = [GetKeyGroup]),
++    (status = 200, body = GetKeyGroup),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -163,8 +167,9 @@ pub async fn add_key_group(
+ }
+ #[utoipa::path(
+     context_path = "/api/v1",
++    request_body = ChangeKeyGroup,
+     responses(
+-    (status = 200, body = [GetKeyGroup]),
++    (status = 200, body = GetKeyGroup),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -176,7 +181,7 @@ pub async fn add_key_group(
+ pub async fn upate_key_group(
+     db: Data<DatabaseConnection>,
+     key_group_id: Path<Uuid>,
+-    key_group: Json<CreateKeyGroup>,
++    key_group: Json<ChangeKeyGroup>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
+diff --git a/api/src/api/user.rs b/api/src/api/user.rs
+index 1a55bfd..cda7f9a 100644
+--- a/api/src/api/user.rs
++++ b/api/src/api/user.rs
+@@ -11,7 +11,7 @@ use uuid::Uuid;
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [Vec<GetUser>]),
++    (status = 200, body = [GetUser]),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -31,7 +31,7 @@ pub async fn get_users(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [GetUser]),
++    (status = 200, body = GetUser),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -52,7 +52,7 @@ pub async fn get_single_user(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [GetUser]),
++    (status = 200, body = GetUser),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -99,7 +99,7 @@ pub async fn add_user(
+     request_body = ChangeUser,
+ 
+     responses(
+-    (status = 200, body = [GetUser]),
++    (status = 200, body = GetUser),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+diff --git a/api/src/api/worker.rs b/api/src/api/worker.rs
+index 10b2908..d59070e 100644
+--- a/api/src/api/worker.rs
++++ b/api/src/api/worker.rs
+@@ -66,8 +66,6 @@ pub async fn update_worker(
+ }
+ #[utoipa::path(
+     context_path = "/api/v1",
+-    request_body = CreateWorker,
+-    
+     responses(
+     (status = 200),
+     (status = 400),
+@@ -91,7 +89,7 @@ pub async fn delete_worker(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [GetWorker]),
++    (status = 200, body = GetWorker),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+@@ -113,7 +111,7 @@ pub async fn get_worker(
+ #[utoipa::path(
+     context_path = "/api/v1",
+     responses(
+-    (status = 200, body = [GetWorker]),
++    (status = 200, body = GetWorker),
+     (status = 400),
+     (status = 401),
+     (status = 404),
+diff --git a/api/src/crud/key.rs b/api/src/crud/key.rs
+index a23a7f1..0523d53 100644
+--- a/api/src/crud/key.rs
++++ b/api/src/crud/key.rs
+@@ -1,14 +1,17 @@
+ use chrono::{DateTime, Utc};
+-use entities::model::{tbl_key, tbl_key_user_history};
++use entities::model::{
++    tbl_key::{self},
++    tbl_key_user_history,
++};
+ use sea_orm::{
+-    prelude::DateTimeUtc, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, QueryFilter,
+-    Statement,
++    prelude::DateTimeUtc, ActiveModelTrait, ColumnTrait, DatabaseConnection, DbBackend,
++    EntityTrait, QueryFilter, Statement,
+ };
+ use serde::{Deserialize, Serialize};
+ use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+-use crate::util::error::CrudError;
++use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
+ 
+ use super::{door::GetDoor, user::GetUser};
+ #[derive(Debug, Serialize, Deserialize, ToSchema)]
+@@ -33,6 +36,15 @@ impl From<&tbl_key::Model> for GetKey {
+         }
+     }
+ }
++#[derive(Debug, Serialize, Deserialize, ToSchema)]
++pub struct ChangeKey {
++    pub name: Option<String>,
++    pub value: Option<String>,
++    #[serde(default, deserialize_with = "deserialize_some")]
++    pub description: Option<Option<String>>,
++    pub door_id: Option<Uuid>,
++}
++
+ #[derive(Debug, Serialize, Deserialize, ToSchema)]
+ pub struct GetKeyHistory {
+     pub key_id: Uuid,
+@@ -84,6 +96,30 @@ pub async fn get_key_by_key_id(
+         None => Err(CrudError::NotFound),
+     }
+ }
++pub async fn update_key_by_key_id(
++    key_id: &Uuid,
++    change_key: &ChangeKey,
++    db: &DatabaseConnection,
++) -> Result<GetKey, CrudError> {
++    let key = tbl_key::Entity::find_by_id(key_id.clone()).one(db).await?;
++
++    match &key {
++        Some(key) => {
++            let active_model: tbl_key::ActiveModel = key.clone().into();
++            let active_model = tbl_key::ActiveModel {
++                description: change_key.description.convert(key.description.clone()),
++                door_id: change_key.door_id.convert(key.door_id.clone()),
++                name: change_key.name.convert(key.name.clone()),
++                value: change_key.value.convert(key.value.clone()),
++                ..active_model
++            }
++            .update(db)
++            .await?;
++            Ok((&active_model).into())
++        }
++        None => Err(CrudError::NotFound),
++    }
++}
+ pub async fn get_keys_of_user_id(
+     user_id: &Uuid,
+     db: &DatabaseConnection,
+diff --git a/api/src/crud/key_group.rs b/api/src/crud/key_group.rs
+index 185799a..5fac500 100644
+--- a/api/src/crud/key_group.rs
++++ b/api/src/crud/key_group.rs
+@@ -1,13 +1,13 @@
++use crate::util::{self, deserialize_some, error::CrudError};
+ use entities::model::{tbl_key, tbl_key_group, tbl_key_group_key, tbl_user};
+ use sea_orm::{
+     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, Set,
+ };
+ use serde::{Deserialize, Serialize};
++use util::convert_active::Convert;
+ use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+-use crate::util::error::CrudError;
+-
+ use super::key::GetKey;
+ 
+ #[derive(Debug, Serialize, Deserialize, ToSchema)]
+@@ -15,7 +15,12 @@ pub struct CreateKeyGroup {
+     name: String,
+     description: Option<String>,
+ }
+-
++#[derive(Debug, Serialize, Deserialize, ToSchema)]
++pub struct ChangeKeyGroup {
++    name: Option<String>,
++    #[serde(default, deserialize_with = "deserialize_some")]
++    description: Option<Option<String>>,
++}
+ #[derive(Debug, Serialize, Deserialize, ToSchema)]
+ pub struct GetKeyGroup {
+     pub key_group_id: Uuid,
+@@ -46,20 +51,24 @@ pub async fn create_key_group(
+     Ok((&model).into())
+ }
+ pub async fn update_key_group(
+-    key_goup: &CreateKeyGroup,
++    key_goup: &ChangeKeyGroup,
+     key_group_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<GetKeyGroup, CrudError> {
+     let model = tbl_key_group::Entity::find_by_id(key_group_id.clone())
+         .one(db)
+         .await?;
+-    match model {
++    match &model {
+         Some(model) => {
+-            let mut model: tbl_key_group::ActiveModel = model.into();
+-            model.description = Set(key_goup.description.clone());
+-            model.name = Set(key_goup.name.clone());
+-            let model = model.update(db).await?;
+-            Ok((&model).into())
++            let active_model: tbl_key_group::ActiveModel = model.clone().into();
++
++            let active_model = tbl_key_group::ActiveModel {
++                description: key_goup.description.convert(model.description.clone()),
++                name: key_goup.name.convert(model.name.clone()),
++                ..active_model
++            };
++            let active_model = active_model.update(db).await?;
++            Ok((&active_model).into())
+         }
+         None => Err(CrudError::NotFound),
+     }
+diff --git a/api/src/crud/user.rs b/api/src/crud/user.rs
+index 974bbb1..18d0ea9 100644
+--- a/api/src/crud/user.rs
++++ b/api/src/crud/user.rs
+@@ -1,19 +1,13 @@
+ use entities::model::{tbl_admin, tbl_role, tbl_user};
+ use itertools::Itertools;
+ use sea_orm::{
+-    ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait,
+-    QueryFilter,
++    ActiveModelTrait, ActiveValue::Set, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
+ };
+ use serde::{Deserialize, Serialize};
+-use tracing::info;
+ use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+-use crate::util::{
+-    deserialize_some,
+-    error::CrudError,
+-    user::{CreateActiveModel, UpdateActiveModel},
+-};
++use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
+ 
+ use super::role::GetRole;
+ #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+@@ -27,16 +21,19 @@ pub struct GetUser {
+ pub struct ChangeUser {
+     pub name: Option<String>,
+     #[serde(default, deserialize_with = "deserialize_some")]
+-    pub role: Option<Option<String>>,
++    pub role_id: Option<Option<Uuid>>,
+     pub email: Option<String>,
++    #[serde(default, deserialize_with = "deserialize_some")]
++    pub picture_url: Option<Option<String>>,
+ }
+ 
+ #[derive(Serialize, Deserialize, Debug, ToSchema)]
+ pub struct CreateUser {
+     pub name: String,
+-    pub role: Option<String>,
++    pub role_id: Option<Uuid>,
+     pub email: String,
+     pub password: String,
++    pub picture_url: Option<String>,
+ }
+ impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
+     fn from((user, role): &(tbl_user::Model, Option<tbl_role::Model>)) -> Self {
+@@ -51,6 +48,7 @@ impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
+ pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudError> {
+     let model = tbl_user::Entity::find()
+         .find_also_related(tbl_role::Entity)
++        .filter(tbl_user::Column::IsActive.eq(true))
+         .all(db)
+         .await?;
+     Ok(model.iter().map(|f| GetUser::from(f)).collect_vec())
+@@ -61,6 +59,7 @@ pub async fn get_user_by_email(
+ ) -> Result<Option<tbl_user::Model>, CrudError> {
+     let model = tbl_user::Entity::find()
+         .filter(tbl_user::Column::Email.eq(email))
++        .filter(tbl_user::Column::IsActive.eq(true))
+         .one(db)
+         .await?;
+     Ok(model)
+@@ -80,30 +79,37 @@ pub async fn get_single_user(
+         None => Err(CrudError::NotFound),
+     }
+ }
+-pub async fn delete_user(
+-    db: &DatabaseConnection,
+-    user_id: &Uuid,
+-) -> Result<DeleteResult, CrudError> {
++pub async fn delete_user(db: &DatabaseConnection, user_id: &Uuid) -> Result<(), CrudError> {
+     let user_id = user_id.clone();
+     let model = tbl_user::Entity::find_by_id(user_id).one(db).await?;
+-    if let Some(model) = model {
+-        info!("{:#?}", model);
+-        return Ok(model.delete(db).await?);
+-    } else {
+-        return Err(CrudError::NotFound);
++    match model {
++        Some(model) => {
++            let mut model: tbl_user::ActiveModel = model.into();
++            model.is_active = Set(false);
++            model.update(db).await?;
++            return Ok(());
++        }
++        None => return Err(CrudError::NotFound),
+     }
+ }
+ pub async fn update_user(
+     db: &DatabaseConnection,
+-    user: ChangeUser,
++    change_user: ChangeUser,
+     user_id: &Uuid,
+ ) -> Result<GetUser, CrudError> {
+     let model = tbl_user::Entity::find_by_id(user_id.clone())
+         .one(db)
+         .await?;
+-    if let Some(model) = model {
+-        let model: tbl_user::ActiveModel = user.convert(model.into())?;
+-        let user = model.update(db).await?;
++    if let Some(model) = &model {
++        let active_model: tbl_user::ActiveModel = model.clone().into();
++        let active_model = tbl_user::ActiveModel {
++            email: change_user.email.convert(model.email.clone()),
++            name: change_user.name.convert(model.name.clone()),
++            role_id: change_user.role_id.convert(model.role_id.clone()),
++            picture_url: change_user.picture_url.convert(model.picture_url.clone()),
++            ..active_model
++        };
++        let user = active_model.update(db).await?;
+         let mut role = None;
+         if let Some(role_id) = user.role_id {
+             role = tbl_role::Entity::find_by_id(role_id).one(db).await?;
+@@ -114,7 +120,15 @@ pub async fn update_user(
+     Err(CrudError::NotFound)
+ }
+ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<GetUser, CrudError> {
+-    let model: tbl_user::ActiveModel = user.convert()?;
++    let model = tbl_user::ActiveModel {
++        name: Set(user.name.clone()),
++        role_id: Set(user.role_id.clone()),
++        is_active: Set(true),
++        email: Set(user.email.clone()),
++        picture_url: Set(user.picture_url.clone()),
++        password: Set(user.password.clone()),
++        ..Default::default()
++    };
+     let user = model.insert(db).await?;
+     let mut role = None;
+     if let Some(role_id) = user.role_id {
+diff --git a/api/src/main.rs b/api/src/main.rs
+index 6311dca..cad9879 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -50,11 +50,15 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
+         crud::role::GetRole,
+         crud::user::CreateUser,
+         crud::user::ChangeUser,
++        crud::door::GetDoor,
++        crud::room::GetRoom,
++        crud::building::GetBuilding,
+         crud::user::GetUser,
+         crud::worker::GetWorker,
+         crud::worker::CreateWorker,
+         crud::key::GetKey,
+         crud::key_group::CreateKeyGroup,
++        crud::key_group::ChangeKeyGroup,
+         crud::key_group::GetKeyGroup,
+         
+     ))
+diff --git a/api/src/util/convert_active.rs b/api/src/util/convert_active.rs
+new file mode 100644
+index 0000000..c8757ce
+--- /dev/null
++++ b/api/src/util/convert_active.rs
+@@ -0,0 +1,19 @@
++use sea_orm::ActiveValue;
++
++pub trait Convert<T>
++where
++    T: Into<sea_orm::Value>,
++{
++    fn convert(&self, default: T) -> ActiveValue<T>;
++}
++impl<T> Convert<T> for Option<T>
++where
++    T: Into<sea_orm::Value> + Clone,
++{
++    fn convert(&self, default: T) -> ActiveValue<T> {
++        match self {
++            Some(value) => ActiveValue::Set(value.clone()),
++            None => ActiveValue::Unchanged(default),
++        }
++    }
++}
+diff --git a/api/src/util/mod.rs b/api/src/util/mod.rs
+index 17ea30e..83f189b 100644
+--- a/api/src/util/mod.rs
++++ b/api/src/util/mod.rs
+@@ -16,7 +16,7 @@ where
+ {
+     Deserialize::deserialize(deserializer).map(Some)
+ }
++pub mod convert_active;
+ pub mod crypto;
+ pub mod error;
+ pub mod middleware;
+-pub mod user;
+diff --git a/api/src/util/user.rs b/api/src/util/user.rs
+deleted file mode 100644
+index 691ad66..0000000
+--- a/api/src/util/user.rs
++++ /dev/null
+@@ -1,52 +0,0 @@
+-use entities::model::tbl_user;
+-use sea_orm::{ActiveModelTrait, Set};
+-use uuid::Uuid;
+-
+-use crate::crud::user::{ChangeUser, CreateUser};
+-
+-use super::error::CrudError;
+-
+-pub trait UpdateActiveModel<T> {
+-    fn convert(&self, model: T) -> Result<T, CrudError>
+-    where
+-        T: ActiveModelTrait;
+-}
+-pub trait CreateActiveModel<T> {
+-    fn convert(&self) -> Result<T, CrudError>
+-    where
+-        T: ActiveModelTrait;
+-}
+-impl UpdateActiveModel<tbl_user::ActiveModel> for ChangeUser {
+-    fn convert(
+-        &self,
+-        mut model: tbl_user::ActiveModel,
+-    ) -> Result<tbl_user::ActiveModel, CrudError> {
+-        if let Some(email) = &self.email {
+-            model.email = Set(email.to_string());
+-        }
+-        if let Some(name) = &self.name {
+-            model.name = Set(name.to_string());
+-        }
+-        if let Some(role) = &self.role {
+-            if let Some(role_id) = &role {
+-                model.role_id = Set(Some(Uuid::parse_str(&role_id)?));
+-            } else {
+-                model.role_id = Set(None);
+-            }
+-        }
+-        Ok(model)
+-    }
+-}
+-impl CreateActiveModel<tbl_user::ActiveModel> for CreateUser {
+-    fn convert(&self) -> Result<tbl_user::ActiveModel, CrudError>
+-    where
+-        tbl_user::ActiveModel: ActiveModelTrait,
+-    {
+-        Ok(tbl_user::ActiveModel {
+-            name: Set(self.name.to_string()),
+-            email: Set(self.email.to_string()),
+-            password: Set(self.password.to_string()),
+-            ..Default::default()
+-        })
+-    }
+-}
+-- 
+2.37.0 (Apple Git-136)
+

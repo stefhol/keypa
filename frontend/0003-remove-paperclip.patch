@@ -1,0 +1,1659 @@
+From aef9877d1cb9d1ff360e43653c6a79013172f61b Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Sun, 6 Nov 2022 16:49:44 +0100
+Subject: [PATCH 03/11] remove paperclip add utoipa
+
+---
+ Cargo.lock                           | 284 +++++++++++++--------------
+ api/Cargo.toml                       |   3 +-
+ api/Readme.md                        |   4 +
+ api/src/api/auth.rs                  |  57 ++++--
+ api/src/api/user.rs                  | 188 ++++++++++--------
+ api/src/api/worker.rs                | 165 +++++++++-------
+ api/src/crud/role.rs                 |   9 +-
+ api/src/crud/user.rs                 |  35 ++--
+ api/src/crud/worker.rs               |  77 ++++----
+ api/src/main.rs                      |  69 ++++---
+ api/src/util/crypto.rs               |   4 +-
+ api/src/util/error.rs                |  56 +++---
+ api/src/util/middleware/extractor.rs |   4 +-
+ api/src/util/middleware/mod.rs       |  33 +++-
+ mock/src/main.rs                     |  22 ++-
+ 15 files changed, 564 insertions(+), 446 deletions(-)
+ create mode 100644 api/Readme.md
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 024fa40..92ba6f3 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -283,7 +283,6 @@ dependencies = [
+  "log",
+  "migration-helper",
+  "orion",
+- "paperclip",
+  "rand 0.8.5",
+  "sea-orm",
+  "serde",
+@@ -291,6 +290,8 @@ dependencies = [
+  "thiserror",
+  "tracing",
+  "tracing-subscriber",
++ "utoipa",
++ "utoipa-swagger-ui",
+  "uuid",
+ ]
+ 
+@@ -1118,6 +1119,7 @@ checksum = "10a35a97730320ffe8e2d410b5d3b69279b98d2c14bdb8b70ea89ecf7888d41e"
+ dependencies = [
+  "autocfg",
+  "hashbrown",
++ "serde",
+ ]
+ 
+ [[package]]
+@@ -1203,12 +1205,6 @@ dependencies = [
+  "cc",
+ ]
+ 
+-[[package]]
+-name = "linked-hash-map"
+-version = "0.5.6"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0717cef1bc8b636c6e1c1bbdefc09e6322da8a9321966e8928ef80d20f7f770f"
+-
+ [[package]]
+ name = "local-channel"
+ version = "0.1.3"
+@@ -1235,7 +1231,6 @@ checksum = "435011366fe56583b16cf956f9df0095b405b82d76425bc8981c0e22e60ec4df"
+ dependencies = [
+  "autocfg",
+  "scopeguard",
+- "serde",
+ ]
+ 
+ [[package]]
+@@ -1277,6 +1272,16 @@ version = "0.3.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "2a60c7ce501c71e03a9c9c0d35b861413ae925bd979cc7a4e30d060069aaac8d"
+ 
++[[package]]
++name = "mime_guess"
++version = "2.0.4"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "4192263c238a5f0d0c6bfd21f336a313a4ce1c450542449ca191bb657b4642ef"
++dependencies = [
++ "mime",
++ "unicase",
++]
++
+ [[package]]
+ name = "minimal-lexical"
+ version = "0.2.1"
+@@ -1440,81 +1445,6 @@ version = "0.1.1"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
+ 
+-[[package]]
+-name = "paperclip"
+-version = "0.7.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f399678683ec199ddca1dd54db957dd158dedb5fc90826eb2a7e6c0800c3a868"
+-dependencies = [
+- "anyhow",
+- "itertools",
+- "once_cell",
+- "paperclip-actix",
+- "paperclip-core",
+- "paperclip-macros",
+- "parking_lot 0.12.1",
+- "semver",
+- "serde",
+- "serde_derive",
+- "serde_json",
+- "serde_yaml",
+- "thiserror",
+- "url",
+-]
+-
+-[[package]]
+-name = "paperclip-actix"
+-version = "0.5.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "29880bc57ef516c272d6fdd215ecaf96375d9a5dbac5412d849b9f9afd0d7298"
+-dependencies = [
+- "actix-service",
+- "actix-web",
+- "futures",
+- "once_cell",
+- "paperclip-core",
+- "paperclip-macros",
+- "parking_lot 0.12.1",
+- "serde_json",
+-]
+-
+-[[package]]
+-name = "paperclip-core"
+-version = "0.5.2"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0bee516533b655ba63e41e788b49a2beb1139e1eebafb143e7cb56b8cabb5da1"
+-dependencies = [
+- "actix-web",
+- "mime",
+- "once_cell",
+- "paperclip-macros",
+- "parking_lot 0.12.1",
+- "pin-project",
+- "regex",
+- "serde",
+- "serde_json",
+- "serde_yaml",
+- "thiserror",
+-]
+-
+-[[package]]
+-name = "paperclip-macros"
+-version = "0.6.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "e89990be67318e3da29c92adb3377e0251a8eee10b4f91ff349cbf2da945e9d1"
+-dependencies = [
+- "heck 0.4.0",
+- "http",
+- "lazy_static",
+- "mime",
+- "proc-macro-error",
+- "proc-macro2",
+- "quote",
+- "strum",
+- "strum_macros",
+- "syn",
+-]
+-
+ [[package]]
+ name = "parking_lot"
+ version = "0.11.2"
+@@ -1584,26 +1514,6 @@ version = "2.2.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "478c572c3d73181ff3c2539045f6eb99e5491218eae919370993b890cdbdd98e"
+ 
+-[[package]]
+-name = "pin-project"
+-version = "1.0.12"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "ad29a609b6bcd67fee905812e544992d216af9d755757c05ed2d0e15a74c6ecc"
+-dependencies = [
+- "pin-project-internal",
+-]
+-
+-[[package]]
+-name = "pin-project-internal"
+-version = "1.0.12"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "069bdb1e05adc7a8990dce9cc75370895fbe4e3d58b9b73bf1aee56359344a55"
+-dependencies = [
+- "proc-macro2",
+- "quote",
+- "syn",
+-]
+-
+ [[package]]
+ name = "pin-project-lite"
+ version = "0.2.9"
+@@ -1840,6 +1750,41 @@ dependencies = [
+  "winapi",
+ ]
+ 
++[[package]]
++name = "rust-embed"
++version = "6.4.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "283ffe2f866869428c92e0d61c2f35dfb4355293cdfdc48f49e895c15f1333d1"
++dependencies = [
++ "rust-embed-impl",
++ "rust-embed-utils",
++ "walkdir",
++]
++
++[[package]]
++name = "rust-embed-impl"
++version = "6.3.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "31ab23d42d71fb9be1b643fe6765d292c5e14d46912d13f3ae2815ca048ea04d"
++dependencies = [
++ "proc-macro2",
++ "quote",
++ "rust-embed-utils",
++ "shellexpand",
++ "syn",
++ "walkdir",
++]
++
++[[package]]
++name = "rust-embed-utils"
++version = "7.3.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "c1669d81dfabd1b5f8e2856b8bbe146c6192b0ba22162edc738ac0a5de18f054"
++dependencies = [
++ "sha2",
++ "walkdir",
++]
++
+ [[package]]
+ name = "rust_decimal"
+ version = "1.26.1"
+@@ -1893,6 +1838,15 @@ version = "1.0.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "4501abdff3ae82a1c1b477a17252eb69cee9e66eb915c1abaa4f44d873df9f09"
+ 
++[[package]]
++name = "same-file"
++version = "1.0.6"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "93fc1dc3aaa9bfed95e02e6eadabb4baf7e3078b0bd1b4d7b6b0b68378900502"
++dependencies = [
++ "winapi-util",
++]
++
+ [[package]]
+ name = "scopeguard"
+ version = "1.1.0"
+@@ -2066,18 +2020,6 @@ dependencies = [
+  "serde",
+ ]
+ 
+-[[package]]
+-name = "serde_yaml"
+-version = "0.8.26"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "578a7433b776b56a35785ed5ce9a7e777ac0598aac5a6dd1b4b18a307c7fc71b"
+-dependencies = [
+- "indexmap",
+- "ryu",
+- "serde",
+- "yaml-rust",
+-]
+-
+ [[package]]
+ name = "sha1"
+ version = "0.10.5"
+@@ -2115,6 +2057,15 @@ dependencies = [
+  "lazy_static",
+ ]
+ 
++[[package]]
++name = "shellexpand"
++version = "2.1.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "7ccc8076840c4da029af4f87e4e8daeb0fca6b87bbb02e10cb60b791450e11e4"
++dependencies = [
++ "dirs",
++]
++
+ [[package]]
+ name = "signal-hook-registry"
+ version = "1.4.0"
+@@ -2293,25 +2244,6 @@ version = "0.10.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
+ 
+-[[package]]
+-name = "strum"
+-version = "0.24.1"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "063e6045c0e62079840579a7e47a355ae92f60eb74daaf156fb1e84ba164e63f"
+-
+-[[package]]
+-name = "strum_macros"
+-version = "0.24.3"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "1e385be0d24f186b4ce2f9982191e7101bb737312ad61c1f2f984f34bcf85d59"
+-dependencies = [
+- "heck 0.4.0",
+- "proc-macro2",
+- "quote",
+- "rustversion",
+- "syn",
+-]
+-
+ [[package]]
+ name = "subtle"
+ version = "2.4.1"
+@@ -2543,6 +2475,15 @@ version = "1.15.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "dcf81ac59edc17cc8697ff311e8f5ef2d99fcbd9817b34cec66f90b6c3dfd987"
+ 
++[[package]]
++name = "unicase"
++version = "2.6.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "50f37be617794602aabbeee0be4f259dc1778fabe05e2d67ee8f79326d5cb4f6"
++dependencies = [
++ "version_check",
++]
++
+ [[package]]
+ name = "unicode-bidi"
+ version = "0.3.8"
+@@ -2599,6 +2540,49 @@ dependencies = [
+  "percent-encoding",
+ ]
+ 
++[[package]]
++name = "utoipa"
++version = "2.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "6289c644ea23411b0f81773544ee2a59e7497b8867f268fb30b330dea87cb360"
++dependencies = [
++ "indexmap",
++ "serde",
++ "serde_json",
++ "utoipa-gen",
++]
++
++[[package]]
++name = "utoipa-gen"
++version = "2.2.0"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "ecf8547910b3e16a2e3506c2edf30c569462b7a975a4435dc5001a92314b43f1"
++dependencies = [
++ "lazy_static",
++ "proc-macro-error",
++ "proc-macro2",
++ "quote",
++ "regex",
++ "syn",
++ "uuid",
++]
++
++[[package]]
++name = "utoipa-swagger-ui"
++version = "2.0.1"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "1ec49afbc72cb3dfbdcc3498143f5ac6cdbd5fa8bd085636d97c24754ce1a53f"
++dependencies = [
++ "actix-web",
++ "mime_guess",
++ "regex",
++ "rust-embed",
++ "serde",
++ "serde_json",
++ "utoipa",
++ "zip",
++]
++
+ [[package]]
+ name = "uuid"
+ version = "1.2.1"
+@@ -2624,6 +2608,17 @@ version = "0.9.4"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
+ 
++[[package]]
++name = "walkdir"
++version = "2.3.2"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "808cf2735cd4b6866113f648b791c6adc5714537bc222d9347bb203386ffda56"
++dependencies = [
++ "same-file",
++ "winapi",
++ "winapi-util",
++]
++
+ [[package]]
+ name = "wasi"
+ version = "0.9.0+wasi-snapshot-preview1"
+@@ -2867,21 +2862,24 @@ version = "0.42.0"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "f40009d85759725a34da6d89a94e63d7bdc50a862acf0dbc7c8e488f1edcb6f5"
+ 
+-[[package]]
+-name = "yaml-rust"
+-version = "0.4.5"
+-source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "56c1936c4cc7a1c9ab21a1ebb602eb942ba868cbd44a99cb7cdc5892335e1c85"
+-dependencies = [
+- "linked-hash-map",
+-]
+-
+ [[package]]
+ name = "zeroize"
+ version = "1.5.7"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "c394b5bd0c6f669e7275d9c20aa90ae064cb22e75a1cad54e1b34088034b149f"
+ 
++[[package]]
++name = "zip"
++version = "0.6.3"
++source = "registry+https://github.com/rust-lang/crates.io-index"
++checksum = "537ce7411d25e54e8ae21a7ce0b15840e7bfcff15b51d697ec3266cc76bdf080"
++dependencies = [
++ "byteorder",
++ "crc32fast",
++ "crossbeam-utils",
++ "flate2",
++]
++
+ [[package]]
+ name = "zstd"
+ version = "0.11.2+zstd.1.5.2"
+diff --git a/api/Cargo.toml b/api/Cargo.toml
+index 3e75312..c4060dd 100644
+--- a/api/Cargo.toml
++++ b/api/Cargo.toml
+@@ -25,7 +25,8 @@ jsonwebtoken = "8"
+ env_logger = "0.9.0"
+ log = "0.4.17"
+ itertools = "0.10.3"
+-paperclip = { version = "0.7", features = ["actix4"] }
++utoipa = { version = "2.2.0", features = ["chrono","actix_extras","uuid",] }
++utoipa-swagger-ui = { version = "2.0.1", features = ["actix-web"] }
+ uuid = "1.2.1"
+ thiserror = "1.0.37"
+ futures = "0.3.25"
+diff --git a/api/Readme.md b/api/Readme.md
+new file mode 100644
+index 0000000..4c9252f
+--- /dev/null
++++ b/api/Readme.md
+@@ -0,0 +1,4 @@
++# Swagger Ui 
++http://localhost:8080/swagger-ui/
++# Spec
++http://localhost:8080/api-doc/openapi.json
+\ No newline at end of file
+diff --git a/api/src/api/auth.rs b/api/src/api/auth.rs
+index 2d50c92..9def860 100644
+--- a/api/src/api/auth.rs
++++ b/api/src/api/auth.rs
+@@ -1,15 +1,14 @@
+ use actix_web::{
+     cookie::{time::Duration, Cookie},
+-    web::Data,
++    get, post,
++    web::{Data, Json},
++    HttpResponse,
+ };
+ use log::error;
+-use paperclip::actix::{
+-    api_v2_operation, get,
+-    web::{HttpResponse, Json},
+-    Apiv2Schema, NoContent,
+-};
++
+ use sea_orm::DatabaseConnection;
+ use serde::Deserialize;
++use utoipa::ToSchema;
+ 
+ use crate::{
+     crud::{
+@@ -17,22 +16,32 @@ use crate::{
+         user::is_admin_by_user_id,
+         worker::{is_leader_by_user_id, is_worker_by_user_id},
+     },
+-    util::{crypto::create_jwt, error::MyError, middleware::extractor::Authenticated},
++    util::{crypto::create_jwt, error::CrudError, middleware::extractor::Authenticated},
+ };
+-#[derive(Apiv2Schema, Deserialize)]
++#[derive(ToSchema, Deserialize)]
+ pub struct Login {
+     email: String,
+     password: String,
+ }
+-#[api_v2_operation]
+-#[get("/login")]
++#[utoipa::path(
++    request_body = Login,
++    context_path = "/api/v1",
++    responses(
++    (status = 200),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++    )
++)]
++#[post("/login")]
+ pub async fn login(
+     db: Data<DatabaseConnection>,
+     login: Json<Login>,
+-    // ) -> actix_web::Result<HttpResponse, MyError> {
+-) -> actix_web::Result<HttpResponse, MyError> {
+-    let model = crud::user::get_user_by_email(&db, &login.email).await;
+-    if let Ok(Some(user)) = model {
++) -> actix_web::Result<HttpResponse, CrudError> {
++    let model = crud::user::get_user_by_email(&db, &login.email).await?;
++    if let Some(user) = model {
+         let password =
+             orion::pwhash::Password::from_slice(&login.password.to_string().into_bytes())
+                 .map_err(|f| {
+@@ -44,7 +53,7 @@ pub async fn login(
+             if let Err(err) = orion::pwhash::hash_password_verify(&user_password, &password) {
+                 error!("{}", err);
+             } else {
+-                let user_id = &user.user_id.to_string();
++                let user_id = &user.user_id;
+                 let is_worker = is_worker_by_user_id(user_id, &db).await.unwrap_or(false);
+                 let is_admin = is_admin_by_user_id(user_id, &db).await.map_err(|f| {
+                     error!("{}", f);
+@@ -84,15 +93,25 @@ pub async fn login(
+             }
+         }
+     }
+-    Err(MyError::Unauthorized)
++    Err(CrudError::NotFound)
+     // HttpResponseWrapper(HttpResponse::Unauthorized().finish())
+ }
+-#[api_v2_operation]
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[get("/register")]
+ pub async fn register(
+     _db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
++) -> actix_web::Result<HttpResponse, CrudError> {
+     println!("{:?}", auth);
+-    Ok(NoContent)
++    Ok(HttpResponse::Ok().finish())
+ }
+diff --git a/api/src/api/user.rs b/api/src/api/user.rs
+index dc6f387..1a55bfd 100644
+--- a/api/src/api/user.rs
++++ b/api/src/api/user.rs
+@@ -1,121 +1,143 @@
+ use crate::crud;
+-use crate::crud::user::{ChangeUser, CreateUser, GetUser};
+-use crate::util::error::MyError;
++use crate::crud::user::{ChangeUser, CreateUser};
++use crate::util::error::CrudError;
+ use crate::util::middleware::extractor::Authenticated;
+ use crate::util::middleware::SecurityLevel;
+ 
+ use actix_web::web::{Data, Json, Path};
+-use paperclip::actix::{api_v2_operation, delete, get, post, AcceptedJson};
+-use paperclip::actix::{put, CreatedJson};
++use actix_web::{delete, get, post, put, HttpResponse};
+ use sea_orm::DatabaseConnection;
+-
+-#[api_v2_operation(summary = "Get Users")]
++use uuid::Uuid;
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200, body = [Vec<GetUser>]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[get("/users")]
+ pub async fn get_users(
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<AcceptedJson<Vec<GetUser>>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Worker {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let users = crud::user::get_all_user(db.get_ref()).await;
+-    return if let Ok(users) = users {
+-        Ok(AcceptedJson(users))
+-    } else {
+-        Err(MyError::Unauthorized)
+-    };
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
++    let users = crud::user::get_all_user(db.get_ref()).await?;
++    Ok(HttpResponse::Ok().json(users))
+ }
+-#[api_v2_operation(summary = "Get Single User")]
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200, body = [GetUser]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[get("/users/{user_id}")]
+ pub async fn get_single_user(
+     db: Data<DatabaseConnection>,
+-    user_id: Path<String>,
++    user_id: Path<Uuid>,
+     auth: Authenticated,
+-) -> actix_web::Result<AcceptedJson<GetUser>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Worker {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let users = crud::user::get_single_user(db.get_ref(), &user_id).await;
+-    return match users {
+-        Ok(users) => match users {
+-            Some(users) => Ok(AcceptedJson(users)),
+-            _ => Err(MyError::NotFound),
+-        },
+-        _ => Err(MyError::Unauthorized),
+-    };
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
++    let users = crud::user::get_single_user(db.get_ref(), &user_id).await?;
++    Ok(HttpResponse::Ok().json(users))
+ }
+-#[api_v2_operation(summary = "Get self")]
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200, body = [GetUser]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[get("/self")]
+ pub async fn get_self(
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<AcceptedJson<GetUser>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::User {
+-        return Err(MyError::Unauthorized);
+-    }
+-    match &auth.try_get_user_id() {
+-        Some(user_id) => {
+-            let users = crud::user::get_single_user(db.get_ref(), user_id).await;
+-            match users {
+-                Ok(users) => match users {
+-                    Some(users) => Ok(AcceptedJson(users)),
+-                    _ => Err(MyError::NotFound),
+-                },
+-                _ => Err(MyError::NotFound),
+-            }
+-        }
+-        _ => Err(MyError::Unauthorized),
+-    }
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::User)?;
++    let user_id = &auth.try_get_user_id()?;
++    let users = crud::user::get_single_user(db.get_ref(), user_id).await?;
++    Ok(HttpResponse::Ok().json(users))
+ }
+-#[api_v2_operation(summary = "Add User")]
++
++#[utoipa::path(
++    context_path = "/api/v1",
++    request_body = CreateUser,
++
++    responses(
++    (status = 201, body = [GetUser]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[post("/users")]
+ pub async fn add_user(
+     user: Json<CreateUser>,
+     auth: Authenticated,
+     db: Data<DatabaseConnection>,
+-) -> actix_web::Result<CreatedJson<GetUser>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let user = crud::user::create_user(db.get_ref(), user.0).await;
+-    return if let Ok(users) = user {
+-        Ok(CreatedJson(users))
+-    } else {
+-        Err(MyError::Unauthorized)
+-    };
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++    let user = crud::user::create_user(db.get_ref(), user.0).await?;
++    Ok(HttpResponse::Created().json(user))
+ }
+-#[api_v2_operation(summary = "Update User")]
++#[utoipa::path(
++    context_path = "/api/v1",
++    request_body = ChangeUser,
++
++    responses(
++    (status = 200, body = [GetUser]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[put("/users/{user_id}")]
+ pub async fn update_user(
+     auth: Authenticated,
+-    user_id: actix_web::web::Path<String>,
++    user_id: actix_web::web::Path<Uuid>,
+     user: actix_web::web::Json<ChangeUser>,
+     db: Data<DatabaseConnection>,
+-) -> actix_web::Result<AcceptedJson<GetUser>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin || !auth.compare_user_id(user_id.as_str()) {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let user = crud::user::update_user(db.get_ref(), user.0, &user_id.into_inner()).await;
+-    return if let Ok(users) = user {
+-        Ok(AcceptedJson(users))
+-    } else {
+-        Err(MyError::Unauthorized)
+-    };
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++
++    let user = crud::user::update_user(db.get_ref(), user.0, &user_id).await?;
++    Ok(HttpResponse::Ok().json(user))
+ }
+-#[api_v2_operation(summary = "Delete User")]
++#[utoipa::path(
++    context_path = "/api/v1",
++
++    responses(
++    (status = 200),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[delete("/users/{user_id}")]
+ pub async fn delete_user(
+-    user_id: actix_web::web::Path<String>,
++    user_id: actix_web::web::Path<Uuid>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let user = crud::user::delete_user(db.get_ref(), &user_id.into_inner()).await;
+-    return if let Ok(_users) = user {
+-        Ok(paperclip::actix::NoContent)
+-    } else {
+-        Err(MyError::Unauthorized)
+-    };
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++    crud::user::delete_user(db.get_ref(), &user_id).await?;
++    Ok(HttpResponse::Ok().finish())
+ }
+diff --git a/api/src/api/worker.rs b/api/src/api/worker.rs
+index cca8f43..8f016a4 100644
+--- a/api/src/api/worker.rs
++++ b/api/src/api/worker.rs
+@@ -1,108 +1,133 @@
+ use crate::crud;
+ 
+-use crate::crud::worker::{CreateWorker, GetWorker};
+-use crate::util::error::MyError;
++use crate::crud::worker::CreateWorker;
++use crate::util::error::{CrudError};
+ use crate::util::middleware::extractor::Authenticated;
+ use crate::util::middleware::SecurityLevel;
+ 
+ use actix_web::web::{Data, Path};
+-use paperclip::actix::{api_v2_operation, delete, post, AcceptedJson, NoContent};
+-use paperclip::actix::{get, put};
++use actix_web::{delete, get, post, put, HttpResponse};
+ use sea_orm::DatabaseConnection;
+-
+-#[api_v2_operation(summary = "Add Worker")]
++use uuid::Uuid;
++#[utoipa::path(
++    context_path = "/api/v1",
++    request_body = CreateWorker,
++    
++    responses(
++    (status = 201),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[post("/users/{user_id}/worker")]
+ pub async fn add_worker(
+     worker: actix_web::web::Json<CreateWorker>,
+-    user_id: Path<String>,
++    user_id: Path<Uuid>,
+     auth: Authenticated,
+     db: Data<DatabaseConnection>,
+-) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let users = crud::worker::create_worker_from_user_id(user_id.as_str(), &worker, &db).await;
+-    match users {
+-        Ok(_) => Ok(NoContent),
+-        _ => Err(MyError::NotFound),
+-    }
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++    crud::worker::create_worker_from_user_id(&user_id, &worker, &db).await?;
++    Ok(HttpResponse::Created().finish())
++    
+ }
+-#[api_v2_operation(summary = "Update Worker")]
++#[utoipa::path(
++    context_path = "/api/v1",
++    request_body = CreateWorker,
++    
++    responses(
++    (status = 200),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[put("/users/{user_id}/worker")]
+ pub async fn update_worker(
+     auth: Authenticated,
+-    user_id: actix_web::web::Path<String>,
++    user_id: actix_web::web::Path<Uuid>,
+     user: actix_web::web::Json<CreateWorker>,
+     db: Data<DatabaseConnection>,
+-) -> actix_web::Result<NoContent, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let user = crud::worker::update_worker_with_user_id(
+-        &user_id.into_inner(),
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++    
++    crud::worker::update_worker_with_user_id(
++        &user_id,
+         &user.into_inner(),
+         db.get_ref(),
+     )
+-    .await;
+-    match user {
+-        Ok(_) => Ok(NoContent),
+-        _ => Err(MyError::NotFound),
+-    }
++    .await?;
++    Ok(HttpResponse::Ok().finish())
+ }
+-#[api_v2_operation(summary = "Delete Worker")]
++#[utoipa::path(
++    context_path = "/api/v1",
++    request_body = CreateWorker,
++    
++    responses(
++    (status = 200),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[delete("/users/{user_id}/worker")]
+ pub async fn delete_worker(
+-    user_id: actix_web::web::Path<String>,
++    user_id: actix_web::web::Path<Uuid>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Admin {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let user = crud::worker::delete_worker_with_user_id(user_id.as_str(), db.get_ref()).await;
+-    match user {
+-        Ok(_users) => Ok(NoContent),
+-        _ => Err(MyError::NotFound),
+-    }
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Admin)?;
++    
++    crud::worker::delete_worker_with_user_id(&user_id, db.get_ref()).await?;
++    Ok(HttpResponse::Ok().finish())
+ }
+-#[api_v2_operation(
+-    summary = "Get Worker",
+-    description = "",
+-    operation_id = "get_worker",
+-    tags("Api reference")
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200, body = [GetWorker]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
+ )]
+ #[get("/users/{user_id}/worker")]
+ pub async fn get_worker(
+-    user_id: actix_web::web::Path<String>,
++    user_id: actix_web::web::Path<Uuid>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<AcceptedJson<GetWorker>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Leader {
+-        return Err(MyError::Unauthorized);
+-    }
+-    let worker = crud::worker::get_worker_by_user_id(db.get_ref(), user_id.as_str()).await;
+-    match worker {
+-        Ok(worker) => Ok(AcceptedJson(worker)),
+-        _ => Err(MyError::NotFound),
+-    }
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Leader)?;
++    
++    let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await?;
++    Ok(HttpResponse::Ok().json(worker))
+ }
+-#[api_v2_operation]
++#[utoipa::path(
++    context_path = "/api/v1",
++    responses(
++    (status = 200, body = [GetWorker]),
++    (status = 400),
++    (status = 401),
++    (status = 404),
++    (status = 406),
++    (status = 500),
++)
++)]
+ #[get("/self/worker")]
+ pub async fn get_self(
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+-) -> actix_web::Result<AcceptedJson<GetWorker>, MyError> {
+-    if auth.to_sercurity_level() < SecurityLevel::Worker {
+-        return Err(MyError::Unauthorized);
+-    }
+-    match auth.try_get_user_id() {
+-        Some(user_id) => {
+-            let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await;
+-            match worker {
+-                Ok(worker) => Ok(AcceptedJson(worker)),
+-                _ => Err(MyError::NotFound),
+-            }
+-        }
+-        _ => Err(MyError::Unauthorized),
+-    }
++) -> actix_web::Result<HttpResponse, CrudError> {
++    auth.has_high_enough_security_level(SecurityLevel::Leader)?;
++    let user_id = auth.try_get_user_id()?;
++    let worker = crud::worker::get_worker_by_user_id(db.get_ref(), &user_id).await?;
++    Ok(HttpResponse::Ok().json(worker))    
+ }
+diff --git a/api/src/crud/role.rs b/api/src/crud/role.rs
+index bf83936..8b90b3f 100644
+--- a/api/src/crud/role.rs
++++ b/api/src/crud/role.rs
+@@ -1,17 +1,18 @@
+ use entities::model::tbl_role;
+-use paperclip::actix::Apiv2Schema;
+ use serde::{Deserialize, Serialize};
++use utoipa::ToSchema;
++use uuid::Uuid;
+ 
+-#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
++#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+ pub struct GetRole {
+-    pub role_id: String,
++    pub role_id: Uuid,
+     pub name: String,
+     pub description: Option<String>,
+ }
+ impl From<&tbl_role::Model> for GetRole {
+     fn from(role: &tbl_role::Model) -> Self {
+         Self {
+-            role_id: role.role_id.to_string(),
++            role_id: role.role_id,
+             name: role.name.to_owned(),
+             description: role.description.to_owned(),
+         }
+diff --git a/api/src/crud/user.rs b/api/src/crud/user.rs
+index 095e78e..974bbb1 100644
+--- a/api/src/crud/user.rs
++++ b/api/src/crud/user.rs
+@@ -1,12 +1,12 @@
+ use entities::model::{tbl_admin, tbl_role, tbl_user};
+ use itertools::Itertools;
+-use paperclip::actix::Apiv2Schema;
+ use sea_orm::{
+     ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait,
+     QueryFilter,
+ };
+ use serde::{Deserialize, Serialize};
+ use tracing::info;
++use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+ use crate::util::{
+@@ -16,14 +16,14 @@ use crate::util::{
+ };
+ 
+ use super::role::GetRole;
+-#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
++#[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
+ pub struct GetUser {
+-    pub user_id: String,
++    pub user_id: Uuid,
+     pub name: String,
+     pub role: Option<GetRole>,
+     pub email: String,
+ }
+-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
++#[derive(Serialize, Deserialize, Debug, ToSchema)]
+ pub struct ChangeUser {
+     pub name: Option<String>,
+     #[serde(default, deserialize_with = "deserialize_some")]
+@@ -31,7 +31,7 @@ pub struct ChangeUser {
+     pub email: Option<String>,
+ }
+ 
+-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
++#[derive(Serialize, Deserialize, Debug, ToSchema)]
+ pub struct CreateUser {
+     pub name: String,
+     pub role: Option<String>,
+@@ -41,7 +41,7 @@ pub struct CreateUser {
+ impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
+     fn from((user, role): &(tbl_user::Model, Option<tbl_role::Model>)) -> Self {
+         Self {
+-            user_id: user.user_id.to_string(),
++            user_id: user.user_id.clone(),
+             name: user.name.to_string(),
+             role: role.to_owned().map(|f| GetRole::from(&f)),
+             email: user.email.to_owned(),
+@@ -67,21 +67,24 @@ pub async fn get_user_by_email(
+ }
+ pub async fn get_single_user(
+     db: &DatabaseConnection,
+-    user_id: &str,
+-) -> Result<Option<GetUser>, CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
++    user_id: &Uuid,
++) -> Result<GetUser, CrudError> {
++    let user_id = user_id.clone();
+     let model = tbl_user::Entity::find_by_id(user_id)
+         .find_also_related(tbl_role::Entity)
+         .filter(tbl_user::Column::IsActive.eq(true))
+         .one(db)
+         .await?;
+-    Ok(model.map(|f| GetUser::from(&f)))
++    match model {
++        Some(model) => Ok(GetUser::from(&model)),
++        None => Err(CrudError::NotFound),
++    }
+ }
+ pub async fn delete_user(
+     db: &DatabaseConnection,
+-    user_id: &str,
++    user_id: &Uuid,
+ ) -> Result<DeleteResult, CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
++    let user_id = user_id.clone();
+     let model = tbl_user::Entity::find_by_id(user_id).one(db).await?;
+     if let Some(model) = model {
+         info!("{:#?}", model);
+@@ -93,9 +96,9 @@ pub async fn delete_user(
+ pub async fn update_user(
+     db: &DatabaseConnection,
+     user: ChangeUser,
+-    id: &str,
++    user_id: &Uuid,
+ ) -> Result<GetUser, CrudError> {
+-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(id)?)
++    let model = tbl_user::Entity::find_by_id(user_id.clone())
+         .one(db)
+         .await?;
+     if let Some(model) = model {
+@@ -121,10 +124,10 @@ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<Ge
+     return Ok(user);
+ }
+ pub async fn is_admin_by_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<bool, CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
++    let user_id = user_id.clone();
+     let admin = tbl_admin::Entity::find_by_id(user_id).one(db).await?;
+     return Ok(admin.is_some());
+ }
+diff --git a/api/src/crud/worker.rs b/api/src/crud/worker.rs
+index 8bd2f84..e7ab293 100644
+--- a/api/src/crud/worker.rs
++++ b/api/src/crud/worker.rs
+@@ -1,7 +1,7 @@
+ use entities::model::{tbl_leader, tbl_worker};
+-use paperclip::actix::Apiv2Schema;
+ use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait};
+ use serde::{Deserialize, Serialize};
++use utoipa::ToSchema;
+ use uuid::Uuid;
+ 
+ use crate::util::error::CrudError;
+@@ -10,41 +10,33 @@ use super::{
+     role::GetRole,
+     user::{get_single_user, GetUser},
+ };
+-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
++#[derive(Serialize, Deserialize, Debug, ToSchema)]
+ pub struct GetWorker {
+-    pub user_id: String,
++    pub user_id: Uuid,
+     pub name: String,
+     pub role: Option<GetRole>,
+     pub email: String,
+     #[serde(skip_serializing)]
+     //only for internal use
+-    boss_id: Option<String>,
++    boss_id: Option<Uuid>,
+ 
+     pub boss: Option<GetUser>,
+ }
+-#[derive(Serialize, Deserialize, Debug, Apiv2Schema)]
+-pub struct Boss {
+-    pub user_id: String,
+-    pub name: String,
+-    pub role: Option<GetRole>,
+-    pub email: String,
+-}
+ 
+ pub async fn get_worker_by_user_id(
+     db: &DatabaseConnection,
+-    user_id: &str,
++    user_id: &Uuid,
+ ) -> Result<GetWorker, CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
+     let temp_worker = __get_worker_by_user_id(db, user_id).await?;
+     if let Some(boss_id) = &temp_worker.boss_id {
+-        let boss_id = Uuid::parse_str(boss_id)?;
++        let boss_id = boss_id.clone();
+         let boss_model = tbl_leader::Entity::find_by_id(boss_id).one(db).await?;
+         let mut boss = None;
+         if let Some(boss_model) = boss_model {
+-            let user_boss_model = __get_worker_by_user_id(db, boss_model.user_id.clone()).await?;
++            let user_boss_model = __get_worker_by_user_id(db, &boss_model.user_id).await?;
+ 
+             boss = Some(GetUser {
+-                user_id: user_boss_model.user_id.to_string(),
++                user_id: user_boss_model.user_id.clone(),
+                 email: user_boss_model.email,
+                 name: user_boss_model.name,
+                 role: user_boss_model.role,
+@@ -60,18 +52,20 @@ pub async fn get_worker_by_user_id(
+ /// Private function that gets a Worker without Boss struct
+ async fn __get_worker_by_user_id(
+     db: &DatabaseConnection,
+-    user_id: Uuid,
++    user_id: &Uuid,
+ ) -> Result<GetWorker, CrudError> {
+-    let user_model = get_single_user(db, &user_id.to_string()).await?;
+-    let worker_model = tbl_worker::Entity::find_by_id(user_id).one(db).await?;
++    let user_model = get_single_user(db, user_id).await?;
++    let worker_model = tbl_worker::Entity::find_by_id(user_id.clone())
++        .one(db)
++        .await?;
+ 
+-    if let (Some(user_model), Some(worker_model)) = (user_model, worker_model) {
++    if let Some(worker_model) = worker_model {
+         let worker = GetWorker {
+             email: user_model.email,
+             role: user_model.role,
+             name: user_model.name,
+             user_id: user_model.user_id,
+-            boss_id: worker_model.boss_user_id.map(|f| f.to_string()),
++            boss_id: worker_model.boss_user_id.map(|f| f.clone()),
+             boss: None,
+         };
+         return Ok(worker);
+@@ -80,37 +74,38 @@ async fn __get_worker_by_user_id(
+ }
+ 
+ pub async fn is_leader_by_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<bool, CrudError> {
+-    let worker_id = Uuid::parse_str(user_id)?;
+-    let leader = tbl_leader::Entity::find_by_id(worker_id).one(db).await?;
++    let leader = tbl_leader::Entity::find_by_id(user_id.clone())
++        .one(db)
++        .await?;
+     return Ok(leader.is_some());
+ }
+ pub async fn is_worker_by_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<bool, CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
+-    let worker = tbl_worker::Entity::find_by_id(user_id).one(db).await?;
++    let worker = tbl_worker::Entity::find_by_id(user_id.clone())
++        .one(db)
++        .await?;
+     return Ok(worker.is_some());
+ }
+-#[derive(Debug, Serialize, Deserialize, Apiv2Schema)]
++#[derive(Debug, Serialize, Deserialize, ToSchema)]
+ pub struct CreateWorker {
+-    pub boss_user_id: Option<String>,
++    pub boss_user_id: Option<Uuid>,
+ }
+ pub async fn create_worker_from_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     woker: &CreateWorker,
+     db: &DatabaseConnection,
+ ) -> Result<(), CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
+     let mut boss_id = None;
+     if let Some(id) = &woker.boss_user_id {
+-        boss_id = Some(Uuid::parse_str(id)?);
++        boss_id = Some(id.clone());
+     }
+     tbl_worker::ActiveModel {
+-        user_id: sea_orm::ActiveValue::Set(user_id),
++        user_id: sea_orm::ActiveValue::Set(user_id.clone()),
+         boss_user_id: sea_orm::ActiveValue::Set(boss_id),
+         ..Default::default()
+     }
+@@ -119,16 +114,17 @@ pub async fn create_worker_from_user_id(
+     Ok(())
+ }
+ pub async fn update_worker_with_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     woker: &CreateWorker,
+     db: &DatabaseConnection,
+ ) -> Result<(), CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
+-    let worker = tbl_worker::Entity::find_by_id(user_id).one(db).await?;
++    let worker = tbl_worker::Entity::find_by_id(user_id.clone())
++        .one(db)
++        .await?;
+     return if let Some(worker) = worker {
+         let mut boss_id = None;
+         if let Some(id) = &woker.boss_user_id {
+-            boss_id = Some(Uuid::parse_str(id)?);
++            boss_id = Some(id.clone());
+         }
+         let mut worker: tbl_worker::ActiveModel = worker.into();
+         worker.boss_user_id = ActiveValue::Set(boss_id);
+@@ -139,11 +135,12 @@ pub async fn update_worker_with_user_id(
+     };
+ }
+ pub async fn delete_worker_with_user_id(
+-    user_id: &str,
++    user_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<(), CrudError> {
+-    let user_id = Uuid::parse_str(user_id)?;
+-    let worker = tbl_worker::Entity::find_by_id(user_id).one(db).await?;
++    let worker = tbl_worker::Entity::find_by_id(user_id.clone())
++        .one(db)
++        .await?;
+     return if let Some(worker) = worker {
+         worker.delete(db).await?;
+         Ok(())
+diff --git a/api/src/main.rs b/api/src/main.rs
+index bf6642d..dbaf0ea 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -2,27 +2,57 @@ pub mod api;
+ pub mod crud;
+ pub mod util;
+ 
++use std::net::Ipv4Addr;
++
+ use actix_cors::Cors;
+-use actix_web::{App, HttpServer};
++use actix_web::{web, App, HttpServer};
++use utoipa_swagger_ui::SwaggerUi;
+ 
+ use dotenv;
+ use log::info;
+-use paperclip::{
+-    actix::{
+-        web::{self},
+-        // extension trait for actix_web::App and proc-macro attributes
+-        OpenApiExt,
+-    },
+-    v2::models::DefaultApiRaw,
+-};
++
+ use sea_orm::Database;
+ 
++use utoipa::OpenApi;
++#[derive(OpenApi)]
++#[openapi(
++    paths(
++        //login
++        api::auth::login,
++        api::auth::register,
++        //user
++        api::user::get_users,
++        api::user::add_user,
++        api::user::delete_user,
++        api::user::update_user,
++        api::user::get_single_user,
++        api::user::get_self,
++        //worker
++        api::worker::add_worker,
++        api::worker::update_worker,
++        api::worker::delete_worker,
++        api::worker::get_worker,
++        api::worker::get_self,
++    ),
++    components(schemas(
++        api::auth::Login,
++        crud::role::GetRole,
++        crud::user::CreateUser,
++        crud::user::ChangeUser,
++        crud::user::GetUser,
++        crud::worker::GetWorker,
++        crud::worker::CreateWorker,
++    ))
++)]
++struct ApiDoc;
+ #[actix_web::main]
+ async fn main() -> anyhow::Result<()> {
+     env_logger::builder()
+         .filter_level(log::LevelFilter::Error)
+         .is_test(true)
+         .init();
++    // Make instance variable of ApiDoc so all worker threads gets the same instance.
++    let openapi = ApiDoc::openapi();
+     let database_url = dotenv::var("DATABASE_URL")?;
+     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
+     let err = migration_helper::create_database(database_url, db_name).await;
+@@ -37,17 +67,15 @@ async fn main() -> anyhow::Result<()> {
+     let db = Database::connect(format!("{}/{}", database_url, db_name)).await?;
+     HttpServer::new(move || {
+         App::new()
+-            .wrap_api_with_spec(DefaultApiRaw {
+-                info: paperclip::v2::models::Info {
+-                    version: "0.2".to_string(),
+-                    title: "KeyPa API Spec".to_string(),
+-                    ..Default::default()
+-                },
+-                ..Default::default()
+-            })
++            .service(
++                SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-doc/openapi.json", openapi.clone()),
++            )
+             .service(
+                 web::scope("/api/v1")
+                     .wrap(util::middleware::Auth)
++                    //login services
++                    .service(api::auth::login)
++                    .service(api::auth::register)
+                     //user services
+                     .service(api::user::get_users)
+                     .service(api::user::add_user)
+@@ -55,9 +83,6 @@ async fn main() -> anyhow::Result<()> {
+                     .service(api::user::update_user)
+                     .service(api::user::get_single_user)
+                     .service(api::user::get_self)
+-                    //login services
+-                    .service(api::auth::login)
+-                    .service(api::auth::register)
+                     //woker services
+                     .service(api::worker::add_worker)
+                     .service(api::worker::update_worker)
+@@ -65,12 +90,10 @@ async fn main() -> anyhow::Result<()> {
+                     .service(api::worker::get_worker)
+                     .service(api::worker::get_self),
+             )
+-            .with_json_spec_at("/api/spec/v2/spec.json")
+-            .build()
+             .app_data(web::Data::new(db.clone()))
+             .wrap(Cors::permissive())
+     })
+-    .bind(("127.0.0.1", 8080))?
++    .bind((Ipv4Addr::UNSPECIFIED, 8080))?
+     .run()
+     .await?;
+     Ok(())
+diff --git a/api/src/util/crypto.rs b/api/src/util/crypto.rs
+index d9541c0..02814dc 100644
+--- a/api/src/util/crypto.rs
++++ b/api/src/util/crypto.rs
+@@ -1,13 +1,11 @@
+ use chrono::{Duration, Utc};
+ use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
+-use paperclip::actix::Apiv2Schema;
+ 
+ use serde::{Deserialize, Serialize};
+ 
+ use super::error::CrudError;
+ const TOKEN_MAX_AGE: i64 = 8 * 60 * 60; //8Hours
+-#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
+-#[openapi(empty)]
++#[derive(Serialize, Deserialize, Clone, Debug)]
+ pub struct Claims {
+     pub sub: String,
+     pub is_admin: bool,
+diff --git a/api/src/util/error.rs b/api/src/util/error.rs
+index 34fd112..1257568 100644
+--- a/api/src/util/error.rs
++++ b/api/src/util/error.rs
+@@ -1,7 +1,4 @@
+-use std::fmt::Display;
+-
+-use actix_web::ResponseError;
+-use paperclip::actix::api_v2_errors;
++use actix_web::{http::StatusCode, ResponseError};
+ use thiserror::Error;
+ #[derive(Debug, Error)]
+ pub enum CrudError {
+@@ -9,33 +6,48 @@ pub enum CrudError {
+     DbError(#[from] sea_orm::error::DbErr),
+     #[error("Not found")]
+     NotFound,
++    #[error("Unauthorized")]
++    Unauthorized,
+     #[error("Error in Uuid Conversion")]
++    // #[error(transparent)]
+     UuidError(#[from] uuid::Error),
+     #[error("Error in Dotenv Retrieval")]
+     DotenvError(#[from] dotenv::Error),
+     #[error("Error in JsonWebToken Generation")]
+     JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
++    #[error("Token Invalid, try Login again")]
++    InvalidToken,
+     #[error("invalid input: {0}")]
+     InvalidInput(String),
+ }
+-#[api_v2_errors(
+-    code = 401,
+-    description = "Unauthorized: Can't access",
+-    code = 404,
+-    description = "Can't find ressource"
+-)]
+-#[derive(Debug, Error)]
+-pub enum MyError {
+-    Unauthorized = 401,
+-    NotFound = 400,
+-}
+-impl Display for MyError {
+-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+-        write!(f, "Unauthorized")
+-    }
+-}
+-impl ResponseError for MyError {
++// #[derive(Debug, Error, ToSchema)]
++// pub enum CrudError {
++//     /// when not authrorized
++//     #[error("Unauthorized")]
++//     Unauthorized,
++//     /// when not found
++//     #[error("Not found")]
++//     NotFound,
++//     #[error("Invalid Uuid format")]
++//     UnprocessableUUid(#[from] uuid::Error),
++//     #[error("Invalid Uuid format")]
++//     #[error("Internal Error")]
++//     DotenvError(#[from] dotenv::Error),
++// }
++impl ResponseError for CrudError {
+     fn status_code(&self) -> actix_web::http::StatusCode {
+-        actix_web::http::StatusCode::INTERNAL_SERVER_ERROR
++        match self {
++            CrudError::DbError(_) => StatusCode::INTERNAL_SERVER_ERROR,
++            CrudError::NotFound => StatusCode::NOT_FOUND,
++            CrudError::UuidError(_) => StatusCode::BAD_REQUEST,
++            CrudError::DotenvError(_) => StatusCode::INTERNAL_SERVER_ERROR,
++            CrudError::JsonWebTokenError(_) => StatusCode::NOT_ACCEPTABLE,
++            CrudError::InvalidInput(_) => StatusCode::BAD_REQUEST,
++            CrudError::Unauthorized => StatusCode::UNAUTHORIZED,
++            CrudError::InvalidToken => StatusCode::UNAUTHORIZED,
++            // Self::Unauthorized => StatusCode::UNAUTHORIZED,
++            // Self::NotFound => StatusCode::NOT_FOUND,
++            // Self::UnprocessableUUid(_) => StatusCode::UNPROCESSABLE_ENTITY,
++        }
+     }
+ }
+diff --git a/api/src/util/middleware/extractor.rs b/api/src/util/middleware/extractor.rs
+index cde26e5..0ad6385 100644
+--- a/api/src/util/middleware/extractor.rs
++++ b/api/src/util/middleware/extractor.rs
+@@ -1,11 +1,9 @@
+ use actix_web::{Error, FromRequest, HttpMessage};
+ use anyhow::anyhow;
+-use paperclip::actix::Apiv2Schema;
+ use std::future::{ready, Ready};
+ 
+ use super::AuthenticationInfo;
+-#[derive(Clone, Debug, Apiv2Schema)]
+-#[openapi(empty)]
++#[derive(Clone, Debug)]
+ pub struct Authenticated(AuthenticationInfo);
+ 
+ impl FromRequest for Authenticated {
+diff --git a/api/src/util/middleware/mod.rs b/api/src/util/middleware/mod.rs
+index 0760d2d..528ce98 100644
+--- a/api/src/util/middleware/mod.rs
++++ b/api/src/util/middleware/mod.rs
+@@ -11,11 +11,11 @@ use actix_web::{
+ 
+ use futures::FutureExt;
+ use futures_util::future::LocalBoxFuture;
+-use paperclip::actix::Apiv2Schema;
++use uuid::Uuid;
+ 
+ use crate::util::crypto;
+ 
+-use super::crypto::Claims;
++use super::{crypto::Claims, error::CrudError};
+ 
+ // There are two steps in middleware processing.
+ // 1. Middleware initialization, middleware factory gets called with
+@@ -32,8 +32,8 @@ impl Auth {
+         Auth
+     }
+ }
+-#[derive(Clone, Debug, Apiv2Schema)]
+-#[openapi(empty)]
++#[derive(Clone, Debug)]
++
+ pub enum AuthenticationResult {
+     Authenticated(Claims),
+     NotAuthenticated,
+@@ -54,17 +54,30 @@ impl AuthenticationResult {
+             SecurityLevel::External
+         };
+     }
+-    pub fn try_get_user_id(&self) -> Option<String> {
++    pub fn has_high_enough_security_level(
++        &self,
++        security_level: SecurityLevel,
++    ) -> Result<(), CrudError> {
++        if self.to_sercurity_level() < security_level {
++            return Err(CrudError::Unauthorized);
++        } else {
++            return Ok(());
++        }
++    }
++    pub fn try_get_user_id(&self) -> Result<Uuid, CrudError> {
+         match self {
+-            AuthenticationResult::Authenticated(val) => Some(val.sub.to_string()),
+-            _ => None,
++            AuthenticationResult::Authenticated(val) => {
++                let id = Uuid::parse_str(&val.sub)?;
++                Ok(id)
++            }
++            _ => Err(CrudError::InvalidToken),
+         }
+     }
+     ///Returns true if user_id in auth token and provided user_id is the same
+-    pub fn compare_user_id(&self, user_id: &str) -> bool {
++    pub fn compare_user_id(&self, user_id: &Uuid) -> bool {
+         match self.try_get_user_id() {
+-            Some(id) => &id == user_id,
+-            None => false,
++            Ok(id) => &id == user_id,
++            _ => false,
+         }
+     }
+ }
+diff --git a/mock/src/main.rs b/mock/src/main.rs
+index bf51905..de0c2c3 100644
+--- a/mock/src/main.rs
++++ b/mock/src/main.rs
+@@ -119,17 +119,21 @@ async fn main() -> anyhow::Result<()> {
+         .await?;
+     }
+     let keycards = tbl_keycard::Entity::find().all(&db).await?;
+-    let users_filtered:Vec<tbl_user::Model>= users.iter().filter(|f| {
+-        f.role_id.unwrap()
+-            == roles
+-                .iter()
+-                .find(|f| f.name == "Angestellter")
+-                .unwrap()
+-                .role_id
+-    }).map(|f|f.to_owned()).collect::<>();
++    let users_filtered: Vec<tbl_user::Model> = users
++        .iter()
++        .filter(|f| {
++            f.role_id.unwrap()
++                == roles
++                    .iter()
++                    .find(|f| f.name == "Angestellter")
++                    .unwrap()
++                    .role_id
++        })
++        .map(|f| f.to_owned())
++        .collect();
+     //insert workers
+     for user in users_filtered {
+-        println!("{:#?}",user);
++        println!("{:#?}", user);
+         tbl_worker::ActiveModel {
+             user_id: ActiveValue::Set(user.user_id.to_owned()),
+             ..Default::default()
+-- 
+2.37.0 (Apple Git-136)
+
