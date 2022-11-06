@@ -11,11 +11,11 @@ use actix_web::{
 
 use futures::FutureExt;
 use futures_util::future::LocalBoxFuture;
-use paperclip::actix::Apiv2Schema;
+use uuid::Uuid;
 
 use crate::util::crypto;
 
-use super::crypto::Claims;
+use super::{crypto::Claims, error::CrudError};
 
 // There are two steps in middleware processing.
 // 1. Middleware initialization, middleware factory gets called with
@@ -32,8 +32,8 @@ impl Auth {
         Auth
     }
 }
-#[derive(Clone, Debug, Apiv2Schema)]
-#[openapi(empty)]
+#[derive(Clone, Debug)]
+
 pub enum AuthenticationResult {
     Authenticated(Claims),
     NotAuthenticated,
@@ -54,17 +54,30 @@ impl AuthenticationResult {
             SecurityLevel::External
         };
     }
-    pub fn try_get_user_id(&self) -> Option<String> {
+    pub fn has_high_enough_security_level(
+        &self,
+        security_level: SecurityLevel,
+    ) -> Result<(), CrudError> {
+        if self.to_sercurity_level() < security_level {
+            return Err(CrudError::Unauthorized);
+        } else {
+            return Ok(());
+        }
+    }
+    pub fn try_get_user_id(&self) -> Result<Uuid, CrudError> {
         match self {
-            AuthenticationResult::Authenticated(val) => Some(val.sub.to_string()),
-            _ => None,
+            AuthenticationResult::Authenticated(val) => {
+                let id = Uuid::parse_str(&val.sub)?;
+                Ok(id)
+            }
+            _ => Err(CrudError::InvalidToken),
         }
     }
     ///Returns true if user_id in auth token and provided user_id is the same
-    pub fn compare_user_id(&self, user_id: &str) -> bool {
+    pub fn compare_user_id(&self, user_id: &Uuid) -> bool {
         match self.try_get_user_id() {
-            Some(id) => &id == user_id,
-            None => false,
+            Ok(id) => &id == user_id,
+            _ => false,
         }
     }
 }

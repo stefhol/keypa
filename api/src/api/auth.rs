@@ -1,15 +1,14 @@
 use actix_web::{
     cookie::{time::Duration, Cookie},
-    web::Data,
+    get, post,
+    web::{Data, Json},
+    HttpResponse,
 };
 use log::error;
-use paperclip::actix::{
-    api_v2_operation, get,
-    web::{HttpResponse, Json},
-    Apiv2Schema, NoContent,
-};
+
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
+use utoipa::ToSchema;
 
 use crate::{
     crud::{
@@ -17,22 +16,32 @@ use crate::{
         user::is_admin_by_user_id,
         worker::{is_leader_by_user_id, is_worker_by_user_id},
     },
-    util::{crypto::create_jwt, error::MyError, middleware::extractor::Authenticated},
+    util::{crypto::create_jwt, error::CrudError, middleware::extractor::Authenticated},
 };
-#[derive(Apiv2Schema, Deserialize)]
+#[derive(ToSchema, Deserialize)]
 pub struct Login {
     email: String,
     password: String,
 }
-#[api_v2_operation]
-#[get("/login")]
+#[utoipa::path(
+    request_body = Login,
+    context_path = "/api/v1",
+    responses(
+    (status = 200),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+    )
+)]
+#[post("/login")]
 pub async fn login(
     db: Data<DatabaseConnection>,
     login: Json<Login>,
-    // ) -> actix_web::Result<HttpResponse, MyError> {
-) -> actix_web::Result<HttpResponse, MyError> {
-    let model = crud::user::get_user_by_email(&db, &login.email).await;
-    if let Ok(Some(user)) = model {
+) -> actix_web::Result<HttpResponse, CrudError> {
+    let model = crud::user::get_user_by_email(&db, &login.email).await?;
+    if let Some(user) = model {
         let password =
             orion::pwhash::Password::from_slice(&login.password.to_string().into_bytes())
                 .map_err(|f| {
@@ -44,7 +53,7 @@ pub async fn login(
             if let Err(err) = orion::pwhash::hash_password_verify(&user_password, &password) {
                 error!("{}", err);
             } else {
-                let user_id = &user.user_id.to_string();
+                let user_id = &user.user_id;
                 let is_worker = is_worker_by_user_id(user_id, &db).await.unwrap_or(false);
                 let is_admin = is_admin_by_user_id(user_id, &db).await.map_err(|f| {
                     error!("{}", f);
@@ -84,15 +93,25 @@ pub async fn login(
             }
         }
     }
-    Err(MyError::Unauthorized)
+    Err(CrudError::NotFound)
     // HttpResponseWrapper(HttpResponse::Unauthorized().finish())
 }
-#[api_v2_operation]
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
 #[get("/register")]
 pub async fn register(
     _db: Data<DatabaseConnection>,
     auth: Authenticated,
-) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+) -> actix_web::Result<HttpResponse, CrudError> {
     println!("{:?}", auth);
-    Ok(NoContent)
+    Ok(HttpResponse::Ok().finish())
 }

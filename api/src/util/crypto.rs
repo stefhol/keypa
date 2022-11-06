@@ -1,13 +1,11 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
-use paperclip::actix::Apiv2Schema;
 
 use serde::{Deserialize, Serialize};
 
 use super::error::CrudError;
 const TOKEN_MAX_AGE: i64 = 8 * 60 * 60; //8Hours
-#[derive(Serialize, Deserialize, Clone, Debug, Apiv2Schema)]
-#[openapi(empty)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Claims {
     pub sub: String,
     pub is_admin: bool,
