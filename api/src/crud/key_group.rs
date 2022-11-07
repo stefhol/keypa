@@ -1,12 +1,12 @@
+use crate::util::{self, deserialize_some, error::CrudError};
 use entities::model::{tbl_key, tbl_key_group, tbl_key_group_key, tbl_user};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, Set,
 };
 use serde::{Deserialize, Serialize};
+use util::convert_active::Convert;
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use crate::util::error::CrudError;
 
 use super::key::GetKey;
 
@@ -15,7 +15,12 @@ pub struct CreateKeyGroup {
     name: String,
     description: Option<String>,
 }
-
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ChangeKeyGroup {
+    name: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_some")]
+    description: Option<Option<String>>,
+}
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetKeyGroup {
     pub key_group_id: Uuid,
@@ -46,20 +51,24 @@ pub async fn create_key_group(
     Ok((&model).into())
 }
 pub async fn update_key_group(
-    key_goup: &CreateKeyGroup,
+    key_goup: &ChangeKeyGroup,
     key_group_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<GetKeyGroup, CrudError> {
     let model = tbl_key_group::Entity::find_by_id(key_group_id.clone())
         .one(db)
         .await?;
-    match model {
+    match &model {
         Some(model) => {
-            let mut model: tbl_key_group::ActiveModel = model.into();
-            model.description = Set(key_goup.description.clone());
-            model.name = Set(key_goup.name.clone());
-            let model = model.update(db).await?;
-            Ok((&model).into())
+            let active_model: tbl_key_group::ActiveModel = model.clone().into();
+
+            let active_model = tbl_key_group::ActiveModel {
+                description: key_goup.description.convert(model.description.clone()),
+                name: key_goup.name.convert(model.name.clone()),
+                ..active_model
+            };
+            let active_model = active_model.update(db).await?;
+            Ok((&active_model).into())
         }
         None => Err(CrudError::NotFound),
     }

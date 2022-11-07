@@ -1,14 +1,17 @@
 use chrono::{DateTime, Utc};
-use entities::model::{tbl_key, tbl_key_user_history};
+use entities::model::{
+    tbl_key::{self},
+    tbl_key_user_history,
+};
 use sea_orm::{
-    prelude::DateTimeUtc, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, QueryFilter,
-    Statement,
+    prelude::DateTimeUtc, ActiveModelTrait, ColumnTrait, DatabaseConnection, DbBackend,
+    EntityTrait, QueryFilter, Statement,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::util::error::CrudError;
+use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
 
 use super::{door::GetDoor, user::GetUser};
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
@@ -33,6 +36,15 @@ impl From<&tbl_key::Model> for GetKey {
         }
     }
 }
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ChangeKey {
+    pub name: Option<String>,
+    pub value: Option<String>,
+    #[serde(default, deserialize_with = "deserialize_some")]
+    pub description: Option<Option<String>>,
+    pub door_id: Option<Uuid>,
+}
+
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetKeyHistory {
     pub key_id: Uuid,
@@ -81,6 +93,30 @@ pub async fn get_key_by_key_id(
 
     match key {
         Some(key) => Ok((&key).into()),
+        None => Err(CrudError::NotFound),
+    }
+}
+pub async fn update_key_by_key_id(
+    key_id: &Uuid,
+    change_key: &ChangeKey,
+    db: &DatabaseConnection,
+) -> Result<GetKey, CrudError> {
+    let key = tbl_key::Entity::find_by_id(key_id.clone()).one(db).await?;
+
+    match &key {
+        Some(key) => {
+            let active_model: tbl_key::ActiveModel = key.clone().into();
+            let active_model = tbl_key::ActiveModel {
+                description: change_key.description.convert(key.description.clone()),
+                door_id: change_key.door_id.convert(key.door_id.clone()),
+                name: change_key.name.convert(key.name.clone()),
+                value: change_key.value.convert(key.value.clone()),
+                ..active_model
+            }
+            .update(db)
+            .await?;
+            Ok((&active_model).into())
+        }
         None => Err(CrudError::NotFound),
     }
 }

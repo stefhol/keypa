@@ -50,11 +50,15 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::role::GetRole,
         crud::user::CreateUser,
         crud::user::ChangeUser,
+        crud::door::GetDoor,
+        crud::room::GetRoom,
+        crud::building::GetBuilding,
         crud::user::GetUser,
         crud::worker::GetWorker,
         crud::worker::CreateWorker,
         crud::key::GetKey,
         crud::key_group::CreateKeyGroup,
+        crud::key_group::ChangeKeyGroup,
         crud::key_group::GetKeyGroup,
         
     ))

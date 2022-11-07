@@ -11,7 +11,7 @@ use uuid::Uuid;
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [Vec<GetUser>]),
+    (status = 200, body = [GetUser]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -31,7 +31,7 @@ pub async fn get_users(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -52,7 +52,7 @@ pub async fn get_single_user(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -99,7 +99,7 @@ pub async fn add_user(
     request_body = ChangeUser,
 
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),

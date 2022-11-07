@@ -66,8 +66,6 @@ pub async fn update_worker(
 }
 #[utoipa::path(
     context_path = "/api/v1",
-    request_body = CreateWorker,
-    
     responses(
     (status = 200),
     (status = 400),
@@ -91,7 +89,7 @@ pub async fn delete_worker(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetWorker]),
+    (status = 200, body = GetWorker),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -113,7 +111,7 @@ pub async fn get_worker(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetWorker]),
+    (status = 200, body = GetWorker),
     (status = 400),
     (status = 401),
     (status = 404),

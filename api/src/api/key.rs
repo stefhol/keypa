@@ -11,7 +11,7 @@ use crate::{
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body=[Vec<GetKey>]),
+    (status = 200, body=[GetKey]),
     (status = 400),
     (status = 401),
     (status = 404),

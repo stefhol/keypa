@@ -9,7 +9,10 @@ use utoipa::IntoParams;
 use uuid::Uuid;
 
 use crate::{
-    crud::{self, key_group::CreateKeyGroup},
+    crud::{
+        self,
+        key_group::{ChangeKeyGroup, CreateKeyGroup},
+    },
     util::{
         error::CrudError,
         middleware::{extractor::Authenticated, SecurityLevel},
@@ -23,7 +26,7 @@ pub struct UserQuery {
     params(UserQuery),
     context_path = "/api/v1",
     responses(
-    (status = 200),
+    (status = 200 ,body = [GetKeyGroup]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -62,7 +65,7 @@ pub struct KeyGroupQuery {
     (status = 500),
 )
 )]
-#[put("/key-group/{key_group_id}")]
+#[post("/key-group/{key_group_id}")]
 pub async fn add_key_into_key_group(
     key_group_id: Path<Uuid>,
     query: Query<KeyGroupQuery>,
@@ -100,7 +103,7 @@ pub async fn delete_key_from_key_group(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [Vec<GetKey>]),
+    (status = 200, body = [GetKey]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -122,7 +125,7 @@ pub async fn get_keys_of_key_group(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [Vec<GetKeyGroup>]),
+    (status = 200, body = [GetKeyGroup]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -142,8 +145,9 @@ pub async fn get_self_key_group(
 }
 #[utoipa::path(
     context_path = "/api/v1",
+    request_body = CreateKeyGroup,
     responses(
-    (status = 200, body = [GetKeyGroup]),
+    (status = 200, body = GetKeyGroup),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -163,8 +167,9 @@ pub async fn add_key_group(
 }
 #[utoipa::path(
     context_path = "/api/v1",
+    request_body = ChangeKeyGroup,
     responses(
-    (status = 200, body = [GetKeyGroup]),
+    (status = 200, body = GetKeyGroup),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -176,7 +181,7 @@ pub async fn add_key_group(
 pub async fn upate_key_group(
     db: Data<DatabaseConnection>,
     key_group_id: Path<Uuid>,
-    key_group: Json<CreateKeyGroup>,
+    key_group: Json<ChangeKeyGroup>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
