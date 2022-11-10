@@ -133,7 +133,7 @@ pub async fn get_keys_of_key_group(
     (status = 500),
 )
 )]
-#[get("/key-group/self")]
+#[get("/self/key-group")]
 pub async fn get_self_key_group(
     db: Data<DatabaseConnection>,
     auth: Authenticated,
