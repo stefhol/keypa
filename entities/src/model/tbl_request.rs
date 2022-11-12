@@ -9,26 +9,26 @@ pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub request_id: Uuid,
     pub requester_id: Uuid,
-    pub key_group_id: Uuid,
+    pub door_group_id: Uuid,
     pub created_at: DateTime,
     pub changed_at: DateTime,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    pub accept: Option<bool>,
-    pub reject: Option<bool>,
-    pub pending: Option<bool>,
+    pub accept: bool,
+    pub reject: bool,
+    pub pending: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_key_group::Entity",
-        from = "Column::KeyGroupId",
-        to = "super::tbl_key_group::Column::KeyGroupId",
+        belongs_to = "super::tbl_door_group::Entity",
+        from = "Column::DoorGroupId",
+        to = "super::tbl_door_group::Column::DoorGroupId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKeyGroup,
+    TblDoorGroup,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::RequesterId",
@@ -41,9 +41,9 @@ pub enum Relation {
     TblRequestComment,
 }
 
-impl Related<super::tbl_key_group::Entity> for Entity {
+impl Related<super::tbl_door_group::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeyGroup.def()
+        Relation::TblDoorGroup.def()
     }
 }
 

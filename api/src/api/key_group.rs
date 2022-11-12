@@ -42,8 +42,8 @@ pub async fn get_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let key_groups = match user_query.user_id {
-        Some(user_id) => crud::key_group::get_key_group_of_user(&db, &user_id).await?,
-        None => crud::key_group::get_all_key_group(&db).await?,
+        Some(user_id) => crud::key_group::get_door_group_of_user(&db, &user_id).await?,
+        None => crud::key_group::get_all_door_group(&db).await?,
     };
 
     Ok(HttpResponse::Ok().json(key_groups))
@@ -73,7 +73,7 @@ pub async fn add_key_into_key_group(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    crud::key_group::add_key_to_key_group(&query.key_id, &key_group_id, &db).await?;
+    crud::key_group::add_door_to_door_group(&query.key_id, &key_group_id, &db).await?;
     Ok(HttpResponse::Ok().finish())
 }
 #[utoipa::path(
@@ -119,7 +119,7 @@ pub async fn get_keys_of_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
 
-    let keys = crud::key_group::get_keys_of_key_group(&db, &key_group_id).await?;
+    let keys = crud::key_group::get_doors_of_door_group(&db, &key_group_id).await?;
     Ok(HttpResponse::Ok().json(keys))
 }
 #[utoipa::path(
@@ -140,7 +140,7 @@ pub async fn get_self_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
-    let key_groups = crud::key_group::get_key_group_of_user(&db, &user_id).await?;
+    let key_groups = crud::key_group::get_door_group_of_user(&db, &user_id).await?;
     Ok(HttpResponse::Ok().json(key_groups))
 }
 #[utoipa::path(
@@ -162,7 +162,7 @@ pub async fn add_key_group(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let key_groups = crud::key_group::create_key_group(&key_group, &db).await?;
+    let key_groups = crud::key_group::create_door_group(&key_group, &db).await?;
     Ok(HttpResponse::Ok().json(key_groups))
 }
 #[utoipa::path(
@@ -186,7 +186,7 @@ pub async fn upate_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
 
-    let key_groups = crud::key_group::update_key_group(&key_group, &key_group_id, &db).await?;
+    let key_groups = crud::key_group::update_door_group(&key_group, &key_group_id, &db).await?;
     Ok(HttpResponse::Ok().json(key_groups))
 }
 ///Check if security_level is high enough or query database to check if it is the object of a user
@@ -200,10 +200,10 @@ async fn is_self_or_security_level(
         Ok(_) => {}
         Err(_) => {
             let user_id = auth.try_get_user_id()?;
-            if !crud::key_group::get_key_group_of_user(&db, &user_id)
+            if !crud::key_group::get_door_group_of_user(&db, &user_id)
                 .await?
                 .iter()
-                .any(|f| key_group_id.to_string() == f.key_group_id.to_string())
+                .any(|f| key_group_id.to_string() == f.door_group_id.to_string())
             {
                 return Err(CrudError::Unauthorized);
             }

@@ -1,15 +1,13 @@
-drop table if exists tbl_key_user_history;
+drop table if exists tbl_door_user_access;
 
 drop table if exists tbl_request_comment;
 drop table if exists tbl_request;
 
-drop table if exists tbl_key_group_key;
+drop table if exists tbl_door_to_group_door;
 drop table if exists tbl_keycard_history;
 drop table if exists tbl_keycard;
 
-drop table if exists tbl_key_group;
-
-drop table if exists tbl_key;
+drop table if exists tbl_door_group;
 
 drop table if exists tbl_door;
 
@@ -25,6 +23,4 @@ drop table if exists tbl_building;
 drop table if exists tbl_worker;
 drop table if exists tbl_user;
 drop table if exists tbl_role;
-drop trigger if exists tbl_user_temp_delete_row_trigger on tbl_user_temp;
-drop function if exists tbl_user_temp_delete_row_function;
-drop table if exists tbl_user_temp;
+drop table if exists _sqlx_migrations;

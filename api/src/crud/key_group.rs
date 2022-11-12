@@ -1,14 +1,13 @@
 use crate::util::{self, deserialize_some, error::CrudError};
-use entities::model::{tbl_key, tbl_key_group, tbl_key_group_key, tbl_user};
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, Set,
-};
+use entities::model::{tbl_door, tbl_door_group, tbl_door_to_group_door, tbl_user};
+use sea_orm::ActiveModelTrait;
+use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter, Set};
 use serde::{Deserialize, Serialize};
 use util::convert_active::Convert;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use super::key::GetKey;
+use super::door::GetDoor;
 
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct CreateKeyGroup {
@@ -23,25 +22,25 @@ pub struct ChangeKeyGroup {
 }
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetKeyGroup {
-    pub key_group_id: Uuid,
+    pub door_group_id: Uuid,
     pub name: String,
     pub description: Option<String>,
 }
-impl From<&tbl_key_group::Model> for GetKeyGroup {
-    fn from(model: &tbl_key_group::Model) -> Self {
+impl From<&tbl_door_group::Model> for GetKeyGroup {
+    fn from(model: &tbl_door_group::Model) -> Self {
         let model = model.clone();
         Self {
-            key_group_id: model.key_group_id,
+            door_group_id: model.door_group_id,
             name: model.name,
             description: model.description,
         }
     }
 }
-pub async fn create_key_group(
+pub async fn create_door_group(
     key_goup: &CreateKeyGroup,
     db: &DatabaseConnection,
 ) -> Result<GetKeyGroup, CrudError> {
-    let model = tbl_key_group::ActiveModel {
+    let model = tbl_door_group::ActiveModel {
         name: Set(key_goup.name.to_string()),
         description: Set(key_goup.description.clone()),
         ..Default::default()
@@ -50,19 +49,19 @@ pub async fn create_key_group(
     .await?;
     Ok((&model).into())
 }
-pub async fn update_key_group(
+pub async fn update_door_group(
     key_goup: &ChangeKeyGroup,
     key_group_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<GetKeyGroup, CrudError> {
-    let model = tbl_key_group::Entity::find_by_id(key_group_id.clone())
+    let model = tbl_door_group::Entity::find_by_id(key_group_id.clone())
         .one(db)
         .await?;
     match &model {
         Some(model) => {
-            let active_model: tbl_key_group::ActiveModel = model.clone().into();
+            let active_model: tbl_door_group::ActiveModel = model.clone().into();
 
-            let active_model = tbl_key_group::ActiveModel {
+            let active_model = tbl_door_group::ActiveModel {
                 description: key_goup.description.convert(model.description.clone()),
                 name: key_goup.name.convert(model.name.clone()),
                 ..active_model
@@ -73,27 +72,27 @@ pub async fn update_key_group(
         None => Err(CrudError::NotFound),
     }
 }
-pub async fn add_key_to_key_group(
-    key_id: &Uuid,
-    key_group_id: &Uuid,
+pub async fn add_door_to_door_group(
+    door_id: &Uuid,
+    door_group_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<(), CrudError> {
-    tbl_key_group_key::ActiveModel {
-        key_group_id: Set(key_group_id.clone()),
-        key_id: Set(key_id.clone()),
+    tbl_door_to_group_door::ActiveModel {
+        door_group_id: Set(door_group_id.clone()),
+        door_id: Set(door_id.clone()),
     }
     .insert(db)
     .await?;
     Ok(())
 }
 pub async fn remove_key_from_key_group(
-    key_id: &Uuid,
-    key_group_id: &Uuid,
+    door_id: &Uuid,
+    door_group_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<(), CrudError> {
-    let model = tbl_key_group_key::Entity::find()
-        .filter(tbl_key_group_key::Column::KeyGroupId.eq(key_group_id.clone()))
-        .filter(tbl_key_group_key::Column::KeyId.eq(key_id.clone()))
+    let model = tbl_door_to_group_door::Entity::find()
+        .filter(tbl_door_to_group_door::Column::DoorGroupId.eq(door_group_id.clone()))
+        .filter(tbl_door_to_group_door::Column::DoorId.eq(door_id.clone()))
         .one(db)
         .await?;
     match model {
@@ -104,17 +103,17 @@ pub async fn remove_key_from_key_group(
         None => Err(CrudError::NotFound),
     }
 }
-pub async fn get_all_key_group(db: &DatabaseConnection) -> Result<Vec<GetKeyGroup>, CrudError> {
-    let model = tbl_key_group::Entity::find().all(db).await?;
+pub async fn get_all_door_group(db: &DatabaseConnection) -> Result<Vec<GetKeyGroup>, CrudError> {
+    let model = tbl_door_group::Entity::find().all(db).await?;
     Ok(model.iter().map(|f| f.into()).collect())
 }
-pub async fn get_keys_of_key_group(
+pub async fn get_doors_of_door_group(
     db: &DatabaseConnection,
     key_group_id: &Uuid,
-) -> Result<Vec<GetKey>, CrudError> {
-    let model = tbl_key_group_key::Entity::find()
-        .filter(tbl_key_group_key::Column::KeyGroupId.eq(key_group_id.clone()))
-        .find_also_related(tbl_key::Entity)
+) -> Result<Vec<GetDoor>, CrudError> {
+    let model = tbl_door_to_group_door::Entity::find()
+        .filter(tbl_door_to_group_door::Column::DoorGroupId.eq(key_group_id.clone()))
+        .find_also_related(tbl_door::Entity)
         .all(db)
         .await?;
     Ok(model
@@ -122,12 +121,12 @@ pub async fn get_keys_of_key_group(
         .map(|f| (f.1.as_ref().expect("can not be null")).into())
         .collect())
 }
-pub async fn get_key_group_of_user(
+pub async fn get_door_group_of_user(
     db: &DatabaseConnection,
     user_id: &Uuid,
 ) -> Result<Vec<GetKeyGroup>, CrudError> {
     let model = tbl_user::Entity::find_by_id(user_id.clone())
-        .find_also_related(tbl_key_group::Entity)
+        .find_also_related(tbl_door_group::Entity)
         .all(db)
         .await?;
     Ok(model

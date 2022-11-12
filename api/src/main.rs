@@ -20,7 +20,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
     paths(
         //login
         api::auth::login,
-        api::auth::register,
+        api::auth::logout,
         //user
         api::user::get_users,
         api::user::add_user,
@@ -44,6 +44,11 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::key_group::get_self_key_group,
         api::key_group::add_key_group,
         api::key_group::upate_key_group,
+        api::request::get_self_requests,
+        api::request::get_requests_from_user,
+        api::request::get_single_requests_from_user,
+        api::request::get_self_requests_from_request_id,
+        api::building::get_buldings,
     ),
     components(schemas(
         api::auth::Login,
@@ -56,11 +61,14 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::user::GetUser,
         crud::worker::GetWorker,
         crud::worker::CreateWorker,
-        crud::key::GetKey,
         crud::key_group::CreateKeyGroup,
         crud::key_group::ChangeKeyGroup,
         crud::key_group::GetKeyGroup,
-        
+        crud::request::GetRequestWithComments,
+        crud::request::GetComments,
+        crud::building::GetCompleteBuilding,
+        crud::building::GetCompleteRoom,
+        crud::building::GetCompleteDoor,
     ))
 )]
 struct ApiDoc;
@@ -100,7 +108,7 @@ async fn main() -> anyhow::Result<()> {
                     .wrap(util::middleware::Auth)
                     //login services
                     .service(api::auth::login)
-                    .service(api::auth::register)
+                    .service(api::auth::logout)
                     //user services
                     .service(api::user::get_users)
                     .service(api::user::add_user)
@@ -124,6 +132,13 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::key_group::get_keys_of_key_group)
                     .service(api::key_group::add_key_group)
                     .service(api::key_group::upate_key_group)
+                    //request
+                    .service(api::request::get_self_requests)
+                    .service(api::request::get_requests_from_user)
+                    .service(api::request::get_single_requests_from_user)
+                    .service(api::request::get_self_requests_from_request_id)
+                    // building
+                    .service(api::building::get_buldings)
                 ,
             )
             .app_data(web::Data::new(db.clone()))

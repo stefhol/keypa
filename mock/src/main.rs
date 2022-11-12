@@ -3,17 +3,16 @@ use anyhow;
 use chrono::{NaiveDateTime, Utc};
 use dotenv;
 use entities::model::{
-    tbl_building, tbl_door, tbl_key, tbl_key_group, tbl_key_group_key, tbl_key_user_history,
+    tbl_building, tbl_door, tbl_door_group, tbl_door_to_group_door, tbl_door_user_access,
     tbl_keycard, tbl_keycard_history, tbl_leader, tbl_request, tbl_request_comment, tbl_role,
     tbl_room, tbl_user, tbl_worker,
 };
-use fake::faker::address::raw::BuildingNumber;
-use fake::faker::barcode::zh_tw::Isbn13;
+use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
+
 use fake::faker::chrono::en::DateTimeAfter;
-use fake::faker::chrono::raw::Time;
+
 use fake::faker::chrono::zh_tw::DateTimeBefore;
-use fake::faker::company::en::{BsNoun, CatchPhase};
-use fake::faker::company::raw::CompanyName;
+use fake::faker::company::en::BsNoun;
 use fake::faker::company::raw::{Industry, Profession};
 use fake::faker::internet::raw::FreeEmail;
 use fake::faker::lorem::zh_tw::Sentence;
@@ -120,7 +119,7 @@ async fn main() -> anyhow::Result<()> {
 
         for _ in 0..rng.gen_range(1..4) {
             let sentence: String = Sentence(0..5).fake_with_rng(&mut rng);
-            tbl_key_group::ActiveModel {
+            tbl_door_group::ActiveModel {
                 name: ActiveValue::Set(Industry(EN).fake_with_rng(&mut rng)),
                 description: ActiveValue::Set(Some(sentence)),
                 owner_id: ActiveValue::Set(user.user_id.clone()),
@@ -130,7 +129,7 @@ async fn main() -> anyhow::Result<()> {
             .await?;
         }
     }
-    let key_groups = tbl_key_group::Entity::find().all(&db).await?;
+    let door_groups = tbl_door_group::Entity::find().all(&db).await?;
     let keycards = tbl_keycard::Entity::find().all(&db).await?;
     let users_filtered: Vec<tbl_user::Model> = users
         .iter()
@@ -176,7 +175,10 @@ async fn main() -> anyhow::Result<()> {
         worker.update(&db).await?;
     }
     for _ in 0..4 {
-        let name: String = BuildingNumber(EN).fake_with_rng(&mut rng);
+        let suffix: String = StreetSuffix(EN).fake_with_rng(&mut rng);
+        let name: String = StreetName(EN).fake_with_rng(&mut rng);
+        let number: String = BuildingNumber(EN).fake_with_rng(&mut rng);
+        let name: String = format!("{} {}. {}", name, suffix, number);
         tbl_building::ActiveModel {
             name: ActiveValue::Set(name),
             ..Default::default()
@@ -186,11 +188,18 @@ async fn main() -> anyhow::Result<()> {
     }
     let buildings = tbl_building::Entity::find().all(&db).await?;
     for _ in 0..100 {
+        let floor = rng.gen_range(0..5);
+        let room_number = rng.gen_range(1..20);
+        let mut room_prefix = "S";
+        if rng.gen_bool(0.2) {
+            room_prefix = "HS";
+        }
+        let name = format!("{}{}{:02}", room_prefix, &floor, &room_number);
         tbl_room::ActiveModel {
             building_id: ActiveValue::Set(buildings[rng.gen_range(0..buildings.len())].building_id),
-            floor: ActiveValue::Set(rng.gen_range(0..5)),
+            floor: ActiveValue::Set(floor),
             is_sensitive: ActiveValue::Set(Some(rng.gen_ratio(1, 8))),
-            name: ActiveValue::Set(CompanyName(EN).fake_with_rng(&mut rng)),
+            name: ActiveValue::Set(name),
             ..Default::default()
         }
         .insert(&db)
@@ -216,24 +225,12 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let doors = tbl_door::Entity::find().all(&db).await?;
-    for _ in 0..400 {
-        tbl_key::ActiveModel {
-            description: ActiveValue::Set(CatchPhase().fake_with_rng(&mut rng)),
-            door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id),
-            name: ActiveValue::Set(Isbn13().fake_with_rng(&mut rng)),
-            value: ActiveValue::Set(Isbn13().fake_with_rng(&mut rng)),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-    }
-    let keys = tbl_key::Entity::find().all(&db).await?;
 
-    for group in &key_groups {
+    for group in &door_groups {
         for _ in 0..rng.gen_range(0..20) {
-            let res = tbl_key_group_key::ActiveModel {
-                key_group_id: ActiveValue::Set(group.key_group_id),
-                key_id: ActiveValue::Set(keys[rng.gen_range(0..keys.len())].key_id),
+            let res = tbl_door_to_group_door::ActiveModel {
+                door_group_id: ActiveValue::Set(group.door_group_id),
+                door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id),
             }
             .insert(&db)
             .await;
@@ -243,27 +240,18 @@ async fn main() -> anyhow::Result<()> {
         }
     }
     for _ in 0..200 {
-        let has_active_time = rng.gen_ratio(1, 5);
-        let mut active_at = None;
-        let mut active_duration = None;
-        if has_active_time {
-            active_at = Some(Time(EN).fake_with_rng(&mut rng));
-            active_duration = Some(rng.gen_range(60..(60 * 60 * 20)));
-        }
         let lent_date = DateTimeBefore(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
         let due_date = DateTimeAfter(lent_date).fake_with_rng(&mut rng);
         let is_active = chrono::offset::Utc::now() < due_date || rng.gen_ratio(1, 20);
         let sentence: String = Sentence(0..3).fake_with_rng(&mut rng);
-        tbl_key_user_history::ActiveModel {
-            active_at: ActiveValue::Set(active_at),
-            active_duration: ActiveValue::Set(active_duration),
+        tbl_door_user_access::ActiveModel {
             comment: ActiveValue::Set(Some(sentence)),
             due_at: ActiveValue::Set(Some(due_date.naive_utc())),
             lent_at: ActiveValue::Set(Some(lent_date.naive_utc())),
             has_problem: ActiveValue::Set(Some(rng.gen_ratio(1, 20))),
             is_active: ActiveValue::Set(Some(is_active)),
             lent: ActiveValue::Set(Some(is_active)),
-            key_id: ActiveValue::Set(keys[rng.gen_range(0..keys.len())].key_id),
+            door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id),
             user_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
         }
         .insert(&db)
@@ -273,13 +261,13 @@ async fn main() -> anyhow::Result<()> {
         let accept = rng.gen_ratio(1, 10);
         let reject = rng.gen_ratio(1, 10);
         tbl_request::ActiveModel {
-            accept: ActiveValue::Set(Some(accept && !reject)),
-            pending: ActiveValue::Set(Some(accept == reject)),
-            reject: ActiveValue::Set(Some(!accept && reject)),
+            accept: ActiveValue::Set(accept && !reject),
+            pending: ActiveValue::Set(accept == reject),
+            reject: ActiveValue::Set(!accept && reject),
             description: ActiveValue::Set(Sentence(0..10).fake_with_rng(&mut rng)),
-            key_group_id: ActiveValue::Set(
-                key_groups[rng.gen_range(0..key_groups.len())]
-                    .key_group_id
+            door_group_id: ActiveValue::Set(
+                door_groups[rng.gen_range(0..door_groups.len())]
+                    .door_group_id
                     .to_owned(),
             ),
             requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
