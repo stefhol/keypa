@@ -26,6 +26,6 @@ pub async fn get_self_key(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = &auth.try_get_user_id()?;
-    let keys = crud::access::get_keys_of_user_id(user_id, db.get_ref()).await?;
+    let keys = crud::access::get_doors_of_user_id(user_id, db.get_ref()).await?;
     Ok(HttpResponse::Ok().json(keys))
 }

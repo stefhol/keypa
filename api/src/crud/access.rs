@@ -7,7 +7,7 @@ use crate::util::error::CrudError;
 
 use super::door::GetDoor;
 
-pub async fn get_keys_of_user_id(
+pub async fn get_doors_of_user_id(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetDoor>, CrudError> {

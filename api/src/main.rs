@@ -5,7 +5,7 @@ pub mod util;
 use std::net::Ipv4Addr;
 
 use actix_cors::Cors;
-use actix_web::{web::{self}, App, HttpServer};
+use actix_web::{web, App, HttpServer};
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;
@@ -37,13 +37,13 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         //key
         api::key::get_self_key,
         //key_group
-        api::key_group::add_key_into_key_group,
-        api::key_group::delete_key_from_key_group,
-        api::key_group::get_key_group,
-        api::key_group::get_keys_of_key_group,
-        api::key_group::get_self_key_group,
-        api::key_group::add_key_group,
-        api::key_group::upate_key_group,
+        api::door_group::add_key_into_key_group,
+        api::door_group::delete_key_from_key_group,
+        api::door_group::get_key_group,
+        api::door_group::get_keys_of_key_group,
+        api::door_group::get_self_key_group,
+        api::door_group::add_key_group,
+        api::door_group::upate_key_group,
         api::request::get_self_requests,
         api::request::get_requests_from_user,
         api::request::get_single_requests_from_user,
@@ -61,9 +61,9 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::user::GetUser,
         crud::worker::GetWorker,
         crud::worker::CreateWorker,
-        crud::key_group::CreateKeyGroup,
-        crud::key_group::ChangeKeyGroup,
-        crud::key_group::GetKeyGroup,
+        crud::door_group::CreateKeyGroup,
+        crud::door_group::ChangeKeyGroup,
+        crud::door_group::GetKeyGroup,
         crud::request::GetRequestWithComments,
         crud::request::GetComments,
         crud::building::GetCompleteBuilding,
@@ -125,13 +125,13 @@ async fn main() -> anyhow::Result<()> {
                     //key
                     .service(api::key::get_self_key)
                     //key_group
-                    .service(api::key_group::add_key_into_key_group)
-                    .service(api::key_group::delete_key_from_key_group)
-                    .service(api::key_group::get_key_group)
-                    .service(api::key_group::get_self_key_group)
-                    .service(api::key_group::get_keys_of_key_group)
-                    .service(api::key_group::add_key_group)
-                    .service(api::key_group::upate_key_group)
+                    .service(api::door_group::add_key_into_key_group)
+                    .service(api::door_group::delete_key_from_key_group)
+                    .service(api::door_group::get_key_group)
+                    .service(api::door_group::get_self_key_group)
+                    .service(api::door_group::get_keys_of_key_group)
+                    .service(api::door_group::add_key_group)
+                    .service(api::door_group::upate_key_group)
                     //request
                     .service(api::request::get_self_requests)
                     .service(api::request::get_requests_from_user)

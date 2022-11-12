@@ -11,7 +11,7 @@ use uuid::Uuid;
 use crate::{
     crud::{
         self,
-        key_group::{ChangeKeyGroup, CreateKeyGroup},
+        door_group::{ChangeKeyGroup, CreateKeyGroup},
     },
     util::{
         error::CrudError,
@@ -42,8 +42,8 @@ pub async fn get_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let key_groups = match user_query.user_id {
-        Some(user_id) => crud::key_group::get_door_group_of_user(&db, &user_id).await?,
-        None => crud::key_group::get_all_door_group(&db).await?,
+        Some(user_id) => crud::door_group::get_door_group_of_user(&db, &user_id).await?,
+        None => crud::door_group::get_all_door_group(&db).await?,
     };
 
     Ok(HttpResponse::Ok().json(key_groups))
@@ -65,15 +65,15 @@ pub struct KeyGroupQuery {
     (status = 500),
 )
 )]
-#[post("/key-group/{key_group_id}")]
+#[post("/key-group/{door_group_id}")]
 pub async fn add_key_into_key_group(
-    key_group_id: Path<Uuid>,
+    door_group_id: Path<Uuid>,
     query: Query<KeyGroupQuery>,
     db: Data<DatabaseConnection>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    crud::key_group::add_door_to_door_group(&query.key_id, &key_group_id, &db).await?;
+    crud::door_group::add_door_to_door_group(&query.key_id, &door_group_id, &db).await?;
     Ok(HttpResponse::Ok().finish())
 }
 #[utoipa::path(
@@ -88,16 +88,16 @@ pub async fn add_key_into_key_group(
     (status = 500),
 )
 )]
-#[delete("/key-group/{key_group_id}")]
+#[delete("/key-group/{door_group_id}")]
 pub async fn delete_key_from_key_group(
-    key_group_id: Path<Uuid>,
+    door_group_id: Path<Uuid>,
     query: Query<KeyGroupQuery>,
     db: Data<DatabaseConnection>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
+    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
 
-    crud::key_group::remove_key_from_key_group(&query.key_id, &key_group_id, &db).await?;
+    crud::door_group::remove_key_from_key_group(&query.key_id, &door_group_id, &db).await?;
     Ok(HttpResponse::Ok().finish())
 }
 #[utoipa::path(
@@ -111,15 +111,15 @@ pub async fn delete_key_from_key_group(
     (status = 500),
 )
 )]
-#[get("/key-group/{key_group_id}")]
+#[get("/key-group/{door_group_id}")]
 pub async fn get_keys_of_key_group(
-    key_group_id: Path<Uuid>,
+    door_group_id: Path<Uuid>,
     db: Data<DatabaseConnection>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
+    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
 
-    let keys = crud::key_group::get_doors_of_door_group(&db, &key_group_id).await?;
+    let keys = crud::door_group::get_doors_of_door_group(&db, &door_group_id).await?;
     Ok(HttpResponse::Ok().json(keys))
 }
 #[utoipa::path(
@@ -140,8 +140,8 @@ pub async fn get_self_key_group(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
-    let key_groups = crud::key_group::get_door_group_of_user(&db, &user_id).await?;
-    Ok(HttpResponse::Ok().json(key_groups))
+    let door_groups = crud::door_group::get_door_group_of_user(&db, &user_id).await?;
+    Ok(HttpResponse::Ok().json(door_groups))
 }
 #[utoipa::path(
     context_path = "/api/v1",
@@ -158,12 +158,12 @@ pub async fn get_self_key_group(
 #[post("/key-group")]
 pub async fn add_key_group(
     db: Data<DatabaseConnection>,
-    key_group: Json<CreateKeyGroup>,
+    door_group: Json<CreateKeyGroup>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let key_groups = crud::key_group::create_door_group(&key_group, &db).await?;
-    Ok(HttpResponse::Ok().json(key_groups))
+    let door_groups = crud::door_group::create_door_group(&door_group, &db).await?;
+    Ok(HttpResponse::Ok().json(door_groups))
 }
 #[utoipa::path(
     context_path = "/api/v1",
@@ -177,33 +177,33 @@ pub async fn add_key_group(
     (status = 500),
 )
 )]
-#[put("/key-group/{key_group_id}")]
+#[put("/key-group/{door_group_id}")]
 pub async fn upate_key_group(
     db: Data<DatabaseConnection>,
-    key_group_id: Path<Uuid>,
-    key_group: Json<ChangeKeyGroup>,
+    door_group_id: Path<Uuid>,
+    door_group: Json<ChangeKeyGroup>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
+    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
 
-    let key_groups = crud::key_group::update_door_group(&key_group, &key_group_id, &db).await?;
-    Ok(HttpResponse::Ok().json(key_groups))
+    let door_groups = crud::door_group::update_door_group(&door_group, &door_group_id, &db).await?;
+    Ok(HttpResponse::Ok().json(door_groups))
 }
 ///Check if security_level is high enough or query database to check if it is the object of a user
 async fn is_self_or_security_level(
     security_level: SecurityLevel,
     auth: &Authenticated,
-    key_group_id: &Uuid,
+    door_group_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<(), CrudError> {
     match auth.has_high_enough_security_level(security_level) {
         Ok(_) => {}
         Err(_) => {
             let user_id = auth.try_get_user_id()?;
-            if !crud::key_group::get_door_group_of_user(&db, &user_id)
+            if !crud::door_group::get_door_group_of_user(&db, &user_id)
                 .await?
                 .iter()
-                .any(|f| key_group_id.to_string() == f.door_group_id.to_string())
+                .any(|f| door_group_id.to_string() == f.door_group_id.to_string())
             {
                 return Err(CrudError::Unauthorized);
             }
