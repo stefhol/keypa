@@ -4,13 +4,12 @@ import { } from "@tanstack/react-table"
 import { Table } from "../../Components/table/Table"
 import { Building } from "../../util/intefaces/Buildings"
 import { Keys } from "../../util/intefaces/Keys"
-import { Key } from "../user/keys/Key"
-const getData = async () => {
-    return await Rest.getSelfRequests()
-}
+import { AuthorizedBuildings } from "../user/keys/Key"
+import { ChangeWorker } from "../leader/ChangeWorker"
+
 export interface DashboardProps { }
 export const Dashboard: React.FC<DashboardProps> = (props) => {
-
+    const { data: userData } = useQuery(["self", "user"], Rest.getSelf)
 
 
     const onTableRowClick = (index: number) => {
@@ -19,12 +18,15 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
     }
     return (<>
         <main>
-            <article>
-                <a href="request">
-                    Neuen Schluessel anfordern
-                </a>
-            </article>
-            <Key />
+            <a href="user">
+                Nutzerbereich
+            </a><br />
+            <a href="worker">
+                Verwaltungsmitarbeiterbereich
+            </a><br />
+            <a href="leader">
+                Verwaltungsvorgesetzterbereich
+            </a><br />
         </main>
     </>)
 }

@@ -22,15 +22,26 @@ export interface Comment {
     written_at: string;
 }
 
-export interface User {
-    email: string;
-    name: string;
-    role: Role;
-    user_id: string;
-}
 
 export interface Role {
     description: string;
     name: string;
     role_id: string;
+}
+
+export interface User {
+    user_id: string;
+    name: string;
+    role: Role;
+    email: string;
+    worker: Worker;
+    is_leader: boolean;
+    is_admin: boolean;
+}
+
+
+
+export interface Worker {
+    user_id: string;
+    boss: null;
 }

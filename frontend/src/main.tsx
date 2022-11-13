@@ -16,6 +16,12 @@ import { Dashboard } from './routes/dashboard/Dashboard';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Request } from './routes/user/request/Request';
 import { Header } from './Components/Ui/Header';
+import { LeaderBase } from './routes/leader/LeaderBase';
+import { ChangeWorker } from './routes/leader/ChangeWorker';
+import { UserBase } from './routes/user/UserBase';
+import { ShowAllUsers } from './routes/leader/ShowAllUsers';
+import { User } from './routes/user/User';
+import { UserChange as UserChange } from './routes/user/UseChange';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -35,9 +41,38 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
       {
-        path: "/request",
-        element: <Request />,
+        path: "user",
+        element: <UserBase />,
+        children: [
+          {
+            path: "",
+            element: <User />
+          },
+          {
+            path: "request",
+            element: <Request />
+          },
+          {
+            path: "account",
+            element: <UserChange />
+          }
+        ]
       },
+      {
+        path: "leader",
+        element: <LeaderBase />,
+        children: [
+          {
+            path: "",
+            element: <ShowAllUsers />
+
+          },
+          {
+            path: "change-worker/:userId",
+            element: <ChangeWorker />
+          }
+        ]
+      }
     ]
   }
 

@@ -31,6 +31,9 @@ const defaultColumn: Partial<ColumnDef<{}>> = {
                 }
                 else if (isValid(new Date(initialValue as string))) {
                     return <>{format(new Date(initialValue as string), 'dd.MM.yyyy hh:mm')} </>
+                } else if (typeof initialValue === "object") {
+                    //@ts-ignore
+                    return <>{initialValue?.name || "x"}</>
                 }
                 else {
                     return <>{initialValue}</>
@@ -39,8 +42,8 @@ const defaultColumn: Partial<ColumnDef<{}>> = {
 
     },
 }
-const createBasicColumns = (obj: {}) => {
-    const columns = []
+export const createBasicColumns = (obj: {}) => {
+    const columns = [] as ColumnDef<{}>[]
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             //@ts-ignore
@@ -58,15 +61,15 @@ const createBasicColumns = (obj: {}) => {
 
 interface ITableProps {
     data?: {}[]
-    columns: ColumnDef<{}>
+    columns: ColumnDef<{}>[]
     onTableRowClick: (index: number) => void
 }
 export const Table: React.FC<ITableProps> = (props) => {
-    const data = React.useMemo(() => props.data || [{}], [props.data])
-
+    const data = React.useMemo(() => props.data || [], [props.data])
+    const columns = React.useMemo(() => props.columns || [], [props.columns])
     const table = useReactTable({
         data,
-        columns: createBasicColumns(data[0]),
+        columns: columns,
         defaultColumn: defaultColumn,
         getCoreRowModel: getCoreRowModel(),
     })
@@ -74,9 +77,14 @@ export const Table: React.FC<ITableProps> = (props) => {
     return (
         <table>
             <thead>
+                <tr><td colSpan={100}>
+                    Suche: <input></input>
+                </td></tr>
                 {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>
+                        <th key="edit"></th>
                         {headerGroup.headers.map(header => (
+
                             <th key={header.id}>
                                 {header.isPlaceholder
                                     ? null
@@ -92,10 +100,16 @@ export const Table: React.FC<ITableProps> = (props) => {
             <tbody>
                 {table.getRowModel().rows.map(row => (
                     <tr key={row.id}
-                        onClick={
-                            () => props.onTableRowClick(row.index)
-                        }
                     >
+                        <td>
+                            <button
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    props.onTableRowClick(row.index)
+
+                                }}
+                            >Ändern</button>
+                        </td>
                         {row.getVisibleCells().map(cell => (
                             <td key={cell.id}>
                                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -107,6 +121,7 @@ export const Table: React.FC<ITableProps> = (props) => {
             <tfoot>
                 {table.getFooterGroups().map(footerGroup => (
                     <tr key={footerGroup.id}>
+                        <th key="edit"></th>
                         {footerGroup.headers.map(header => (
                             <th key={header.id}>
                                 {header.isPlaceholder

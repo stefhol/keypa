@@ -11,7 +11,7 @@ use crate::{
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body=[GetKey]),
+    (status = 200, body=[GetCompleteBuilding]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -19,13 +19,13 @@ use crate::{
     (status = 500),
 )
 )]
-#[get("/self/keys")]
-pub async fn get_self_key(
+#[get("/self/doors")]
+pub async fn get_self_door(
     db: Data<DatabaseConnection>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = &auth.try_get_user_id()?;
-    let keys = crud::access::get_doors_of_user_id(user_id, db.get_ref()).await?;
+    let keys = crud::access::get_building_with_only_authorized_doors(user_id, &db).await?;
     Ok(HttpResponse::Ok().json(keys))
 }

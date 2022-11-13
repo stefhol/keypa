@@ -32,10 +32,8 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::worker::add_worker,
         api::worker::update_worker,
         api::worker::delete_worker,
-        api::worker::get_worker,
-        api::worker::get_self_worker,
         //key
-        api::key::get_self_key,
+        api::door::get_self_door,
         //key_group
         api::door_group::add_key_into_key_group,
         api::door_group::delete_key_from_key_group,
@@ -59,7 +57,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
-        crud::worker::GetWorker,
+        crud::worker::GetSmallWorker,
         crud::worker::CreateWorker,
         crud::door_group::CreateKeyGroup,
         crud::door_group::ChangeKeyGroup,
@@ -120,10 +118,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::worker::add_worker)
                     .service(api::worker::update_worker)
                     .service(api::worker::delete_worker)
-                    .service(api::worker::get_worker)
-                    .service(api::worker::get_self_worker)
                     //key
-                    .service(api::key::get_self_key)
+                    .service(api::door::get_self_door)
                     //key_group
                     .service(api::door_group::add_key_into_key_group)
                     .service(api::door_group::delete_key_from_key_group)

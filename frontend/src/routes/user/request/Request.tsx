@@ -9,6 +9,7 @@ const getData = async () => {
 export interface RequestProps { }
 export const Request: React.FC<RequestProps> = (props) => {
     const [description, setDescription] = React.useState("");
+    const [until, setUntil] = React.useState("");
     const selection = React.useRef({ getCurrentSelection: () => Selection }) as unknown as SelectionRef;
     const { data } = useQuery(["buildings"], getData)
     const [keygroup, setKeygroup] = React.useState("");
@@ -24,13 +25,7 @@ export const Request: React.FC<RequestProps> = (props) => {
     // requester_id: string;
     return (<>
 
-        <main>
-            <button onClick={(e) => {
-                e.preventDefault()
-                console.log(selection.current.getCurrentSelection());
-            }}>
-                Absenden
-            </button>
+        <h1>Neue Anfrage</h1>
             <form>
 
                 <label>
@@ -38,10 +33,22 @@ export const Request: React.FC<RequestProps> = (props) => {
                     <br />
 
                     <textarea
-                        style={{ minWidth: 200, minHeight: 100 }}
+                    style={{ minWidth: "15rem", minHeight: 100 }}
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                     />
+            </label><br />
+            <label>
+                Bis wann
+                <br />
+
+                <input
+                    type={'date'}
+                    value={until}
+                    onChange={(e) => {
+                        setUntil(e.target.value)
+                    }}
+                />
                 </label>
                 <br />
                 <label>
@@ -50,10 +57,15 @@ export const Request: React.FC<RequestProps> = (props) => {
                     {data &&
                         <TreeView selectionRef={selection} data={prepareData(data)} />
                     }
-                </label>
-
-            </form>
-        </main>
+            </label>
+            <br />
+            <button onClick={(e) => {
+                e.preventDefault()
+                console.log(selection.current.getCurrentSelection());
+            }}>
+                Absenden
+            </button>
+        </form>
     </>)
 }
 
@@ -70,7 +82,7 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
         ret.push({
             name: `Stockwerk: ${floor}`,
             children: data.filter(val => val.floor == floor).map((val, idx) => ({
-                name: `Raum: ${floor}${idx}`,
+                name: `Raum: ${val.name}`,
                 children: []
             }))
         })

@@ -1,76 +1,60 @@
+use crate::crud;
+use crate::util::error::CrudError;
 use entities::model::{tbl_leader, tbl_worker};
 use sea_orm::{ActiveModelTrait, ActiveValue, DatabaseConnection, EntityTrait, ModelTrait};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::util::error::CrudError;
+use super::user::GetUserSmall;
 
-use super::{
-    role::GetRole,
-    user::{get_single_user, GetUser},
-};
-#[derive(Serialize, Deserialize, Debug, ToSchema)]
-pub struct GetWorker {
-    pub user_id: Uuid,
-    pub name: String,
-    pub role: Option<GetRole>,
-    pub email: String,
-    #[serde(skip_serializing)]
-    //only for internal use
-    boss_id: Option<Uuid>,
-
-    pub boss: Option<GetUser>,
+#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
+pub struct GetSmallWorker {
+    user_id: Uuid,
+    pub boss: Option<GetUserSmall>,
 }
-
+impl From<&tbl_worker::Model> for GetSmallWorker {
+    fn from(worker: &tbl_worker::Model) -> Self {
+        Self {
+            user_id: worker.user_id,
+            boss: None,
+        }
+    }
+}
 pub async fn get_worker_by_user_id(
     db: &DatabaseConnection,
     user_id: &Uuid,
-) -> Result<GetWorker, CrudError> {
-    let temp_worker = __get_worker_by_user_id(db, user_id).await?;
-    if let Some(boss_id) = &temp_worker.boss_id {
-        let boss_id = boss_id.clone();
-        let boss_model = tbl_leader::Entity::find_by_id(boss_id).one(db).await?;
-        let mut boss = None;
-        if let Some(boss_model) = boss_model {
-            let user_boss_model = __get_worker_by_user_id(db, &boss_model.user_id).await?;
-
-            boss = Some(GetUser {
-                user_id: user_boss_model.user_id.clone(),
-                email: user_boss_model.email,
-                name: user_boss_model.name,
-                role: user_boss_model.role,
-            });
-        }
-        return Ok(GetWorker {
-            boss,
-            ..temp_worker
-        });
-    }
-    Ok(temp_worker)
-}
-/// Private function that gets a Worker without Boss struct
-async fn __get_worker_by_user_id(
-    db: &DatabaseConnection,
-    user_id: &Uuid,
-) -> Result<GetWorker, CrudError> {
-    let user_model = get_single_user(db, user_id).await?;
-    let worker_model = tbl_worker::Entity::find_by_id(user_id.clone())
+) -> Result<GetSmallWorker, CrudError> {
+    let worker = tbl_worker::Entity::find_by_id(user_id.clone())
         .one(db)
         .await?;
-
-    if let Some(worker_model) = worker_model {
-        let worker = GetWorker {
-            email: user_model.email,
-            role: user_model.role,
-            name: user_model.name,
-            user_id: user_model.user_id,
-            boss_id: worker_model.boss_user_id.map(|f| f.clone()),
-            boss: None,
+    if let Some(worker) = worker {
+        return match worker.boss_user_id {
+            Some(boss_id) => {
+                let leader_user = get_leader_by_user_id(db, &boss_id).await?;
+                Ok(GetSmallWorker {
+                    boss: Some(leader_user),
+                    ..(&worker).into()
+                })
+            }
+            None => Ok((&worker).into()),
         };
-        return Ok(worker);
     }
     Err(CrudError::NotFound)
+}
+pub async fn get_leader_by_user_id(
+    db: &DatabaseConnection,
+    user_id: &Uuid,
+) -> Result<GetUserSmall, CrudError> {
+    let user = GetUserSmall::from(&crud::user::get_single_user(db, user_id).await?);
+    let is_admin = crud::user::is_admin_by_user_id(user_id, db).await?;
+    let is_worker = crud::worker::is_worker_by_user_id(user_id, db).await?;
+    Ok(GetUserSmall {
+        is_leader: Some(true),
+        is_admin: Some(is_admin),
+        is_worker: Some(is_worker),
+        ..user
+    })
 }
 
 pub async fn is_leader_by_user_id(

@@ -1,6 +1,7 @@
 import { LoginRequest } from "../routes/login/Login"
 import { Building } from "./intefaces/Buildings"
 import { Keys } from "./intefaces/Keys"
+import { User } from "./intefaces/Request"
 
 //@ts-ignore
 const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
@@ -12,8 +13,20 @@ export class Rest {
     static sendLogout = async () => {
         return await this.quickFetch("logout", "GET")
     }
-    static getSelfKeys = async () => {
-        return await this.quickFetchJson<Keys[]>("self/keys", "GET")
+    static getSelfDoors = async () => {
+        return await this.quickFetchJson<Building[]>("self/doors", "GET")
+    }
+    static getSelf = async () => {
+        return await this.quickFetchJson<User>("self", "GET")
+    }
+    static getUsers = async () => {
+        return await this.quickFetchJson<User[]>("users", "GET")
+    }
+    static getSingleUser = async (userId: string) => {
+        return await this.quickFetchJson<User>(`users/${userId}`, "GET")
+    }
+    static getSingleWoker = async (userId: string) => {
+        return await this.quickFetchJson<User>(`users/${userId}`, "GET")
     }
     static getBuildings = async () => {
         return await this.quickFetchJson<Building[]>("buildings", "GET")

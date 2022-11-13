@@ -46,7 +46,7 @@ pub async fn get_single_user(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let users = crud::user::get_single_user(db.get_ref(), &user_id).await?;
+    let users = crud::user::get_single_user(&db, &user_id).await?;
     Ok(HttpResponse::Ok().json(users))
 }
 #[utoipa::path(

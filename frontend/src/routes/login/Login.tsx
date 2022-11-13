@@ -8,7 +8,7 @@ export interface LoginRequest {
 }
 export interface LoginProps { }
 export const Login: React.FC<LoginProps> = (props) => {
-    const [name, setName] = React.useState("una_ad@yahoo.com");
+    const [name, setName] = React.useState("aric_architecto@gmail.com");
     const [password, setPassword] = React.useState("1234");
     const [error, setError] = React.useState("");
     const navigate = useNavigate()
