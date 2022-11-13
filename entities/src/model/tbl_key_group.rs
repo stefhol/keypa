@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub key_group_id: Uuid,
+    pub owner_id: Uuid,
     pub name: String,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
@@ -15,21 +16,35 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_request::Entity")]
-    TblRequest,
+    #[sea_orm(
+        belongs_to = "super::tbl_user::Entity",
+        from = "Column::OwnerId",
+        to = "super::tbl_user::Column::UserId",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    TblUser,
     #[sea_orm(has_many = "super::tbl_key_group_key::Entity")]
     TblKeyGroupKey,
+    #[sea_orm(has_many = "super::tbl_request::Entity")]
+    TblRequest,
 }
 
-impl Related<super::tbl_request::Entity> for Entity {
+impl Related<super::tbl_user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblUser.def()
     }
 }
 
 impl Related<super::tbl_key_group_key::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeyGroupKey.def()
+    }
+}
+
+impl Related<super::tbl_request::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRequest.def()
     }
 }
 

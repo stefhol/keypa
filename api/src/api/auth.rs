@@ -16,7 +16,7 @@ use crate::{
         user::is_admin_by_user_id,
         worker::{is_leader_by_user_id, is_worker_by_user_id},
     },
-    util::{crypto::create_jwt, error::CrudError, middleware::extractor::Authenticated},
+    util::{crypto::create_jwt, error::CrudError},
 };
 #[derive(ToSchema, Deserialize)]
 pub struct Login {
@@ -78,6 +78,7 @@ pub async fn login(
                         .cookie(
                             Cookie::build("token", &token)
                                 .max_age(Duration::hours(8))
+                                .path("/")
                                 .finish(),
                         )
                         //used in auth on server
@@ -107,11 +108,10 @@ pub async fn login(
     (status = 500),
 )
 )]
-#[get("/register")]
-pub async fn register(
-    _db: Data<DatabaseConnection>,
-    auth: Authenticated,
-) -> actix_web::Result<HttpResponse, CrudError> {
-    println!("{:?}", auth);
-    Ok(HttpResponse::Ok().finish())
+#[get("/logout")]
+pub async fn logout(_db: Data<DatabaseConnection>) -> actix_web::Result<HttpResponse, CrudError> {
+    let mut token = Cookie::build("token", "").finish();
+    token.make_removal();
+    let bearer = Cookie::build("bearer", "").finish();
+    return Ok(HttpResponse::Ok().cookie(token).cookie(bearer).finish());
 }

@@ -11,7 +11,7 @@ use uuid::Uuid;
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [Vec<GetUser>]),
+    (status = 200, body = [GetUser]),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -31,7 +31,7 @@ pub async fn get_users(
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -46,13 +46,13 @@ pub async fn get_single_user(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let users = crud::user::get_single_user(db.get_ref(), &user_id).await?;
+    let users = crud::user::get_single_user(&db, &user_id).await?;
     Ok(HttpResponse::Ok().json(users))
 }
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -99,7 +99,7 @@ pub async fn add_user(
     request_body = ChangeUser,
 
     responses(
-    (status = 200, body = [GetUser]),
+    (status = 200, body = GetUser),
     (status = 400),
     (status = 401),
     (status = 404),

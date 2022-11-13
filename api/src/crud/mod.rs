@@ -1,3 +1,9 @@
+pub mod access;
+pub mod building;
+pub mod door;
+pub mod door_group;
+pub mod request;
 pub mod role;
+pub mod room;
 pub mod user;
 pub mod worker;

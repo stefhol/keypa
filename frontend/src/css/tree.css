@@ -1,0 +1,9 @@
+.tree button {
+    font-size: small;
+    padding  : 2px;
+}
+
+.tree input {
+    width : initial;
+    height: initial;
+}
