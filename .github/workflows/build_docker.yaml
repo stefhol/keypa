@@ -1,4 +1,4 @@
-name: Build Keypa API
+name: Docker Keypa API
 
 on:
   workflow_dispatch:
@@ -10,7 +10,6 @@ env:
 jobs:
     
   build_docker:
-    needs: build
     runs-on: ubuntu-latest
     permissions:
       packages: write
