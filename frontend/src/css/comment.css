@@ -1,0 +1,44 @@
+
+.comment {
+    display       : flex;
+    flex-direction: column;
+
+    width           : 180px;
+    height          : auto;
+    background-color: darkgrey;
+    color           : black;
+    padding         : 0.5rem;
+    position        : relative;
+    margin          : 1rem;
+    border-radius   : 10px;
+}
+
+.comment.blue {
+    background-color: lightblue;
+}
+
+.comment>.date {
+    font-size: smaller;
+}
+
+.comment.false:after {
+    content      : " ";
+    position     : absolute;
+    right        : -15px;
+    top          : 15px;
+    border-top   : 15px solid transparent;
+    border-right : none;
+    border-left  : 15px solid darkgrey;
+    border-bottom: 15px solid transparent;
+}
+
+.comment.blue:after {
+    content      : " ";
+    position     : absolute;
+    left         : -15px;
+    top          : 15px;
+    border-top   : 15px solid transparent;
+    border-right : 15px solid lightblue;
+    border-left  : none;
+    border-bottom: 15px solid transparent;
+}

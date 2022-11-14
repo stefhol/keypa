@@ -30,12 +30,47 @@ pub async fn get_doors_of_user_id(
 
     Ok(values.iter().map(|f| f.into()).collect())
 }
-pub async fn get_building_with_only_authorized_doors(
+pub async fn get_doors_of_door_group_id(
+    user_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<Vec<GetDoor>, CrudError> {
+    let values = tbl_door::Entity::find()
+        .from_raw_sql(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"select (tbl_door.*) from tbl_door_group
+            join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
+            join tbl_door on tbl_door.door_id = tbl_door.door_id
+            where tbl_door_group.door_group_id = $1"#,
+            vec![user_id.clone().into()],
+        ))
+        .all(db)
+        .await?;
+
+    Ok(values.iter().map(|f| f.into()).collect())
+}
+pub async fn get_building_by_user_id_with_only_authorized_doors(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let buildings = crud::building::get_building_complex(db).await?;
     let authorized_doors = get_doors_of_user_id(user_id, db).await?;
+    let filtered_buildings = get_only_authorized_complex_building(buildings, authorized_doors);
+    Ok(filtered_buildings)
+    // Ok(values.iter().map(|f| f.into()).collect())
+}
+pub async fn get_building_by_door_group_with_only_authorized_doors(
+    door_group_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<Vec<GetCompleteBuilding>, CrudError> {
+    let buildings = crud::building::get_building_complex(db).await?;
+    let authorized_doors = get_doors_of_door_group_id(door_group_id, db).await?;
+    let filtered_buildings = get_only_authorized_complex_building(buildings, authorized_doors);
+    Ok(filtered_buildings)
+}
+fn get_only_authorized_complex_building(
+    buildings: Vec<GetCompleteBuilding>,
+    authorized_doors: Vec<GetDoor>,
+) -> Vec<GetCompleteBuilding> {
     let mut filtered_buildings = vec![];
     for builing in buildings {
         let mut rooms = vec![];
@@ -62,7 +97,5 @@ pub async fn get_building_with_only_authorized_doors(
             filtered_buildings.push(GetCompleteBuilding { rooms, ..builing })
         }
     }
-
-    Ok(filtered_buildings)
-    // Ok(values.iter().map(|f| f.into()).collect())
+    filtered_buildings
 }

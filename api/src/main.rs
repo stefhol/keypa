@@ -34,6 +34,8 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::worker::delete_worker,
         //key
         api::door::get_self_door,
+        api::door::get_doors_of_door_group,
+        
         //key_group
         api::door_group::add_key_into_key_group,
         api::door_group::delete_key_from_key_group,
@@ -47,6 +49,9 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::request::get_single_requests_from_user,
         api::request::get_self_requests_from_request_id,
         api::building::get_buldings,
+        api::request::get_all_pending_requests,
+        api::request::get_single_requests,
+        
     ),
     components(schemas(
         api::auth::Login,
@@ -120,6 +125,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::worker::delete_worker)
                     //key
                     .service(api::door::get_self_door)
+                    .service(api::door::get_doors_of_door_group)
                     //key_group
                     .service(api::door_group::add_key_into_key_group)
                     .service(api::door_group::delete_key_from_key_group)
@@ -133,6 +139,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_requests_from_user)
                     .service(api::request::get_single_requests_from_user)
                     .service(api::request::get_self_requests_from_request_id)
+                    .service(api::request::get_all_pending_requests)
+                    .service(api::request::get_single_requests)
                     // building
                     .service(api::building::get_buldings)
                 ,

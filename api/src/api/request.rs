@@ -48,7 +48,7 @@ pub async fn get_self_requests(
     (status = 500),
 )
 )]
-#[get("/request/{user_id}")]
+#[get("user/{user_id}/request/")]
 pub async fn get_requests_from_user(
     db: Data<DatabaseConnection>,
     user_id: Path<Uuid>,
@@ -98,7 +98,7 @@ pub async fn get_self_requests_from_request_id(
     (status = 500),
 )
 )]
-#[get("/request/{user_id}")]
+#[get("/user/{user_id}/request")]
 pub async fn get_single_requests_from_user(
     db: Data<DatabaseConnection>,
     user_id: Path<Uuid>,
@@ -112,5 +112,46 @@ pub async fn get_single_requests_from_user(
         db.get_ref(),
     )
     .await?;
+    Ok(HttpResponse::Ok().json(request))
+}
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200, body = [GetRequestWithComments]),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[get("/request")]
+pub async fn get_all_pending_requests(
+    db: Data<DatabaseConnection>,
+    auth: Authenticated,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
+    let request = crud::request::get_all_open_requests(&db).await?;
+    Ok(HttpResponse::Ok().json(request))
+}
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200, body = GetRequestWithComments),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[get("/request/{request_id}")]
+pub async fn get_single_requests(
+    db: Data<DatabaseConnection>,
+    request_id: Path<Uuid>,
+    auth: Authenticated,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
+    let request = crud::request::get_single_request(&db, &request_id).await?;
     Ok(HttpResponse::Ok().json(request))
 }

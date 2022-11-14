@@ -22,6 +22,9 @@ import { UserBase } from './routes/user/UserBase';
 import { ShowAllUsers } from './routes/leader/ShowAllUsers';
 import { User } from './routes/user/User';
 import { UserChange as UserChange } from './routes/user/UseChange';
+import { WorkerBase } from './routes/worker/WorkerBase';
+import { ShowPendingRequests } from './routes/worker/ShowPendingRequests';
+import { ChangeRequest } from './routes/worker/ChangeRequest';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -71,6 +74,23 @@ const router = createBrowserRouter([
             path: "change-worker/:userId",
             element: <ChangeWorker />
           }
+        ]
+      },
+      {
+        path: "worker",
+        element: <WorkerBase />,
+        children: [
+          {
+            path: "",
+            element: <ShowPendingRequests />
+
+          },
+          {
+            path: "change-request/:requestId",
+            element: <ChangeRequest />
+
+          },
+
         ]
       }
     ]
