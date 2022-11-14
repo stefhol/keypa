@@ -34,6 +34,13 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::worker::delete_worker,
         //key
         api::door::get_self_door,
+        api::door::get_user_authorized_doors,
+        api::door::get_doors_of_door_group,
+        //keycard
+        api::keycard::get_self_keycard,
+        api::keycard::get_keycard_of_user_id,
+        api::keycard::get_single_keycard,
+        
         //key_group
         api::door_group::add_key_into_key_group,
         api::door_group::delete_key_from_key_group,
@@ -47,6 +54,9 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::request::get_single_requests_from_user,
         api::request::get_self_requests_from_request_id,
         api::building::get_buldings,
+        api::request::get_all_pending_requests,
+        api::request::get_single_requests,
+        
     ),
     components(schemas(
         api::auth::Login,
@@ -57,6 +67,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
+        crud::user::GetUserSmall,
         crud::worker::GetSmallWorker,
         crud::worker::CreateWorker,
         crud::door_group::CreateKeyGroup,
@@ -67,6 +78,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::building::GetCompleteBuilding,
         crud::building::GetCompleteRoom,
         crud::building::GetCompleteDoor,
+        crud::keycard::GetKeycard,
     ))
 )]
 struct ApiDoc;
@@ -120,6 +132,13 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::worker::delete_worker)
                     //key
                     .service(api::door::get_self_door)
+                    .service(api::door::get_user_authorized_doors)
+                    .service(api::door::get_doors_of_door_group)
+                    //keycard
+                    .service(api::keycard::get_self_keycard)
+                    .service(api::keycard::get_keycard_of_user_id)
+                    .service(api::keycard::get_single_keycard)
+                    
                     //key_group
                     .service(api::door_group::add_key_into_key_group)
                     .service(api::door_group::delete_key_from_key_group)
@@ -133,6 +152,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_requests_from_user)
                     .service(api::request::get_single_requests_from_user)
                     .service(api::request::get_self_requests_from_request_id)
+                    .service(api::request::get_all_pending_requests)
+                    .service(api::request::get_single_requests)
                     // building
                     .service(api::building::get_buldings)
                 ,

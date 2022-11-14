@@ -62,7 +62,7 @@ export const createBasicColumns = (obj: {}) => {
 interface ITableProps {
     data?: {}[]
     columns: ColumnDef<{}>[]
-    onTableRowClick: (index: number) => void
+    rowAction: IAction[]
 }
 export const Table: React.FC<ITableProps> = (props) => {
     const data = React.useMemo(() => props.data || [], [props.data])
@@ -77,7 +77,7 @@ export const Table: React.FC<ITableProps> = (props) => {
     return (
         <table>
             <thead>
-                <tr><td colSpan={100}>
+                <tr key={-1}><td colSpan={100}>
                     Suche: <input></input>
                 </td></tr>
                 {table.getHeaderGroups().map(headerGroup => (
@@ -99,16 +99,10 @@ export const Table: React.FC<ITableProps> = (props) => {
             </thead>
             <tbody>
                 {table.getRowModel().rows.map(row => (
-                    <tr key={row.id}
+                    <tr key={row.index}
                     >
                         <td>
-                            <button
-                                onClick={(e) => {
-                                    e.preventDefault()
-                                    props.onTableRowClick(row.index)
-
-                                }}
-                            >Ändern</button>
+                            {props.rowAction.map((val, idx) => <ButtonTable {...val} rowIndex={row.index} key={`edit${idx}`} />)}
                         </td>
                         {row.getVisibleCells().map(cell => (
                             <td key={cell.id}>
@@ -138,4 +132,23 @@ export const Table: React.FC<ITableProps> = (props) => {
         </table>
     )
 }
+export interface IAction {
+    element: JSX.Element,
+    onClick: (rowIndex: number) => void
+}
+export interface ButtonTableProps extends IAction {
+    rowIndex: number
+}
+export const ButtonTable: React.FC<ButtonTableProps> = ({
+    element,
+    onClick,
+    rowIndex
+}) => {
 
+    return (React.cloneElement(element, {
+        onClick: (e: Event) => {
+            e.preventDefault();
+            onClick(rowIndex)
+        }
+    }))
+}

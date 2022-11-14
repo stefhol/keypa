@@ -6,11 +6,12 @@ export interface Request {
     comments?: Comment[];
     created_at: string;
     description: string;
-    key_group_id: string;
+    door_group_id: string;
     pending: boolean;
     reject: boolean;
     request_id: string;
     requester_id: string;
+    requester: User
 }
 
 export interface Comment {

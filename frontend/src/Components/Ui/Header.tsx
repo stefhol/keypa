@@ -9,6 +9,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
         <>
             <header>
                 <LogoSmall width={40} onClick={() => { navigate("/") }} />
+                <button onClick={(e) => {
+                    e.preventDefault()
+                    navigate("/dashboard")
+                }}>
+                    Dashboard
+                </button>
                 <span className="spacer"> </span>
                 <button onClick={(e) => {
                     e.preventDefault()
@@ -16,6 +22,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 }}>
                     Logout
                 </button>
+
                 <button onClick={(e) => {
                     navigate("/login")
                 }}>

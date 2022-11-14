@@ -1,0 +1,602 @@
+From def3ff806805f67457cb7bd98c82ab6586cb5579 Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Sat, 5 Nov 2022 02:19:49 +0100
+Subject: [PATCH 01/11] wip add jwt auth
+
+---
+ .env                           |   3 +-
+ api/src/api/auth.rs            |  99 +++++++++++++++++++++++++---
+ api/src/api/key.rs             |   1 +
+ api/src/api/user.rs            |  11 +++-
+ api/src/crud/user.rs           |  47 +++++++++++---
+ api/src/crud/worker.rs         | 114 +++++++++++++++++++++++++++++++++
+ api/src/main.rs                |   2 +-
+ api/src/util/crypto.rs         |  79 +++++++++++++++++++++++
+ api/src/util/error.rs          |   4 ++
+ api/src/util/middleware/mod.rs |  41 ++++++++++--
+ api/src/util/mod.rs            |   1 +
+ 11 files changed, 373 insertions(+), 29 deletions(-)
+ create mode 100644 api/src/util/crypto.rs
+
+diff --git a/.env b/.env
+index fa038ff..98ce7ea 100644
+--- a/.env
++++ b/.env
+@@ -1,2 +1,3 @@
+ DATABASE_URL=postgres://postgres:password@localhost/keypa
+-DEMO_FACES=../faces/
+\ No newline at end of file
++DEMO_FACES=../faces/
++JWT_SECRET=reallyLongPassword
+\ No newline at end of file
+diff --git a/api/src/api/auth.rs b/api/src/api/auth.rs
+index 849700b..9d4e0e7 100644
+--- a/api/src/api/auth.rs
++++ b/api/src/api/auth.rs
+@@ -1,12 +1,93 @@
+-use actix_web::web::Data;
+-use paperclip::actix::{api_v2_operation, get, Apiv2Schema, NoContent};
++use actix_web::{
++    cookie::{time::Duration, Cookie},
++    web::{Data, Json},
++    HttpResponse,
++};
++use log::error;
++use paperclip::actix::{api_v2_operation, get, Apiv2Schema, HttpResponseWrapper, NoContent};
+ use sea_orm::DatabaseConnection;
+-use serde::Serialize;
++use serde::Deserialize;
+ 
+-use crate::util::{error::MyError, middleware::extractor::Authenticated};
+-#[derive(Serialize, Apiv2Schema)]
+-struct Login {
+-    message: String,
++use crate::{
++    crud::{
++        self,
++        user::is_admin_by_user_id,
++        worker::{get_worker_by_user_id, is_leader_by_worker_id},
++    },
++    util::{crypto::create_jwt, error::MyError, middleware::extractor::Authenticated},
++};
++#[derive(Apiv2Schema, Deserialize)]
++pub struct Login {
++    email: String,
++    password: String,
++}
++
++#[get("/login")]
++pub async fn login(
++    db: Data<DatabaseConnection>,
++    login: Json<Login>,
++) -> paperclip::actix::HttpResponseWrapper {
++    let model = crud::user::get_user_by_email(&db, &login.email).await;
++    if let Ok(Some(user)) = model {
++        let password =
++            orion::pwhash::Password::from_slice(&login.password.to_string().into_bytes())
++                .map_err(|f| {
++                    error!("{}", f);
++                    f
++                })
++                .unwrap();
++        if let Ok(user_password) = orion::pwhash::PasswordHash::from_encoded(&user.password) {
++            if let Err(err) = orion::pwhash::hash_password_verify(&user_password, &password) {
++                error!("{}", err);
++            } else {
++                let worker = get_worker_by_user_id(&db, &user.user_id.to_string()).await;
++                let is_admin = is_admin_by_user_id(user.user_id, &db).await.map_err(|f| {
++                    error!("{}", f);
++                    f
++                });
++                let is_leader = match &worker {
++                    Ok(Some(worker)) => is_leader_by_worker_id(&worker.worker_id, &db)
++                        .await
++                        .map_err(|f| {
++                            error!("{}", f);
++                            f
++                        })
++                        .unwrap_or(false),
++                    _ => false,
++                };
++                let token = create_jwt(
++                    &user.user_id.to_string(),
++                    is_admin
++                        .map_err(|f| {
++                            error!("{}", f);
++                            f
++                        })
++                        .unwrap_or(false),
++                    worker
++                        .map_err(|f| {
++                            error!("{}", f);
++                            f
++                        })
++                        .unwrap_or(None)
++                        .is_some(),
++                    is_leader,
++                );
++                if let Ok(token) = token {
++                    return HttpResponseWrapper(
++                        HttpResponse::Ok()
++                            .cookie(
++                                Cookie::build("token", token)
++                                    .http_only(true)
++                                    .max_age(Duration::hours(8))
++                                    .finish(),
++                            )
++                            .finish(),
++                    );
++                }
++            }
++        }
++    }
++    HttpResponseWrapper(HttpResponse::Unauthorized().finish())
+ }
+ #[api_v2_operation(
+     summary = "My awesome handler",
+@@ -15,8 +96,8 @@ struct Login {
+     operation_id = "login",
+     tags("Api reference"),
+ )]
+-#[get("/login")]
+-pub async fn login(
++#[get("/register")]
++pub async fn register(
+     _db: Data<DatabaseConnection>,
+     auth: Authenticated,
+ ) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+diff --git a/api/src/api/key.rs b/api/src/api/key.rs
+index e69de29..8b13789 100644
+--- a/api/src/api/key.rs
++++ b/api/src/api/key.rs
+@@ -0,0 +1 @@
++
+diff --git a/api/src/api/user.rs b/api/src/api/user.rs
+index 5ad33cb..8a279a0 100644
+--- a/api/src/api/user.rs
++++ b/api/src/api/user.rs
+@@ -1,6 +1,8 @@
+ use crate::crud;
+ use crate::crud::user::{ChangeUser, CreateUser, GetUser};
+ use crate::util::error::MyError;
++use crate::util::middleware::extractor::Authenticated;
++use crate::util::middleware::SecurityLevel;
+ 
+ use actix_web::web::Data;
+ use paperclip::actix::{api_v2_operation, delete, get, post, AcceptedJson};
+@@ -18,9 +20,12 @@ use sea_orm::DatabaseConnection;
+ #[get("/users")]
+ pub async fn get_users(
+     db: Data<DatabaseConnection>,
++    auth: Authenticated,
+ ) -> actix_web::Result<AcceptedJson<Vec<GetUser>>, MyError> {
+     let users = crud::user::get_all_user(db.get_ref()).await;
+-
++    if auth.to_sercurity_level() < SecurityLevel::Worker {
++        return Err(MyError::Unauthorized);
++    }
+     return if let Ok(users) = users {
+         Ok(AcceptedJson(users))
+     } else {
+@@ -61,7 +66,7 @@ pub async fn update_user(
+     user: actix_web::web::Json<ChangeUser>,
+     db: Data<DatabaseConnection>,
+ ) -> actix_web::Result<AcceptedJson<GetUser>, MyError> {
+-    let user = crud::user::update_user(db.get_ref(), user.0, id.into_inner()).await;
++    let user = crud::user::update_user(db.get_ref(), user.0, &id.into_inner()).await;
+     return if let Ok(users) = user {
+         Ok(AcceptedJson(users))
+     } else {
+@@ -79,7 +84,7 @@ pub async fn delete_user(
+     id: actix_web::web::Path<String>,
+     db: Data<DatabaseConnection>,
+ ) -> actix_web::Result<paperclip::actix::NoContent, MyError> {
+-    let user = crud::user::delete_user(db.get_ref(), id.into_inner()).await;
++    let user = crud::user::delete_user(db.get_ref(), &id.into_inner()).await;
+     return if let Ok(_users) = user {
+         Ok(paperclip::actix::NoContent)
+     } else {
+diff --git a/api/src/crud/user.rs b/api/src/crud/user.rs
+index ca1bbd1..8a4fa8d 100644
+--- a/api/src/crud/user.rs
++++ b/api/src/crud/user.rs
+@@ -1,7 +1,10 @@
+-use entities::model::{tbl_role, tbl_user};
++use entities::model::{tbl_admin, tbl_role, tbl_user};
+ use itertools::Itertools;
+ use paperclip::actix::Apiv2Schema;
+-use sea_orm::{ActiveModelTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait};
++use sea_orm::{
++    ActiveModelTrait, ColumnTrait, DatabaseConnection, DeleteResult, EntityTrait, ModelTrait,
++    QueryFilter,
++};
+ use serde::{Deserialize, Serialize};
+ use tracing::info;
+ use uuid::Uuid;
+@@ -52,20 +55,34 @@ pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudE
+         .await?;
+     Ok(model.iter().map(|f| GetUser::from(f)).collect_vec())
+ }
++pub async fn get_user_by_email(
++    db: &DatabaseConnection,
++    email: &str,
++) -> Result<Option<tbl_user::Model>, CrudError> {
++    let model = tbl_user::Entity::find()
++        .filter(tbl_user::Column::Email.eq(email))
++        .one(db)
++        .await?;
++    Ok(model)
++}
+ pub async fn get_single_user(
+     db: &DatabaseConnection,
+-    uuid: uuid::Uuid,
++    user_id: &str,
+ ) -> Result<Option<GetUser>, CrudError> {
+-    let model = tbl_user::Entity::find_by_id(uuid)
++    let user_id = Uuid::parse_str(user_id)?;
++    let model = tbl_user::Entity::find_by_id(user_id)
+         .find_also_related(tbl_role::Entity)
++        .filter(tbl_user::Column::IsActive.eq(true))
+         .one(db)
+         .await?;
+     Ok(model.map(|f| GetUser::from(&f)))
+ }
+-pub async fn delete_user(db: &DatabaseConnection, uuid: String) -> Result<DeleteResult, CrudError> {
+-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(&uuid)?)
+-        .one(db)
+-        .await?;
++pub async fn delete_user(
++    db: &DatabaseConnection,
++    user_id: &str,
++) -> Result<DeleteResult, CrudError> {
++    let user_id = Uuid::parse_str(user_id)?;
++    let model = tbl_user::Entity::find_by_id(user_id).one(db).await?;
+     if let Some(model) = model {
+         info!("{:#?}", model);
+         return Ok(model.delete(db).await?);
+@@ -76,9 +93,9 @@ pub async fn delete_user(db: &DatabaseConnection, uuid: String) -> Result<Delete
+ pub async fn update_user(
+     db: &DatabaseConnection,
+     user: ChangeUser,
+-    id: String,
++    id: &str,
+ ) -> Result<GetUser, CrudError> {
+-    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(&id)?)
++    let model = tbl_user::Entity::find_by_id(Uuid::parse_str(id)?)
+         .one(db)
+         .await?;
+     if let Some(model) = model {
+@@ -103,3 +120,13 @@ pub async fn create_user(db: &DatabaseConnection, user: CreateUser) -> Result<Ge
+     let user: GetUser = (&(user, role)).into();
+     return Ok(user);
+ }
++pub async fn is_admin_by_user_id(
++    user_id: Uuid,
++    db: &DatabaseConnection,
++) -> Result<bool, CrudError> {
++    let admin = tbl_admin::Entity::find()
++        .filter(tbl_admin::Column::UserId.eq(user_id))
++        .one(db)
++        .await?;
++    return Ok(admin.is_some());
++}
+diff --git a/api/src/crud/worker.rs b/api/src/crud/worker.rs
+index 8b13789..939b436 100644
+--- a/api/src/crud/worker.rs
++++ b/api/src/crud/worker.rs
+@@ -1 +1,115 @@
++use entities::model::{tbl_leader, tbl_worker};
++use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QuerySelect};
++use serde::{Deserialize, Serialize};
++use uuid::Uuid;
+ 
++use crate::util::error::CrudError;
++
++use super::{role::GetRole, user::get_single_user};
++#[derive(Serialize, Deserialize, Debug)]
++pub struct Worker {
++    pub user_id: String,
++    pub worker_id: String,
++    pub name: String,
++    pub role: Option<GetRole>,
++    pub email: String,
++    #[serde(skip_serializing)]
++    //only for internal use
++    boss_id: Option<String>,
++
++    pub boss: Option<Boss>,
++}
++#[derive(Serialize, Deserialize, Debug)]
++pub struct Boss {
++    pub user_id: String,
++    pub worker_id: String,
++    pub leader_id: String,
++    pub name: String,
++    pub role: Option<GetRole>,
++    pub email: String,
++}
++
++pub async fn get_worker_by_user_id(
++    db: &DatabaseConnection,
++    user_id: &str,
++) -> Result<Option<Worker>, CrudError> {
++    let temp_worker = __get_worker_by_user_id(db, user_id).await?;
++    if let Some(boss_id) = &temp_worker.boss_id {
++        let boss_id = Uuid::parse_str(boss_id)?;
++        let boss_model = tbl_leader::Entity::find()
++            .filter(tbl_leader::Column::LeaderId.eq(boss_id))
++            .one(db)
++            .await?;
++        let mut boss = None;
++        if let Some(boss_model) = boss_model {
++            let user_boss_model = __get_worker_by_user_id(db, &boss_id.to_string()).await?;
++
++            boss = Some(Boss {
++                user_id: user_boss_model.user_id.to_string(),
++                worker_id: boss_model.worker_id.to_string(),
++                leader_id: boss_model.leader_id.to_string(),
++                email: user_boss_model.email,
++                name: user_boss_model.name,
++                role: user_boss_model.role,
++            });
++        }
++        return Ok(Some(Worker {
++            boss,
++            ..temp_worker
++        }));
++    }
++    Ok(None)
++}
++/// Private function that gets a Worker without Boss struct
++async fn __get_worker_by_user_id(
++    db: &DatabaseConnection,
++    user_id: &str,
++) -> Result<Worker, CrudError> {
++    let user_model = get_single_user(db, &user_id).await?;
++    let worker_model = tbl_worker::Entity::find()
++        .filter(tbl_worker::Column::UserId.eq(user_id))
++        .one(db)
++        .await?;
++
++    if let (Some(user_model), Some(worker_model)) = (user_model, worker_model) {
++        let worker = Worker {
++            worker_id: worker_model.worker_id.to_string(),
++            email: user_model.email,
++            role: user_model.role,
++            name: user_model.name,
++            user_id: user_model.user_id,
++            boss_id: worker_model.boss_id.map(|f| f.to_string()),
++            boss: None,
++        };
++        return Ok(worker);
++    }
++    Err(CrudError::NotFound)
++}
++
++pub async fn is_leader_by_worker_id(
++    worker_id: &str,
++    db: &DatabaseConnection,
++) -> Result<bool, CrudError> {
++    let worker_id = Uuid::parse_str(worker_id)?;
++    let leader = tbl_leader::Entity::find()
++        .filter(tbl_leader::Column::WorkerId.eq(worker_id))
++        .one(db)
++        .await?;
++    return Ok(leader.is_some());
++}
++pub async fn get_worker_id_by_user_id(
++    user_id: &str,
++    db: &DatabaseConnection,
++) -> Result<Option<Uuid>, CrudError> {
++    let user_id = Uuid::parse_str(user_id)?;
++    let worker = tbl_worker::Entity::find()
++        .filter(tbl_worker::Column::UserId.eq(user_id))
++        .select_only()
++        .column(tbl_worker::Column::WorkerId)
++        .one(db)
++        .await?;
++    if let Some(worker) = worker {
++        return Ok(Some(worker.worker_id));
++    }
++    Ok(None)
++}
+diff --git a/api/src/main.rs b/api/src/main.rs
+index e51358e..83f49b0 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -20,7 +20,7 @@ use sea_orm::Database;
+ #[actix_web::main]
+ async fn main() -> anyhow::Result<()> {
+     env_logger::builder()
+-        .filter_level(log::LevelFilter::Debug)
++        .filter_level(log::LevelFilter::Error)
+         .is_test(true)
+         .init();
+     let database_url = dotenv::var("DATABASE_URL")?;
+diff --git a/api/src/util/crypto.rs b/api/src/util/crypto.rs
+new file mode 100644
+index 0000000..08dd3df
+--- /dev/null
++++ b/api/src/util/crypto.rs
+@@ -0,0 +1,79 @@
++use std::str::FromStr;
++
++use actix_web::cookie::Cookie;
++
++use chrono::{Duration, Utc};
++use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
++use sea_orm::{prelude::Uuid, DatabaseConnection};
++use serde::{Deserialize, Serialize};
++
++use crate::crud;
++
++use super::error::CrudError;
++const TOKEN_MAX_AGE: i64 = 8 * 60 * 60; //8Hours
++#[derive(Serialize, Deserialize, Clone, Debug)]
++pub struct Claims {
++    pub sub: String,
++    pub is_admin: bool,
++    pub is_worker: bool,
++    pub is_leader: bool,
++    exp: usize,
++}
++
++pub fn create_jwt(
++    uid: &str,
++    is_admin: bool,
++    is_worker: bool,
++    is_leader: bool,
++) -> Result<String, CrudError> {
++    let expiration = Utc::now()
++        .checked_add_signed(Duration::seconds(TOKEN_MAX_AGE))
++        .expect("valid timestamp")
++        .timestamp();
++
++    let claims = Claims {
++        sub: uid.to_owned(),
++        exp: expiration as usize,
++        //only for ui
++        is_admin,
++        is_worker,
++        is_leader,
++    };
++    let header = Header::new(Algorithm::HS512);
++    Ok(encode(
++        &header,
++        &claims,
++        &EncodingKey::from_secret(dotenv::var("JWT_SECRET")?.as_bytes()),
++    )?)
++}
++
++pub fn authorize(token: &str) -> anyhow::Result<Claims> {
++    let decoded = decode::<Claims>(
++        &token,
++        &DecodingKey::from_secret(dotenv::var("JWT_SECRET")?.as_bytes()),
++        &Validation::new(Algorithm::HS512),
++    )?;
++    Ok(decoded.claims)
++}
++pub async fn is_admin(cookie: &Option<Cookie<'_>>, db: &DatabaseConnection) -> bool {
++    if let Some(cookie) = cookie {
++        let claim = self::authorize(cookie.value());
++        if let Ok(claim) = claim {
++            if let Ok(sub) = Uuid::from_str(&claim.sub) {
++                return crud::user::is_admin_by_user_id(sub, db)
++                    .await
++                    .unwrap_or(false);
++            }
++        }
++    }
++    false
++}
++pub fn is_self(cookie: Option<Cookie>, id: &str) -> bool {
++    if let Some(cookie) = cookie {
++        let claim = self::authorize(cookie.value());
++        if let Ok(claim) = claim {
++            return &claim.sub == id;
++        }
++    }
++    false
++}
+diff --git a/api/src/util/error.rs b/api/src/util/error.rs
+index 5af7b5b..1a360e6 100644
+--- a/api/src/util/error.rs
++++ b/api/src/util/error.rs
+@@ -11,6 +11,10 @@ pub enum CrudError {
+     NotFound,
+     #[error("Error in Uuid Conversion")]
+     UuidError(#[from] uuid::Error),
++    #[error("Error in Dotenv Retrieval")]
++    DotenvError(#[from] dotenv::Error),
++    #[error("Error in JsonWebToken Generation")]
++    JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
+     #[error("invalid input: {0}")]
+     InvalidInput(String),
+ }
+diff --git a/api/src/util/middleware/mod.rs b/api/src/util/middleware/mod.rs
+index 3bd358b..f2c4e2d 100644
+--- a/api/src/util/middleware/mod.rs
++++ b/api/src/util/middleware/mod.rs
+@@ -13,6 +13,10 @@ use anyhow::anyhow;
+ use futures::FutureExt;
+ use futures_util::future::LocalBoxFuture;
+ 
++use crate::util::crypto;
++
++use super::crypto::Claims;
++
+ // There are two steps in middleware processing.
+ // 1. Middleware initialization, middleware factory gets called with
+ //    next service in chain as parameter.
+@@ -30,9 +34,35 @@ impl Auth {
+ }
+ #[derive(Clone, Debug)]
+ pub enum AuthenticationResult {
+-    Authenticated,
++    Authenticated(Claims),
+     NotAuthenticated,
+ }
++impl AuthenticationResult {
++    pub fn to_sercurity_level(&self) -> SecurityLevel {
++        return if let AuthenticationResult::Authenticated(val) = self {
++            return if val.is_admin {
++                SecurityLevel::Admin
++            } else if val.is_leader {
++                SecurityLevel::Leader
++            } else if val.is_worker {
++                SecurityLevel::Worker
++            } else {
++                SecurityLevel::User
++            };
++        } else {
++            SecurityLevel::External
++        };
++    }
++}
++#[derive(Clone, PartialOrd, PartialEq)]
++pub enum SecurityLevel {
++    External = 0,
++    User = 1,
++    Worker = 2,
++    Leader = 3,
++    Admin = 4,
++}
++
+ pub type AuthenticationInfo = Rc<AuthenticationResult>;
+ // Middleware factory is `Transform` trait
+ // `S` - type of the next service
+@@ -72,14 +102,15 @@ where
+     fn call(&self, req: ServiceRequest) -> Self::Future {
+         println!("Requested: {}", req.path());
+         if let Some(cookie) = req.cookie("token") {
+-            if cookie.http_only() == Some(true) {
+-                //TODO: Change to real value
+-                req.extensions_mut()
+-                    .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::Authenticated));
++            if let Ok(val) = crypto::authorize(cookie.value()) {
++                req.extensions_mut().insert::<AuthenticationInfo>(Rc::new(
++                    AuthenticationResult::Authenticated(val),
++                ));
+             } else {
+                 req.extensions_mut()
+                     .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::NotAuthenticated));
+             }
++            //TODO: Change to real value
+         } else {
+             req.extensions_mut()
+                 .insert::<AuthenticationInfo>(Rc::new(AuthenticationResult::NotAuthenticated));
+diff --git a/api/src/util/mod.rs b/api/src/util/mod.rs
+index 7b399a2..17ea30e 100644
+--- a/api/src/util/mod.rs
++++ b/api/src/util/mod.rs
+@@ -16,6 +16,7 @@ where
+ {
+     Deserialize::deserialize(deserializer).map(Some)
+ }
++pub mod crypto;
+ pub mod error;
+ pub mod middleware;
+ pub mod user;
+-- 
+2.37.0 (Apple Git-136)
+

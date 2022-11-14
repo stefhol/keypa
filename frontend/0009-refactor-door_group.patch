@@ -1,0 +1,300 @@
+From eaf913d9af5b553c956e72e05e181410766521a7 Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Sat, 12 Nov 2022 17:47:19 +0100
+Subject: [PATCH 09/11] refactor door_group
+
+---
+ api/src/api/{key_group.rs => door_group.rs}  | 56 ++++++++++----------
+ api/src/api/key.rs                           |  2 +-
+ api/src/api/mod.rs                           |  2 +-
+ api/src/crud/access.rs                       |  2 +-
+ api/src/crud/{key_group.rs => door_group.rs} |  0
+ api/src/crud/mod.rs                          |  2 +-
+ api/src/main.rs                              | 36 ++++++-------
+ 7 files changed, 50 insertions(+), 50 deletions(-)
+ rename api/src/api/{key_group.rs => door_group.rs} (72%)
+ rename api/src/crud/{key_group.rs => door_group.rs} (100%)
+
+diff --git a/api/src/api/key_group.rs b/api/src/api/door_group.rs
+similarity index 72%
+rename from api/src/api/key_group.rs
+rename to api/src/api/door_group.rs
+index 433e5fb..023ffb2 100644
+--- a/api/src/api/key_group.rs
++++ b/api/src/api/door_group.rs
+@@ -11,7 +11,7 @@ use uuid::Uuid;
+ use crate::{
+     crud::{
+         self,
+-        key_group::{ChangeKeyGroup, CreateKeyGroup},
++        door_group::{ChangeKeyGroup, CreateKeyGroup},
+     },
+     util::{
+         error::CrudError,
+@@ -42,8 +42,8 @@ pub async fn get_key_group(
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::User)?;
+     let key_groups = match user_query.user_id {
+-        Some(user_id) => crud::key_group::get_door_group_of_user(&db, &user_id).await?,
+-        None => crud::key_group::get_all_door_group(&db).await?,
++        Some(user_id) => crud::door_group::get_door_group_of_user(&db, &user_id).await?,
++        None => crud::door_group::get_all_door_group(&db).await?,
+     };
+ 
+     Ok(HttpResponse::Ok().json(key_groups))
+@@ -65,15 +65,15 @@ pub struct KeyGroupQuery {
+     (status = 500),
+ )
+ )]
+-#[post("/key-group/{key_group_id}")]
++#[post("/key-group/{door_group_id}")]
+ pub async fn add_key_into_key_group(
+-    key_group_id: Path<Uuid>,
++    door_group_id: Path<Uuid>,
+     query: Query<KeyGroupQuery>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+-    crud::key_group::add_door_to_door_group(&query.key_id, &key_group_id, &db).await?;
++    crud::door_group::add_door_to_door_group(&query.key_id, &door_group_id, &db).await?;
+     Ok(HttpResponse::Ok().finish())
+ }
+ #[utoipa::path(
+@@ -88,16 +88,16 @@ pub async fn add_key_into_key_group(
+     (status = 500),
+ )
+ )]
+-#[delete("/key-group/{key_group_id}")]
++#[delete("/key-group/{door_group_id}")]
+ pub async fn delete_key_from_key_group(
+-    key_group_id: Path<Uuid>,
++    door_group_id: Path<Uuid>,
+     query: Query<KeyGroupQuery>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
++    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
+ 
+-    crud::key_group::remove_key_from_key_group(&query.key_id, &key_group_id, &db).await?;
++    crud::door_group::remove_key_from_key_group(&query.key_id, &door_group_id, &db).await?;
+     Ok(HttpResponse::Ok().finish())
+ }
+ #[utoipa::path(
+@@ -111,15 +111,15 @@ pub async fn delete_key_from_key_group(
+     (status = 500),
+ )
+ )]
+-#[get("/key-group/{key_group_id}")]
++#[get("/key-group/{door_group_id}")]
+ pub async fn get_keys_of_key_group(
+-    key_group_id: Path<Uuid>,
++    door_group_id: Path<Uuid>,
+     db: Data<DatabaseConnection>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
++    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
+ 
+-    let keys = crud::key_group::get_doors_of_door_group(&db, &key_group_id).await?;
++    let keys = crud::door_group::get_doors_of_door_group(&db, &door_group_id).await?;
+     Ok(HttpResponse::Ok().json(keys))
+ }
+ #[utoipa::path(
+@@ -140,8 +140,8 @@ pub async fn get_self_key_group(
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::User)?;
+     let user_id = auth.try_get_user_id()?;
+-    let key_groups = crud::key_group::get_door_group_of_user(&db, &user_id).await?;
+-    Ok(HttpResponse::Ok().json(key_groups))
++    let door_groups = crud::door_group::get_door_group_of_user(&db, &user_id).await?;
++    Ok(HttpResponse::Ok().json(door_groups))
+ }
+ #[utoipa::path(
+     context_path = "/api/v1",
+@@ -158,12 +158,12 @@ pub async fn get_self_key_group(
+ #[post("/key-group")]
+ pub async fn add_key_group(
+     db: Data<DatabaseConnection>,
+-    key_group: Json<CreateKeyGroup>,
++    door_group: Json<CreateKeyGroup>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::User)?;
+-    let key_groups = crud::key_group::create_door_group(&key_group, &db).await?;
+-    Ok(HttpResponse::Ok().json(key_groups))
++    let door_groups = crud::door_group::create_door_group(&door_group, &db).await?;
++    Ok(HttpResponse::Ok().json(door_groups))
+ }
+ #[utoipa::path(
+     context_path = "/api/v1",
+@@ -177,33 +177,33 @@ pub async fn add_key_group(
+     (status = 500),
+ )
+ )]
+-#[put("/key-group/{key_group_id}")]
++#[put("/key-group/{door_group_id}")]
+ pub async fn upate_key_group(
+     db: Data<DatabaseConnection>,
+-    key_group_id: Path<Uuid>,
+-    key_group: Json<ChangeKeyGroup>,
++    door_group_id: Path<Uuid>,
++    door_group: Json<ChangeKeyGroup>,
+     auth: Authenticated,
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+-    is_self_or_security_level(SecurityLevel::Worker, &auth, &key_group_id, &db).await?;
++    is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;
+ 
+-    let key_groups = crud::key_group::update_door_group(&key_group, &key_group_id, &db).await?;
+-    Ok(HttpResponse::Ok().json(key_groups))
++    let door_groups = crud::door_group::update_door_group(&door_group, &door_group_id, &db).await?;
++    Ok(HttpResponse::Ok().json(door_groups))
+ }
+ ///Check if security_level is high enough or query database to check if it is the object of a user
+ async fn is_self_or_security_level(
+     security_level: SecurityLevel,
+     auth: &Authenticated,
+-    key_group_id: &Uuid,
++    door_group_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<(), CrudError> {
+     match auth.has_high_enough_security_level(security_level) {
+         Ok(_) => {}
+         Err(_) => {
+             let user_id = auth.try_get_user_id()?;
+-            if !crud::key_group::get_door_group_of_user(&db, &user_id)
++            if !crud::door_group::get_door_group_of_user(&db, &user_id)
+                 .await?
+                 .iter()
+-                .any(|f| key_group_id.to_string() == f.door_group_id.to_string())
++                .any(|f| door_group_id.to_string() == f.door_group_id.to_string())
+             {
+                 return Err(CrudError::Unauthorized);
+             }
+diff --git a/api/src/api/key.rs b/api/src/api/key.rs
+index fb3bda8..84a0d32 100644
+--- a/api/src/api/key.rs
++++ b/api/src/api/key.rs
+@@ -26,6 +26,6 @@ pub async fn get_self_key(
+ ) -> actix_web::Result<HttpResponse, CrudError> {
+     auth.has_high_enough_security_level(SecurityLevel::User)?;
+     let user_id = &auth.try_get_user_id()?;
+-    let keys = crud::access::get_keys_of_user_id(user_id, db.get_ref()).await?;
++    let keys = crud::access::get_doors_of_user_id(user_id, db.get_ref()).await?;
+     Ok(HttpResponse::Ok().json(keys))
+ }
+diff --git a/api/src/api/mod.rs b/api/src/api/mod.rs
+index 1555111..cff2a79 100644
+--- a/api/src/api/mod.rs
++++ b/api/src/api/mod.rs
+@@ -1,7 +1,7 @@
+ pub mod auth;
+ pub mod building;
++pub mod door_group;
+ pub mod key;
+-pub mod key_group;
+ pub mod request;
+ pub mod user;
+ pub mod worker;
+diff --git a/api/src/crud/access.rs b/api/src/crud/access.rs
+index 9ed2945..f7eed91 100644
+--- a/api/src/crud/access.rs
++++ b/api/src/crud/access.rs
+@@ -7,7 +7,7 @@ use crate::util::error::CrudError;
+ 
+ use super::door::GetDoor;
+ 
+-pub async fn get_keys_of_user_id(
++pub async fn get_doors_of_user_id(
+     user_id: &Uuid,
+     db: &DatabaseConnection,
+ ) -> Result<Vec<GetDoor>, CrudError> {
+diff --git a/api/src/crud/key_group.rs b/api/src/crud/door_group.rs
+similarity index 100%
+rename from api/src/crud/key_group.rs
+rename to api/src/crud/door_group.rs
+diff --git a/api/src/crud/mod.rs b/api/src/crud/mod.rs
+index 72adf42..226dbc9 100644
+--- a/api/src/crud/mod.rs
++++ b/api/src/crud/mod.rs
+@@ -1,7 +1,7 @@
+ pub mod access;
+ pub mod building;
+ pub mod door;
+-pub mod key_group;
++pub mod door_group;
+ pub mod request;
+ pub mod role;
+ pub mod room;
+diff --git a/api/src/main.rs b/api/src/main.rs
+index b96a3ae..2ade562 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -5,7 +5,7 @@ pub mod util;
+ use std::net::Ipv4Addr;
+ 
+ use actix_cors::Cors;
+-use actix_web::{web::{self}, App, HttpServer};
++use actix_web::{web, App, HttpServer};
+ use utoipa_swagger_ui::SwaggerUi;
+ 
+ use dotenv;
+@@ -37,13 +37,13 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
+         //key
+         api::key::get_self_key,
+         //key_group
+-        api::key_group::add_key_into_key_group,
+-        api::key_group::delete_key_from_key_group,
+-        api::key_group::get_key_group,
+-        api::key_group::get_keys_of_key_group,
+-        api::key_group::get_self_key_group,
+-        api::key_group::add_key_group,
+-        api::key_group::upate_key_group,
++        api::door_group::add_key_into_key_group,
++        api::door_group::delete_key_from_key_group,
++        api::door_group::get_key_group,
++        api::door_group::get_keys_of_key_group,
++        api::door_group::get_self_key_group,
++        api::door_group::add_key_group,
++        api::door_group::upate_key_group,
+         api::request::get_self_requests,
+         api::request::get_requests_from_user,
+         api::request::get_single_requests_from_user,
+@@ -61,9 +61,9 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
+         crud::user::GetUser,
+         crud::worker::GetWorker,
+         crud::worker::CreateWorker,
+-        crud::key_group::CreateKeyGroup,
+-        crud::key_group::ChangeKeyGroup,
+-        crud::key_group::GetKeyGroup,
++        crud::door_group::CreateKeyGroup,
++        crud::door_group::ChangeKeyGroup,
++        crud::door_group::GetKeyGroup,
+         crud::request::GetRequestWithComments,
+         crud::request::GetComments,
+         crud::building::GetCompleteBuilding,
+@@ -125,13 +125,13 @@ async fn main() -> anyhow::Result<()> {
+                     //key
+                     .service(api::key::get_self_key)
+                     //key_group
+-                    .service(api::key_group::add_key_into_key_group)
+-                    .service(api::key_group::delete_key_from_key_group)
+-                    .service(api::key_group::get_key_group)
+-                    .service(api::key_group::get_self_key_group)
+-                    .service(api::key_group::get_keys_of_key_group)
+-                    .service(api::key_group::add_key_group)
+-                    .service(api::key_group::upate_key_group)
++                    .service(api::door_group::add_key_into_key_group)
++                    .service(api::door_group::delete_key_from_key_group)
++                    .service(api::door_group::get_key_group)
++                    .service(api::door_group::get_self_key_group)
++                    .service(api::door_group::get_keys_of_key_group)
++                    .service(api::door_group::add_key_group)
++                    .service(api::door_group::upate_key_group)
+                     //request
+                     .service(api::request::get_self_requests)
+                     .service(api::request::get_requests_from_user)
+-- 
+2.37.0 (Apple Git-136)
+

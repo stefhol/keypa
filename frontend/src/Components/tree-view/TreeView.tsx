@@ -8,35 +8,43 @@ interface Selection {
 }
 export type SelectionRef =
     MutableRefObject<{
-        getCurrentSelection: () => Selection
+        getCurrentSelection: () => TreeData[]
     }>
 
 export interface TreeViewProps {
-    selectionRef?: SelectionRef
+    filter?: boolean
+    isInitialValueTrue?: boolean
+    selectionRef?: TreeData[]
     data: TreeData[]
+    readonly: boolean
+    expanded?: boolean
 }
 interface BaseTree {
+    className?: string
     bubbleDown?: (bool: boolean) => void
     bubbleUp?: (caller: string, bool: boolean) => void
     parentActive?: [string, boolean]
     keys: string[]
+    isInitialValueTrue?: boolean
+    readonly: boolean
+    expanded?: boolean
 
 }
 interface ITreeContext {
-    selection?: Selection
+    selection?: TreeData[]
+    filter?: boolean
 }
 const TreeContext = React.createContext({} as ITreeContext)
 
 export const TreeView: React.FC<TreeViewProps> = (props) => {
     const [loading, setLoading] = React.useState(true);
-
-    const selection = React.useRef({} as Selection);
+    const [filter, setFilter] = React.useState(!!props.filter);
+    const selection = React.useRef([] as TreeData[]);
     React.useEffect(() => {
-        createSelectionOutOfTreeNodes(props.data, selection.current)
-        console.log(selection);
+        selection.current = props.data
 
         setLoading(false)
-    }, []);
+    }, [props.data]);
 
 
     React.useImperativeHandle(
@@ -45,10 +53,22 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
         [selection],
     )
     return (<div className="tree">
-        <TreeContext.Provider value={{ selection: selection.current }} >
+        <TreeContext.Provider value={{ selection: selection.current, filter }} >
             {
                 !loading &&
-                <TreeComponentWrapper value={props.data} keys={[]} />
+                <>
+                    <label>
+                        Filter
+                        <input
+                            checked={filter}
+                            onChange={() => setFilter(prev => !prev)}
+                            type={"checkbox"} />
+                    </label>
+                    <TreeComponentWrapper
+                        readonly={props.readonly}
+                        expanded={props.expanded}
+                        value={props.data} keys={[]} isInitialValueTrue={props.isInitialValueTrue} />
+                </>
             }
         </TreeContext.Provider>
     </div>)
@@ -71,23 +91,32 @@ interface ICompProps extends BaseTree {
     value: TreeData
 }
 export const TreeComponent: React.FC<ICompProps> = (props) => {
-    const { selection } = React.useContext(TreeContext);
-    const [checked, setChecked] = React.useState(false);
+    const { selection, filter } = React.useContext(TreeContext);
+    const [checked, setChecked] = React.useState(!!props.value.value);
+    const [hasATrueValueInTree, setHasATrueValueInTree] = React.useState(false);
     const [lastAction, setLastAction] = React.useState(props.value.name);
-    const [showChildren, setShowChildren] = React.useState(false);
+    const [showChildren, setShowChildren] = React.useState(!!props.expanded);
     React.useEffect(() => {
-        let currentSelection = getCurrentSelection(selection as Selection, props.keys, props.value.name)
+        let currentSelection = getCurrentTreeData(selection, props.keys, props.value.name)
 
         currentSelection.value = checked
-    }, [checked]);
+
+        if (typeof filter === "boolean") {
+
+            setHasATrueValueInTree(isTrueInChildren(currentSelection))
+        }
+
+    }, [checked, filter]);
     React.useEffect(() => {
         if (props.parentActive?.[1] !== undefined && props.parentActive?.[0] === props.parent?.name) {
             setChecked(props.parentActive?.[1])
             setLastAction(props.value.name)
         }
     }, [props.parentActive?.[0], props.parentActive?.[1]]);
-
-    return (<li className="tree node">
+    React.useEffect(() => {
+        setChecked(!!props.value.value)
+    }, []);
+    return (<li className={`tree node ${props.className || ""} ${(!hasATrueValueInTree && filter) ? "hidden" : ""}`}>
         <label>
             {(props.value.children && props.value.children?.length > 0) && <button className='tree' onClick={(e) => {
                 e.preventDefault()
@@ -96,17 +125,22 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
             <input className='tree'
                 type={"checkbox"}
                 checked={checked}
-                onChange={() => {
-                    props.bubbleUp && props.bubbleUp(props.value.name, !checked)
-                    setChecked(!checked)
-                    setLastAction(props.value.name)
+                readOnly={props.readonly}
+                onChange={(e) => {
+                    if (!props.readonly) {
+                        props.bubbleUp && props.bubbleUp(props.value.name, !checked)
+                        setChecked(!checked)
+                        setLastAction(props.value.name)
+                    }
                 }}
             />
             {props.value.name}
         </label>
         {
-            ((props.value.children && props.value.children?.length > 0) && showChildren) &&
+            ((props.value.children && props.value.children?.length > 0)) &&
             <TreeComponentWrapper
+                {...props}
+                className={`${showChildren ? "" : "hidden"}`}
                 value={props.value.children}
                 parent={props.value}
                 bubbleUp={(caller, bool) => {
@@ -115,6 +149,7 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
                         setChecked(bool)
                         props.bubbleUp && props.bubbleUp(props.value.name, bool)
                         setLastAction(caller)
+                        setShowChildren(true)
                     }
                 }}
                 parentActive={[lastAction, checked]}
@@ -125,6 +160,7 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
 }
 export interface TreeData {
     name: string,
+    value?: boolean,
     children?: TreeData[]
 }
 const data: TreeData[] = [
@@ -153,24 +189,46 @@ const data: TreeData[] = [
 ]
 
 
-const getCurrentSelection = (obj: Selection, keys: string[], currentKey: string) => {
-    let select = obj as Selection
-    keys.forEach(key => {
-        // @ts-ignore
-        select = select[key].children
-    })
-    return select[currentKey]
+// const getCurrentSelection = (obj: Selection, keys: string[], currentKey: string) => {
+//     let select = obj as Selection
+//     keys.forEach(key => {
+//         // @ts-ignore
+//         select = select[key].children
+//     })
+//     return select[currentKey]
+// }
+const getCurrentTreeData = (obj: TreeData[] = [], keys: string[], currentKey: string): TreeData => {
+    let curr = obj
+    for (let index = 0; index < keys.length; index++) {
+        const key = keys[index];
+        curr = curr.find(val => val.name === key)?.children || []
+    }
+    return curr.find(val => val.name === currentKey) || {} as TreeData
 }
 
-const createSelectionOutOfTreeNodes = (input: TreeData[], output: Selection) => {
-    for (let index = 0; index < input.length; index++) {
-        const element = input[index];
-        output[element.name] = {
-            value: false,
-            children: {}
-        }
-        if (element.children) {
-            createSelectionOutOfTreeNodes(element.children, output[element.name].children)
+// const createSelectionOutOfTreeNodes = (input: TreeData[], output: Selection) => {
+//     for (let index = 0; index < input.length; index++) {
+//         const element = input[index];
+//         output[element.name] = {
+//             value: !!element.value,
+//             children: {}
+//         }
+//         if (element.children) {
+//             createSelectionOutOfTreeNodes(element.children, output[element.name].children)
+//         }
+//     }
+// }
+const isTrueInChildren = (input: TreeData): boolean => {
+    if (input.value) {
+        return true
+    }
+    let treeData = input.children || []
+    for (let index = 0; index < treeData.length; index++) {
+        const el = treeData[index];
+        let found = isTrueInChildren(el)
+        if (found) {
+            return true
         }
     }
+    return false
 }

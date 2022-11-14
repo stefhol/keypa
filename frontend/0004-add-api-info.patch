@@ -1,0 +1,43 @@
+From 094d578e597980e81836d85ccda3687dda88b02f Mon Sep 17 00:00:00 2001
+From: stefhol <hoef.stef@pm.me>
+Date: Sun, 6 Nov 2022 17:07:23 +0100
+Subject: [PATCH 04/11] add api info
+
+---
+ api/src/main.rs | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+
+diff --git a/api/src/main.rs b/api/src/main.rs
+index dbaf0ea..e9f75a7 100644
+--- a/api/src/main.rs
++++ b/api/src/main.rs
+@@ -13,9 +13,10 @@ use log::info;
+ 
+ use sea_orm::Database;
+ 
+-use utoipa::OpenApi;
++use utoipa::{OpenApi, openapi::{Server, Info}};
+ #[derive(OpenApi)]
+ #[openapi(
++    
+     paths(
+         //login
+         api::auth::login,
+@@ -52,7 +53,13 @@ async fn main() -> anyhow::Result<()> {
+         .is_test(true)
+         .init();
+     // Make instance variable of ApiDoc so all worker threads gets the same instance.
+-    let openapi = ApiDoc::openapi();
++    let mut openapi = ApiDoc::openapi();
++    
++    openapi.servers = Some(vec![
++       Server::new(format!("{}:{}",Ipv4Addr::UNSPECIFIED, 8080))
++    ]);
++    openapi.info = Info::new("KeyPa", "0.0.1");
++
+     let database_url = dotenv::var("DATABASE_URL")?;
+     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
+     let err = migration_helper::create_database(database_url, db_name).await;
+-- 
+2.37.0 (Apple Git-136)
+

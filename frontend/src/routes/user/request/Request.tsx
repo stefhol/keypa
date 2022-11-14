@@ -53,7 +53,7 @@ export const Request: React.FC<RequestProps> = (props) => {
                 <br />
                 <label>
                     Waehle die Raeume fuer den du Zugang benoetigst
-
+                <br />
                     {data &&
                         <TreeView selectionRef={selection} data={prepareData(data)} />
                     }
@@ -69,7 +69,7 @@ export const Request: React.FC<RequestProps> = (props) => {
     </>)
 }
 
-export const prepareData = (data: Building[]) => {
+export const prepareData = (data: Building[], filter?: boolean) => {
     return data.map(val => ({
         name: `Gebaeude ${val.name}`,
         children: prepareStockwerke(val.rooms)
@@ -83,6 +83,7 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
             name: `Stockwerk: ${floor}`,
             children: data.filter(val => val.floor == floor).map((val, idx) => ({
                 name: `Raum: ${val.name}`,
+                value: !!val.doors.find(val => val.owner === true),
                 children: []
             }))
         })

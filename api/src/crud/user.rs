@@ -10,6 +10,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::{role::GetRole, worker::GetSmallWorker};
+
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct GetUser {
     pub user_id: Uuid,
