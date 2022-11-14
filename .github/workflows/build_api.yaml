@@ -1,21 +1,25 @@
-name: Rust
+name: Build Keypa API
 
 on:
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  IMAGE_NAME: keypa_api
 
 jobs:
   build:
     
     runs-on: ubuntu-latest
+
     name: build release
+    
     defaults:
       run:
         working-directory: .
     container:
       image: clux/muslrust
+    
     steps:
     - uses: actions/checkout@v3
     - name: Link to predefined musl toolchain
@@ -35,5 +39,46 @@ jobs:
         cp ./mock ./builds/mock
     - uses: actions/upload-artifact@v3
       with:
-        name: Build test
-        path: ./target/x86_64-unknown-linux-musl/release/builds
+        name: rest_api_x86_musl
+        path: |
+          ./target/x86_64-unknown-linux-musl/release/builds
+          ./Dockerfile
+          - name: Build image
+    
+  build_docker:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    name: build docker image
+    steps:
+    - name: Download a Build Artifact
+      uses: actions/download-artifact@v2.0.10
+      with:
+        # Artifact name
+        name: keypa_x86_musl
+    - name: show files
+      run: ls -R
+    - name: build docker
+      run: | 
+        docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+    - name: Log in to registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+      run: echo "${{ secrets.UPLOAD_PACKAGE_SECRET }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push image
+      run: |
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+          docker tag $IMAGE_NAME $IMAGE_ID:$VERSION
+          docker push $IMAGE_ID:$VERSION
