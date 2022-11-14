@@ -2,10 +2,12 @@ pub mod api;
 pub mod crud;
 pub mod util;
 
-use std::net::Ipv4Addr;
+use std::{net::Ipv4Addr, env};
 
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+
+use actix_web::{ App, HttpServer, get, error::HttpError, web};
+use actix_web_lab::web::spa;
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;
@@ -14,6 +16,7 @@ use log::info;
 use sea_orm::Database;
 
 use utoipa::{OpenApi, openapi::{Server, Info}};
+
 #[derive(OpenApi)]
 #[openapi(
     
@@ -84,13 +87,14 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
 struct ApiDoc;
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
+    // let wwwroot = dotenv::var("WWWROOT")?;
+    // env::set_current_dir(&wwwroot)?;
     env_logger::builder()
         .filter_level(log::LevelFilter::Error)
         .is_test(true)
         .init();
     // Make instance variable of ApiDoc so all worker threads gets the same instance.
     let mut openapi = ApiDoc::openapi();
-    
     openapi.servers = Some(vec![
        Server::new(format!("{}:{}",Ipv4Addr::UNSPECIFIED, 8080))
     ]);
@@ -113,6 +117,7 @@ async fn main() -> anyhow::Result<()> {
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-doc/openapi.json", openapi.clone()),
             )
+            
             .service(
                 web::scope("/api/v1")
                     .wrap(util::middleware::Auth)
@@ -158,6 +163,12 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::building::get_buldings)
                 ,
             )
+            // .service(
+            //     spa().index_file("./index.html")
+            //         .static_resources_location("./assets")
+            //         .static_resources_mount("/assets")
+            //         .finish()
+            // )
             .app_data(web::Data::new(db.clone()))
             .wrap(Cors::permissive())
     })
