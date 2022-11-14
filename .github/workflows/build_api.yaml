@@ -39,7 +39,7 @@ jobs:
         cp ./mock ./builds/mock
     - uses: actions/upload-artifact@v3
       with:
-        name: rest_api_x86_musl
+        name: keypa_x86_musl
         path: |
           ./target/x86_64-unknown-linux-musl/release/builds
           ./Dockerfile
