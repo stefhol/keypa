@@ -4,7 +4,7 @@ use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
 
 use uuid::Uuid;
 
-use super::building::{GetCompleteBuilding, GetCompleteRoom};
+use super::building::{GetCompleteBuilding, GetCompleteDoor, GetCompleteRoom};
 use super::door::GetDoor;
 use crate::crud;
 use crate::util::error::CrudError;
@@ -39,7 +39,7 @@ pub async fn get_doors_of_door_group_id(
             DbBackend::Postgres,
             r#"select (tbl_door.*) from tbl_door_group
             join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
-            join tbl_door on tbl_door.door_id = tbl_door.door_id
+            join tbl_door on tbl_door_to_group_door.door_id = tbl_door.door_id
             where tbl_door_group.door_group_id = $1"#,
             vec![user_id.clone().into()],
         ))
@@ -54,7 +54,7 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let buildings = crud::building::get_building_complex(db).await?;
     let authorized_doors = get_doors_of_user_id(user_id, db).await?;
-    let filtered_buildings = get_only_authorized_complex_building(buildings, authorized_doors);
+    let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
     // Ok(values.iter().map(|f| f.into()).collect())
 }
@@ -64,9 +64,10 @@ pub async fn get_building_by_door_group_with_only_authorized_doors(
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let buildings = crud::building::get_building_complex(db).await?;
     let authorized_doors = get_doors_of_door_group_id(door_group_id, db).await?;
-    let filtered_buildings = get_only_authorized_complex_building(buildings, authorized_doors);
+    let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }
+/// get only buiding with authorized doors
 fn get_only_authorized_complex_building(
     buildings: Vec<GetCompleteBuilding>,
     authorized_doors: Vec<GetDoor>,
@@ -87,7 +88,10 @@ fn get_only_authorized_complex_building(
                         .map(|f| f.door_id)
                         .contains(&door.door_id)
                     {
-                        doors.push(door.clone())
+                        doors.push(GetCompleteDoor {
+                            owner: true,
+                            ..door
+                        })
                     }
                 }
                 rooms.push(GetCompleteRoom { doors, ..room })
@@ -98,4 +102,38 @@ fn get_only_authorized_complex_building(
         }
     }
     filtered_buildings
+}
+/// Returns complete structure with value in door changed
+fn get_complex_building_authorized(
+    buildings: Vec<GetCompleteBuilding>,
+    authorized_doors: Vec<GetDoor>,
+) -> Vec<GetCompleteBuilding> {
+    let buildings: Vec<GetCompleteBuilding> = buildings
+        .iter()
+        .map(|building| {
+            let mut building = building.clone();
+            building.rooms = building
+                .rooms
+                .iter()
+                .map(|room| {
+                    let mut room = room.clone();
+                    room.doors = room
+                        .doors
+                        .iter()
+                        .map(|door| {
+                            let mut door = door.clone();
+                            door.owner = authorized_doors
+                                .iter()
+                                .map(|f| f.door_id)
+                                .contains(&door.door_id);
+                            door
+                        })
+                        .collect();
+                    room
+                })
+                .collect();
+            building
+        })
+        .collect();
+    buildings
 }

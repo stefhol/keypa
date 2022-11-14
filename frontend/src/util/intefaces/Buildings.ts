@@ -18,5 +18,6 @@ export interface Room {
 export interface Door {
     door_id: string;
     name: string;
+    owner: boolean;
     room_id: string;
 }

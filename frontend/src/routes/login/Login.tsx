@@ -2,6 +2,7 @@ import React from "react";
 import { Rest } from "../../util/Rest";
 import '../../css/login.css'
 import { useNavigate } from "react-router-dom";
+import { useLoading } from "../../hooks/useLoading";
 export interface LoginRequest {
     email: string,
     password: string
@@ -10,6 +11,7 @@ export interface LoginProps { }
 export const Login: React.FC<LoginProps> = (props) => {
     const [name, setName] = React.useState("aric_architecto@gmail.com");
     const [password, setPassword] = React.useState("1234");
+    const { startLoading, stopLoading } = useLoading()
     const [error, setError] = React.useState("");
     const navigate = useNavigate()
     return (<main className="login"
@@ -19,6 +21,7 @@ export const Login: React.FC<LoginProps> = (props) => {
             className="login"
             onSubmit={e => {
                 e.preventDefault()
+                startLoading()
                 Rest.sendLogin({
                     email: name,
                     password
@@ -30,6 +33,9 @@ export const Login: React.FC<LoginProps> = (props) => {
                         console.log(err);
 
                         setError("Login nicht erfolgreich")
+                    })
+                    .finally(() => {
+                        stopLoading()
                     })
             }}>
             <input

@@ -3,18 +3,20 @@
     display       : flex;
     flex-direction: column;
 
-    width           : 180px;
+    width : 300px;
     height          : auto;
     background-color: darkgrey;
     color           : black;
     padding         : 0.5rem;
     position        : relative;
-    margin          : 1rem;
+    margin : 0.5rem;
+    margin-left: 2rem;
     border-radius   : 10px;
 }
 
 .comment.blue {
     background-color: lightblue;
+    margin-left: 0;
 }
 
 .comment>.date {

@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import React from "react"
 import { useParams } from "react-router-dom"
+import { SelectionRef, TreeView } from "../../Components/tree-view/TreeView"
+import "../../css/comment.css"
+import { useLoading } from "../../hooks/useLoading"
 import { Comment, Request } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
-import { UserInfo } from "../user/UseChange"
-import "../../css/comment.css"
-import { BuildingFC } from "../user/keys/Key"
+import { getCountOfRooms } from "../user/keys/Key"
 import { prepareData } from "../user/request/Request"
+import { UserInfo } from "../user/UseChange"
 export interface ChangeRequestProps { }
 const getUser = async ({ queryKey }: { queryKey: string[] }) => {
     const userId = queryKey[1]
@@ -24,7 +26,8 @@ const getBuildingWithDoorGroups = async ({ queryKey }: { queryKey: string[] }) =
 export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
     const { requestId } = useParams()
 
-    const { data: request } = useQuery(["request", requestId || ""], getRequest)
+    const { data: request, isLoading } = useQuery(["request", requestId || ""], getRequest)
+    useLoading(isLoading)
 
     return (<>
         {request &&
@@ -40,6 +43,8 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
     const [accept, setAccept] = React.useState(props.data.accept);
     const [reject, setReject] = React.useState(props.data.reject);
     const [pending, setPending] = React.useState(props.data.pending);
+    const selection = React.useRef({ getCurrentSelection: () => Selection }) as unknown as SelectionRef;
+
     return (<>
         <form>
             <UserInfo data={props.data.requester} />
@@ -71,16 +76,22 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     <option value="3" selected={pending}>Ausstehend</option>
                 </select>
             </label>
-            <BuildingFC value={prepareData(building || [])} />
-
             <button>
                 Aenderung Speichern
             </button>
-            <CommentBoxFC
-                data={props.data.comments || []}
-                requester={props.data.requester_id}
-            />
+            <h2>Angefragte Raeume</h2>
+            {(building && building?.length || 0) > 0 && <>
+                <>Raumanzahl: {getCountOfRooms(building || [])}</>
+                <TreeView selectionRef={selection} data={prepareData(building || [])} filter expanded /></>
+
+
+            }
         </form>
+
+        <CommentBoxFC
+            data={props.data.comments || []}
+            requester={props.data.requester_id}
+        />
     </>)
 }
 
@@ -92,6 +103,7 @@ export const CommentFC: React.FC<CommentProps> = (props) => {
 
     return (<>
         <div className={`comment ${props.isRequester && "blue"}`}>
+
             <span><strong>{props.comment.user.name}</strong></span>
             <span>{props.comment.comment}</span>
             <span className="date">{format(new Date(props.comment.written_at), "dd.MM.yyyy hh:mm")}</span>
@@ -104,7 +116,10 @@ export interface CommentBoxProps {
 }
 export const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
     const [newComment, setNewComment] = React.useState("");
-    return (<>
+    return (<div className="comment-box">
+        <h2>
+            Kommentare
+        </h2>
         {props.data.map(val => <CommentFC
             comment={val}
             isRequester={val.user_id === props.requester}
@@ -118,5 +133,5 @@ export const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
 
         </div>
         <button onClick={(e) => { e.preventDefault() }}>Sende Nachricht</button>
-    </>)
+    </div>)
 }

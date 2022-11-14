@@ -1,16 +1,19 @@
 import { useQuery } from "@tanstack/react-query"
-import { TreeData } from "../../../Components/tree-view/TreeView"
+import { TreeData, TreeView } from "../../../Components/tree-view/TreeView"
+import { Building } from "../../../util/intefaces/Buildings"
 import { Rest } from "../../../util/Rest"
 import { prepareData } from "../request/Request"
 
-export interface KeyProps { }
+export interface KeyProps {
+    data: Building[]
+
+}
 export const AuthorizedBuildings: React.FC<KeyProps> = (props) => {
-    const { data: keys } = useQuery(["self", "doors"], Rest.getSelfDoors)
     return (<>
         <h2>Meine Zugänge</h2>
         {
-            (keys && keys) &&
-            <BuildingFC value={prepareData(keys)} />
+            (props.data) &&
+            <TreeView data={prepareData(props.data)} expanded readonly filter />
         }
     </>)
 }
@@ -19,7 +22,6 @@ export interface BuildingFCProps {
     value: TreeData[]
 }
 export const BuildingFC: React.FC<BuildingFCProps> = (props) => {
-
     return (<>
         {
             props.value.map((val, idx) => (<>{
@@ -37,4 +39,8 @@ export const BuildingFC: React.FC<BuildingFCProps> = (props) => {
             }</>))
         }
     </>)
+}
+export const getCountOfRooms = (data: Building[]) => {
+    return data.reduce((acc, building) => (acc + building.rooms.reduce((acc, room) => acc + (room.doors.find(val => val.owner) ? 1 : 0), 0)), 0)
+
 }

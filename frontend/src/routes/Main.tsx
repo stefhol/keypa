@@ -8,6 +8,9 @@ export const Main: React.FC<MainProps> = (props) => {
     return (<main>
         <LogoFull width={300} /><br />
         <a href="/dashboard">Zum Dashboard</a>
+
+        <h3>Prototyp keine Eingaben moeglich</h3>
+
         <p>
             Universitäten sind heutzutage immer auf der Suche nach Wegen, um die Sicherheit zu verbessern. Ein Schlüsselverwaltungssystem ist eine gute Möglichkeit, um den Überblick über die vielen Schlüssel zu behalten, die im Umlauf sind. Mit einem Schlüsselverwaltungssystem können Sie den Zugriff auf bestimmte Bereiche einschränken und so die Sicherheit erhöhen.
         </p>

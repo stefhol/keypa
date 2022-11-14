@@ -9,24 +9,19 @@ import { ChangeWorker } from "../leader/ChangeWorker"
 
 export interface DashboardProps { }
 export const Dashboard: React.FC<DashboardProps> = (props) => {
-    const { data: userData } = useQuery(["self", "user"], Rest.getSelf)
-
-
-    const onTableRowClick = (index: number) => {
-        console.log(index);
-
-    }
     return (<>
         <main>
             <a href="user">
                 Nutzerbereich
             </a><br />
-            <a href="worker">
-                Verwaltungsmitarbeiterbereich
+            <h3>Verwaltung</h3>
+            <a href="request">
+                Alle austehenden Anfragen fuer Zugeaenge
             </a><br />
             <a href="leader">
-                Verwaltungsvorgesetzterbereich
+                Alle Nutzer
             </a><br />
+
         </main>
     </>)
 }

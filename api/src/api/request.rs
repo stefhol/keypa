@@ -48,14 +48,14 @@ pub async fn get_self_requests(
     (status = 500),
 )
 )]
-#[get("user/{user_id}/request/")]
+#[get("user/{user_id}/request")]
 pub async fn get_requests_from_user(
     db: Data<DatabaseConnection>,
     user_id: Path<Uuid>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let requests = crud::request::get_request_from_user_id(&user_id, db.get_ref()).await?;
+    let requests = crud::request::get_request_from_user_id(&user_id, &db).await?;
     Ok(HttpResponse::Ok().json(requests))
 }
 #[derive(Debug, Serialize, Deserialize)]
