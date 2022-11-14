@@ -14,9 +14,9 @@ export type SelectionRef =
 export interface TreeViewProps {
     filter?: boolean
     isInitialValueTrue?: boolean
-    selectionRef?: TreeData[]
+    selectionRef?: SelectionRef
     data: TreeData[]
-    readonly: boolean
+    readonly?: boolean
     expanded?: boolean
 }
 interface BaseTree {
@@ -26,7 +26,7 @@ interface BaseTree {
     parentActive?: [string, boolean]
     keys: string[]
     isInitialValueTrue?: boolean
-    readonly: boolean
+    readonly?: boolean
     expanded?: boolean
 
 }
@@ -45,10 +45,13 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
 
         setLoading(false)
     }, [props.data]);
-
-
+    const temp = React.useRef({});
+    let selectionRef = temp;
+    if (props.selectionRef) {
+        selectionRef = props.selectionRef
+    }
     React.useImperativeHandle(
-        props.selectionRef,
+        selectionRef,
         () => ({ getCurrentSelection: () => { return selection.current; } }),
         [selection],
     )
