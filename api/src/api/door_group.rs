@@ -65,11 +65,7 @@ pub struct KeyGroupQuery {
     (status = 500),
 )
 )]
-<<<<<<< HEAD:api/src/api/door_group.rs
 #[post("/key-group/{door_group_id}")]
-=======
-#[post("/key-group/{key_group_id}")]
->>>>>>> 9560445 (minor fixes):api/src/api/key_group.rs
 pub async fn add_key_into_key_group(
     door_group_id: Path<Uuid>,
     query: Query<KeyGroupQuery>,
@@ -184,13 +180,8 @@ pub async fn add_key_group(
 #[put("/key-group/{door_group_id}")]
 pub async fn upate_key_group(
     db: Data<DatabaseConnection>,
-<<<<<<< HEAD:api/src/api/door_group.rs
     door_group_id: Path<Uuid>,
     door_group: Json<ChangeKeyGroup>,
-=======
-    key_group_id: Path<Uuid>,
-    key_group: Json<ChangeKeyGroup>,
->>>>>>> 9560445 (minor fixes):api/src/api/key_group.rs
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     is_self_or_security_level(SecurityLevel::Worker, &auth, &door_group_id, &db).await?;

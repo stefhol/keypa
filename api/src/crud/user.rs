@@ -9,13 +9,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-<<<<<<< HEAD
 use super::{role::GetRole, worker::GetSmallWorker};
-=======
-use crate::util::{convert_active::Convert, deserialize_some, error::CrudError};
 
-use super::role::GetRole;
->>>>>>> 9560445 (minor fixes)
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct GetUser {
     pub user_id: Uuid,
@@ -96,7 +91,6 @@ impl From<&GetUser> for GetUserSmall {
 }
 
 pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudError> {
-<<<<<<< HEAD
     let users = get_raw_all_user(db).await?;
     let mut user_vec = vec![];
     for user in users {
@@ -104,14 +98,6 @@ pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudE
         user_vec.push(user);
     }
     Ok(user_vec)
-=======
-    let model = tbl_user::Entity::find()
-        .find_also_related(tbl_role::Entity)
-        .filter(tbl_user::Column::IsActive.eq(true))
-        .all(db)
-        .await?;
-    Ok(model.iter().map(|f| GetUser::from(f)).collect_vec())
->>>>>>> 9560445 (minor fixes)
 }
 pub async fn get_user_by_email(
     db: &DatabaseConnection,
