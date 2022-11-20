@@ -18,13 +18,13 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_request::Entity",
+        belongs_to = "super::tbl_request_base::Entity",
         from = "Column::RequestId",
-        to = "super::tbl_request::Column::RequestId",
+        to = "super::tbl_request_base::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblRequest,
+    TblRequestBase,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::UserId",
@@ -35,9 +35,9 @@ pub enum Relation {
     TblUser,
 }
 
-impl Related<super::tbl_request::Entity> for Entity {
+impl Related<super::tbl_request_base::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblRequestBase.def()
     }
 }
 

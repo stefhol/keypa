@@ -20,8 +20,7 @@ pub async fn get_doors_of_user_id(
             join tbl_door_group on tbl_user.user_id = tbl_door_group.owner_id
             join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
             join tbl_door on tbl_door_to_group_door.door_id = tbl_door.door_id
-            join tbl_door_user_access on tbl_door.door_id = tbl_door_user_access.door_id
-            where tbl_door_user_access.is_active = true and
+            where tbl_door_group.is_active = true and
             tbl_user.user_id = $1"#,
             vec![user_id.clone().into()],
         ))
@@ -68,6 +67,7 @@ pub async fn get_building_by_door_group_with_only_authorized_doors(
     Ok(filtered_buildings)
 }
 /// get only buiding with authorized doors
+#[allow(dead_code)]
 fn get_only_authorized_complex_building(
     buildings: Vec<GetCompleteBuilding>,
     authorized_doors: Vec<GetDoor>,

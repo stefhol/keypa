@@ -20,19 +20,11 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblUser,
-    #[sea_orm(has_many = "super::tbl_worker::Entity")]
-    TblWorker,
 }
 
 impl Related<super::tbl_user::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblUser.def()
-    }
-}
-
-impl Related<super::tbl_worker::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblWorker.def()
     }
 }
 

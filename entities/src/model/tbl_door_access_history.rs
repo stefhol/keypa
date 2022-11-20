@@ -4,15 +4,14 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_key")]
+#[sea_orm(table_name = "tbl_door_access_history")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub key_id: Uuid,
-    pub name: String,
-    pub value: String,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub description: Option<String>,
+    pub door_history_id: Uuid,
     pub door_id: Uuid,
+    pub user_id: Uuid,
+    pub deactivated_at: Option<DateTime>,
+    pub activated_at: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -25,10 +24,14 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblDoor,
-    #[sea_orm(has_many = "super::tbl_key_group_key::Entity")]
-    TblKeyGroupKey,
-    #[sea_orm(has_many = "super::tbl_key_user_history::Entity")]
-    TblKeyUserHistory,
+    #[sea_orm(
+        belongs_to = "super::tbl_user::Entity",
+        from = "Column::UserId",
+        to = "super::tbl_user::Column::UserId",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    TblUser,
 }
 
 impl Related<super::tbl_door::Entity> for Entity {
@@ -37,15 +40,9 @@ impl Related<super::tbl_door::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_key_group_key::Entity> for Entity {
+impl Related<super::tbl_user::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeyGroupKey.def()
-    }
-}
-
-impl Related<super::tbl_key_user_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeyUserHistory.def()
+        Relation::TblUser.def()
     }
 }
 

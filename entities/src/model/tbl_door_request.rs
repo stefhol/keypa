@@ -4,19 +4,11 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_request")]
+#[sea_orm(table_name = "tbl_door_request")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub request_id: Uuid,
-    pub requester_id: Uuid,
     pub door_group_id: Uuid,
-    pub created_at: DateTime,
-    pub changed_at: DateTime,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub description: Option<String>,
-    pub accept: bool,
-    pub reject: bool,
-    pub pending: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -30,15 +22,13 @@ pub enum Relation {
     )]
     TblDoorGroup,
     #[sea_orm(
-        belongs_to = "super::tbl_user::Entity",
-        from = "Column::RequesterId",
-        to = "super::tbl_user::Column::UserId",
+        belongs_to = "super::tbl_request_base::Entity",
+        from = "Column::RequestId",
+        to = "super::tbl_request_base::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblUser,
-    #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
-    TblRequestComment,
+    TblRequestBase,
 }
 
 impl Related<super::tbl_door_group::Entity> for Entity {
@@ -47,15 +37,9 @@ impl Related<super::tbl_door_group::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_user::Entity> for Entity {
+impl Related<super::tbl_request_base::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblUser.def()
-    }
-}
-
-impl Related<super::tbl_request_comment::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestComment.def()
+        Relation::TblRequestBase.def()
     }
 }
 

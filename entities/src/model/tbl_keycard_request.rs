@@ -4,43 +4,42 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_key_group_key")]
+#[sea_orm(table_name = "tbl_keycard_request")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub key_id: Uuid,
-    #[sea_orm(primary_key, auto_increment = false)]
-    pub key_group_id: Uuid,
+    pub request_id: Uuid,
+    pub keycard_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_key_group::Entity",
-        from = "Column::KeyGroupId",
-        to = "super::tbl_key_group::Column::KeyGroupId",
+        belongs_to = "super::tbl_keycard::Entity",
+        from = "Column::KeycardId",
+        to = "super::tbl_keycard::Column::KeycardId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKeyGroup,
+    TblKeycard,
     #[sea_orm(
-        belongs_to = "super::tbl_key::Entity",
-        from = "Column::KeyId",
-        to = "super::tbl_key::Column::KeyId",
+        belongs_to = "super::tbl_request_base::Entity",
+        from = "Column::RequestId",
+        to = "super::tbl_request_base::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKey,
+    TblRequestBase,
 }
 
-impl Related<super::tbl_key_group::Entity> for Entity {
+impl Related<super::tbl_keycard::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeyGroup.def()
+        Relation::TblKeycard.def()
     }
 }
 
-impl Related<super::tbl_key::Entity> for Entity {
+impl Related<super::tbl_request_base::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKey.def()
+        Relation::TblRequestBase.def()
     }
 }
 

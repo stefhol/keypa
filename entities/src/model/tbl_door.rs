@@ -26,8 +26,8 @@ pub enum Relation {
     TblKeycardHistory,
     #[sea_orm(has_many = "super::tbl_door_to_group_door::Entity")]
     TblDoorToGroupDoor,
-    #[sea_orm(has_many = "super::tbl_door_user_access::Entity")]
-    TblDoorUserAccess,
+    #[sea_orm(has_many = "super::tbl_door_access_history::Entity")]
+    TblDoorAccessHistory,
 }
 
 impl Related<super::tbl_room::Entity> for Entity {
@@ -48,9 +48,9 @@ impl Related<super::tbl_door_to_group_door::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_door_user_access::Entity> for Entity {
+impl Related<super::tbl_door_access_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoorUserAccess.def()
+        Relation::TblDoorAccessHistory.def()
     }
 }
 

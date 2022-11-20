@@ -11,6 +11,8 @@ pub struct Model {
     pub name: String,
     pub role_id: Option<Uuid>,
     pub is_active: bool,
+    pub tel: Option<String>,
+    pub address: Option<String>,
     pub email: String,
     pub picture_url: Option<String>,
     pub password: String,
@@ -32,16 +34,12 @@ pub enum Relation {
     TblLeader,
     #[sea_orm(has_many = "super::tbl_admin::Entity")]
     TblAdmin,
-    #[sea_orm(has_many = "super::tbl_door_group::Entity")]
-    TblDoorGroup,
-    #[sea_orm(has_many = "super::tbl_keycard::Entity")]
-    TblKeycard,
-    #[sea_orm(has_many = "super::tbl_request::Entity")]
-    TblRequest,
+    #[sea_orm(has_many = "super::tbl_request_base::Entity")]
+    TblRequestBase,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
-    #[sea_orm(has_many = "super::tbl_door_user_access::Entity")]
-    TblDoorUserAccess,
+    #[sea_orm(has_many = "super::tbl_door_access_history::Entity")]
+    TblDoorAccessHistory,
 }
 
 impl Related<super::tbl_role::Entity> for Entity {
@@ -68,21 +66,9 @@ impl Related<super::tbl_admin::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_door_group::Entity> for Entity {
+impl Related<super::tbl_request_base::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoorGroup.def()
-    }
-}
-
-impl Related<super::tbl_keycard::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeycard.def()
-    }
-}
-
-impl Related<super::tbl_request::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblRequestBase.def()
     }
 }
 
@@ -92,9 +78,9 @@ impl Related<super::tbl_request_comment::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_door_user_access::Entity> for Entity {
+impl Related<super::tbl_door_access_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoorUserAccess.def()
+        Relation::TblDoorAccessHistory.def()
     }
 }
 

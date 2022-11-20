@@ -3,9 +3,9 @@ use anyhow;
 use chrono::{NaiveDateTime, Utc};
 use dotenv;
 use entities::model::{
-    tbl_building, tbl_door, tbl_door_group, tbl_door_to_group_door, tbl_door_user_access,
-    tbl_keycard, tbl_keycard_history, tbl_leader, tbl_request, tbl_request_comment, tbl_role,
-    tbl_room, tbl_user, tbl_worker,
+    tbl_building, tbl_door, tbl_door_group, tbl_door_request, tbl_door_to_group_door,
+    tbl_door_user_access, tbl_keycard, tbl_keycard_history, tbl_leader, tbl_request_base,
+    tbl_request_comment, tbl_role, tbl_room, tbl_user, tbl_worker,
 };
 use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
 
@@ -32,7 +32,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
     let database_url = dotenv::var("DATABASE_URL")?;
     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
-    println!("{}/{}", database_url, db_name);
+    info!("{}/{}", database_url, db_name);
 
     let err = migration_helper::drop_database(database_url, db_name).await;
     if let Err(err) = err {
@@ -57,7 +57,7 @@ async fn main() -> anyhow::Result<()> {
     .insert(&db)
     .await?;
     tbl_role::ActiveModel {
-        name: ActiveValue::Set("Angestellter".to_string()),
+        name: ActiveValue::Set("administrative staff".to_string()),
         ..Default::default()
     }
     .insert(&db)
@@ -137,7 +137,7 @@ async fn main() -> anyhow::Result<()> {
             f.role_id.unwrap()
                 == roles
                     .iter()
-                    .find(|f| f.name == "Angestellter")
+                    .find(|f| f.name == "administrative staff")
                     .unwrap()
                     .role_id
         })
@@ -145,7 +145,6 @@ async fn main() -> anyhow::Result<()> {
         .collect();
     //insert workers
     for user in users_filtered {
-        println!("{:#?}", user);
         tbl_worker::ActiveModel {
             user_id: ActiveValue::Set(user.user_id.to_owned()),
             ..Default::default()
@@ -260,25 +259,36 @@ async fn main() -> anyhow::Result<()> {
     for _ in 0..100 {
         let accept = rng.gen_ratio(1, 10);
         let reject = rng.gen_ratio(1, 10);
-        tbl_request::ActiveModel {
+        let request_base = tbl_request_base::ActiveModel {
             accept: ActiveValue::Set(accept && !reject),
             pending: ActiveValue::Set(accept == reject),
             reject: ActiveValue::Set(!accept && reject),
             description: ActiveValue::Set(Sentence(0..10).fake_with_rng(&mut rng)),
-            door_group_id: ActiveValue::Set(
-                door_groups[rng.gen_range(0..door_groups.len())]
-                    .door_group_id
-                    .to_owned(),
-            ),
             requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
             ..Default::default()
         }
         .insert(&db)
         .await?;
+        tbl_door_request::ActiveModel {
+            door_group_id: ActiveValue::Set(
+                door_groups[rng.gen_range(0..door_groups.len())]
+                    .door_group_id
+                    .to_owned(),
+            ),
+            request_id: ActiveValue::Set(request_base.request_id.clone()),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
     }
-    let requests = tbl_request::Entity::find().all(&db).await?;
+    let requests = tbl_request_base::Entity::find().all(&db).await?;
+    let door_requests = tbl_door_request::Entity::find().all(&db).await?;
     for _ in 0..500 {
-        let request = &requests[rng.gen_range(0..requests.len())];
+        let door_request = &door_requests[rng.gen_range(0..door_requests.len())];
+        let request = requests
+            .iter()
+            .find(|f| &f.request_id == &door_request.request_id)
+            .unwrap();
         let user_who_writes_comment;
         //get the user or a random worker
         if rng.gen_bool(0.5) {

@@ -2,12 +2,12 @@ pub mod api;
 pub mod crud;
 pub mod util;
 
-use std::{net::Ipv4Addr, env};
+use std::{net::Ipv4Addr};
 
 use actix_cors::Cors;
 
-use actix_web::{ App, HttpServer, get, error::HttpError, web};
-use actix_web_lab::web::spa;
+use actix_web::{ App, HttpServer, web};
+
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;

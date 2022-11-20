@@ -4,23 +4,23 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_user_temp")]
+#[sea_orm(table_name = "tbl_status")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub temp_id: Uuid,
-    pub created_at: DateTime,
-    pub name: Option<String>,
-    pub email: Option<String>,
+    pub status_id: Uuid,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_many = "super::tbl_request_base::Entity")]
+    TblRequestBase,
+}
 
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
+impl Related<super::tbl_request_base::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRequestBase.def()
     }
 }
 

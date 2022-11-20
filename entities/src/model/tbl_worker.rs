@@ -8,19 +8,10 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub user_id: Uuid,
-    pub boss_user_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "super::tbl_leader::Entity",
-        from = "Column::BossUserId",
-        to = "super::tbl_leader::Column::UserId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblLeader,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::UserId",
@@ -29,12 +20,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblUser,
-}
-
-impl Related<super::tbl_leader::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblLeader.def()
-    }
 }
 
 impl Related<super::tbl_user::Entity> for Entity {

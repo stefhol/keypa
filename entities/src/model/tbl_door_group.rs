@@ -8,31 +8,30 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub door_group_id: Uuid,
-    pub owner_id: Uuid,
-    pub name: String,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub description: Option<String>,
+    pub request_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_user::Entity",
-        from = "Column::OwnerId",
-        to = "super::tbl_user::Column::UserId",
+        belongs_to = "super::tbl_request_base::Entity",
+        from = "Column::RequestId",
+        to = "super::tbl_request_base::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblUser,
+    TblRequestBase,
     #[sea_orm(has_many = "super::tbl_door_to_group_door::Entity")]
     TblDoorToGroupDoor,
-    #[sea_orm(has_many = "super::tbl_request::Entity")]
-    TblRequest,
+    #[sea_orm(has_many = "super::tbl_door_request::Entity")]
+    TblDoorRequest,
+    #[sea_orm(has_many = "super::tbl_temp_keycard_request::Entity")]
+    TblTempKeycardRequest,
 }
 
-impl Related<super::tbl_user::Entity> for Entity {
+impl Related<super::tbl_request_base::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblUser.def()
+        Relation::TblRequestBase.def()
     }
 }
 
@@ -42,9 +41,15 @@ impl Related<super::tbl_door_to_group_door::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_request::Entity> for Entity {
+impl Related<super::tbl_door_request::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblDoorRequest.def()
+    }
+}
+
+impl Related<super::tbl_temp_keycard_request::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblTempKeycardRequest.def()
     }
 }
 
