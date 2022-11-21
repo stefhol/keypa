@@ -24,16 +24,22 @@ import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
 import { RequestBase } from './routes/request/WorkerBase';
-import { Request } from './routes/user/request/Request';
+import { RoomRequest, RequestPicker, TempRequest } from './routes/user/request/Request';
 import { UserChange } from './routes/user/UseChange';
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
+import { StatsDemo } from './routes/stats/StatsDemo';
+import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Header />,
     children: [
+      {
+        path: "/stats",
+        element: <StatsDemo />
+      },
       {
         path: "/",
         element: <Main />,
@@ -86,7 +92,19 @@ const router = createBrowserRouter([
           },
           {
             path: "add-request",
-            element: <Request />
+            element: <RequestPicker />
+          },
+          {
+            path: "add-request/room",
+            element: <RoomRequest />
+          },
+          {
+            path: "add-request/keycard",
+            element: <KeycardRequest />
+          },
+          {
+            path: "add-request/temp",
+            element: <TempRequest />
           },
           {
             path: "change-request/:requestId",
@@ -101,7 +119,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: "",
-            element: <></>
+            element: <GlobalKeycardList />
           },
           {
             path: "add-request",

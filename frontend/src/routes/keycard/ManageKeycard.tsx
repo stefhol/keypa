@@ -4,7 +4,7 @@ export interface ManageKeycardProps { }
 export const ManageKeycard: React.FC<ManageKeycardProps> = (props) => {
 
     return (<>
-        <h1>Aenderungen Keycard</h1>
+        <h1>Änderungen Keycard</h1>
         <ManageKeycardForm />
     </>)
 }

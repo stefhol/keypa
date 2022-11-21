@@ -22,7 +22,7 @@ use uuid::Uuid;
     (status = 500),
 )
 )]
-#[get("user/{user_id}/keycard")]
+#[get("/user/{user_id}/keycard")]
 pub async fn get_keycard_of_user_id(
     db: Data<DatabaseConnection>,
     user_id: Path<Uuid>,

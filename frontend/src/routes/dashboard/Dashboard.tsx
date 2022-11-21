@@ -11,15 +11,22 @@ export interface DashboardProps { }
 export const Dashboard: React.FC<DashboardProps> = (props) => {
     return (<>
         <main>
+            <h1>Dashboard</h1>
             <a href="user">
-                Nutzerbereich
+                Mein Bereich
             </a><br />
             <h3>Verwaltung</h3>
             <a href="request">
-                Alle austehenden Anfragen fuer Zugeaenge
+                Austehende Antragsformulare
+            </a><br />
+            <a href="/keycard">
+                Keycard Übersicht
             </a><br />
             <a href="leader">
-                Alle Nutzer
+                Nutzer Übersicht
+            </a><br />
+            <a href="stats">
+                Statistiken
             </a><br />
 
         </main>

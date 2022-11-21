@@ -37,7 +37,7 @@ export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
                             },
                         },
                         {
-                            element: <button>Antraege</button>,
+                            element: <button>Anträge</button>,
                             onClick(idx) {
                                 navigate(`/user/${userData[idx].user_id}/request`)
                             },

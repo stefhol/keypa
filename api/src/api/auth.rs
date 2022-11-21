@@ -110,8 +110,9 @@ pub async fn login(
 )]
 #[get("/logout")]
 pub async fn logout(_db: Data<DatabaseConnection>) -> actix_web::Result<HttpResponse, CrudError> {
-    let mut token = Cookie::build("token", "").finish();
+    let mut token = Cookie::build("token", "").path("/").finish();
     token.make_removal();
-    let bearer = Cookie::build("bearer", "").finish();
+    let mut bearer = Cookie::build("bearer", "").http_only(true).finish();
+    bearer.make_removal();
     return Ok(HttpResponse::Ok().cookie(token).cookie(bearer).finish());
 }
