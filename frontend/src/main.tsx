@@ -31,6 +31,7 @@ import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { StatsDemo } from './routes/stats/StatsDemo';
 import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
+import { Logs } from './routes/logs/Logs';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -143,10 +144,13 @@ const router = createBrowserRouter([
           {
             path: "change-worker/:userId",
             element: <ChangeWorker />
-          }
+          },
         ]
       },
-
+      {
+        path: "logs",
+        element: <Logs />
+      }
     ]
   }
 

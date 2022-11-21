@@ -117,11 +117,11 @@ export const StatsDemo: React.FC<StatsDemoProps> = (props) => {
 
         <div>
 
-            <h2>Beispiel Statistik Raumbuchungen</h2>
+            <h2>Beispiel Statistik</h2>
             <button onClick={(e) => {
                 e.preventDefault()
             }}>
-                Daten Export in Excel
+                Daten Export
             </button>
             <p>
                 ...Weitere Statistiken folgen

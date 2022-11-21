@@ -25,10 +25,13 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
             <a href="leader">
                 Nutzer Übersicht
             </a><br />
+
             <a href="stats">
                 Statistiken
             </a><br />
-
+            <a href="logs">
+                Logdateien
+            </a><br />
         </main>
     </>)
 }

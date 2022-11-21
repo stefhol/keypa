@@ -110,7 +110,8 @@ const UserFc: React.FC<UserProps> = (props) => {
                 <tbody>
                     <tr>
                         <td>
-                            <button>Schliessen</button>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
                         </td>
                         <td>
                             {format(new Date(), "dd.MM.yyyy hh:mm")}
@@ -133,8 +134,8 @@ const UserFc: React.FC<UserProps> = (props) => {
                     </tr>
                     <tr>
                         <td>
-                            <button>Ansehen</button>
-                            <button>Schliessen</button>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
                         </td>
                         <td>
                             {format(new Date(), "dd.MM.yyyy hh:mm")}

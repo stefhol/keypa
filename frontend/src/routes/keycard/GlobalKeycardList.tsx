@@ -28,6 +28,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
                 <tr>
                     <td>
                         <button>Erinnerung schicken</button>
+                        <button>Nutzer öffnen</button>
                     </td>
                     <td>
                         Herbert Traum

@@ -16,7 +16,7 @@ export const ChangeWorker: React.FC<ChangeWorkerProps> = (props) => {
     const [isWorker, setIsWorker] = React.useState(true)
 
     return (<>
-        <h1>Nutzer anpassen</h1>
+        <h1>Rechte vergeben</h1>
         {data &&
             <><h2>Informationen</h2>
                 <p>
@@ -48,13 +48,6 @@ export const WorkerForm: React.FC<WorkerFormProps> = (props) => {
                     checked={isWorker}
                     type="checkbox"
                     onChange={(e) => setIsWorker(prev => !prev)}
-                />
-            </label>
-            <label>
-                Vorgesetzter:
-                <input
-                    value={boss}
-                    onChange={(e) => setBoss(e.target.value)}
                 />
             </label>
             <h3>
