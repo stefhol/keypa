@@ -6,7 +6,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
             <thead>
                 <tr>
                     <th colSpan={100}>
-                        Nur ablaufende Keycards anzeigen <input type={"checkbox"} />
+                        Nur ablaufende Keycards anzeigen <input type={"checkbox"} checked />
                     </th>
                 </tr>
                 <tr>
@@ -43,6 +43,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
                 <tr>
                     <td>
                         <button>Erinnerung schicken</button>
+                        <button>Nutzer öffnen</button>
                     </td>
                     <td>
                         Ulrike Meier
