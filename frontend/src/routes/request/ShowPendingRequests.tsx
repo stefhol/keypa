@@ -12,6 +12,16 @@ export const ShowPendingRequests: React.FC<{}> = (props) => {
     const { } = useLoading(isLoading)
     return (<>
         {myData && <Table data={myData} columns={createBasicColumns(myData[0])}
+            filter={
+                <>
+                    <span className="container">Pending <input checked type={"checkbox"} /> </span>
+                    <span className="container">Reject <input type={"checkbox"} /> </span>
+                    <span className="container">Accept <input type={"checkbox"} /> </span>
+                    <span className="container"><select style={{ width: "initial" }}>
+                        <option>room-request</option>
+                    </select> </span>
+                </>
+            }
             rowAction={
                 [
                     {

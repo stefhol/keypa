@@ -1,61 +1,45 @@
+import { createBasicColumns, Table } from "../../Components/table/Table"
+import { prepareData } from "../user/request/Request"
+
 export interface GlobalKeycardListProps { }
 export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
 
     return (<>
-        <table>
-            <thead>
-                <tr>
-                    <th colSpan={100}>
-                        Nur ablaufende Keycards anzeigen <input type={"checkbox"} checked />
-                    </th>
-                </tr>
-                <tr>
-                    <th>
+        <Table
+            filter={
+                <span className="container">
+                    Nur ablaufende Keycards anzeigen <input type={"checkbox"} checked />
+                </span>
+            }
+            rowAction={[
+                {
+                    element: <button>Per Email kontakieren</button>,
+                    onClick(rowIndex) {
 
-                    </th>
-                    <th>
-                        Nutzer
-                    </th>
-                    <th>
-                        Rückgabe fällig
-                    </th>
-                    <th>
-                        Grund
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>
-                        <button>Erinnerung schicken</button>
-                        <button>Nutzer öffnen</button>
-                    </td>
-                    <td>
-                        Herbert Traum
-                    </td>
-                    <td>
-                        in 2 Tagen
-                    </td>
-                    <td>
-                        Ablauf
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <button>Erinnerung schicken</button>
-                        <button>Nutzer öffnen</button>
-                    </td>
-                    <td>
-                        Ulrike Meier
-                    </td>
-                    <td>
-                        in 5 Tagen
-                    </td>
-                    <td>
-                        Kündigung
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                    },
+                },
+                {
+                    element: <button>Nutzer ansehen</button>,
+                    onClick(rowIndex) {
+
+                    },
+                },
+            ]}
+            data={demoData}
+            columns={createBasicColumns(demoData[0])}
+        />
+
     </>)
 }
+const demoData = [
+    {
+        Nutzer: "Herbert Traum",
+        "Rückgabe fällig": "in 2 Tagen",
+        Grund: "Ablauf"
+    },
+    {
+        Nutzer: "Ulrike Meier",
+        "Rückgabe fällig": "in 5 Tagen",
+        Grund: "Kündigung"
+    }
+]

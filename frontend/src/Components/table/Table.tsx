@@ -63,6 +63,7 @@ interface ITableProps {
     data?: {}[]
     columns: ColumnDef<{}>[]
     rowAction: IAction[]
+    filter?: JSX.Element
 }
 export const Table: React.FC<ITableProps> = (props) => {
     const data = React.useMemo(() => props.data || [], [props.data])
@@ -78,7 +79,10 @@ export const Table: React.FC<ITableProps> = (props) => {
         <table>
             <thead>
                 <tr key={-1}><td colSpan={100}>
-                    Suche: <input></input>
+                    <span>
+                        Suche: <input></input>
+                    </span>
+                    {props.filter}
                 </td></tr>
                 {table.getHeaderGroups().map(headerGroup => (
                     <tr key={headerGroup.id}>

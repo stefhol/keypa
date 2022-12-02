@@ -19,13 +19,16 @@ export const Dashboard: React.FC<DashboardProps> = (props) => {
             <a href="request">
                 Austehende Antragsformulare
             </a><br />
+            <a href="propositons">
+                Anfragen
+            </a><br />
             <a href="/keycard">
                 Keycard Übersicht
             </a><br />
             <a href="leader">
                 Nutzer Übersicht
             </a><br />
-
+            <h3>Tools</h3>
             <a href="stats">
                 Statistiken
             </a><br />

@@ -19,9 +19,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     </button>}
                 <span className="spacer"> </span>
                 {
-                    window.document.cookie !== "" &&
+                    window.document.cookie.match("token") &&
                     <button onClick={(e) => {
-                        e.preventDefault()
+                            e.preventDefault()
                         Rest.sendLogout().then(res => console.log(res))
                     }}>
                         Logout
@@ -29,7 +29,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 }
 
                 {
-                    (window.document.cookie === "" && !window.location.pathname.match("login")) &&
+                    (!window.document.cookie.match("token") && !window.location.pathname.match("login")) &&
                     <button onClick={(e) => {
                         navigate("/login")
                     }}>

@@ -95,11 +95,8 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     <option value="3" selected={pending}>Ausstehend</option>
                 </select>
             </label>
-            <button>
-                Aenderung Speichern
-            </button>
             <div className="container">
-                <h2>Angefragte Raeume</h2>
+                <h2>Angefragte Räume</h2>
                 {(building && building?.length || 0) > 0 && <>
                     <>Raumanzahl: {getCountOfRooms(building || [])}</>
                     <TreeView selectionRef={selection} data={prepareData(building || [])} filter expanded />
@@ -108,6 +105,9 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
 
                 }
             </div>
+            <button>
+                Änderung Speichern
+            </button>
         </form>
 
         <div className="container">

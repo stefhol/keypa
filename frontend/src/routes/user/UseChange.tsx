@@ -44,6 +44,5 @@ export const UserInfo: React.FC<UserInfoProps> = ({ data }) => {
             Ist momentan Verwaltungsmitarbeiter:
             {data.worker ? "Ja" : "Nein"}
         </p>
-        <button onClick={(e) => navigate("/")}>Inaktiv schalten</button>
     </div>)
 }

@@ -32,6 +32,9 @@ import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { StatsDemo } from './routes/stats/StatsDemo';
 import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
 import { Logs } from './routes/logs/Logs';
+import { PropositionBase } from './routes/propositons/PropositionBase';
+import { CreatePropostion } from './routes/propositons/CreatePropostion';
+import { ConvertProposition } from './routes/propositons/ConvertProposition';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -97,7 +100,7 @@ const router = createBrowserRouter([
           },
           {
             path: "add-request/room",
-            element: <RoomRequest />
+            element: <CreatePropostion />
           },
           {
             path: "add-request/keycard",
@@ -150,7 +153,28 @@ const router = createBrowserRouter([
       {
         path: "logs",
         element: <Logs />
-      }
+      },
+      {
+        path: "propositions",
+        element: <LeaderBase />,
+        children: [
+
+        ]
+      },
+      {
+        path: "propositons",
+        element: <RequestBase />,
+        children: [
+          {
+            path: "",
+            element: <PropositionBase />
+          },
+          {
+            path: "demo",
+            element: <ConvertProposition />
+          }
+        ]
+      },
     ]
   }
 
