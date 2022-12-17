@@ -26,6 +26,8 @@ pub enum Relation {
     TblBuilding,
     #[sea_orm(has_many = "super::tbl_door::Entity")]
     TblDoor,
+    #[sea_orm(has_many = "super::tbl_room_department::Entity")]
+    TblRoomDepartment,
 }
 
 impl Related<super::tbl_building::Entity> for Entity {
@@ -37,6 +39,12 @@ impl Related<super::tbl_building::Entity> for Entity {
 impl Related<super::tbl_door::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblDoor.def()
+    }
+}
+
+impl Related<super::tbl_room_department::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRoomDepartment.def()
     }
 }
 

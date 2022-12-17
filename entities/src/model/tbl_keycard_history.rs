@@ -6,12 +6,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "tbl_keycard_history")]
 pub struct Model {
-    #[sea_orm(primary_key, auto_increment = false)]
+    #[sea_orm(primary_key)]
+    pub keycard_history_id: i64,
     pub keycard_id: Uuid,
-    #[sea_orm(primary_key, auto_increment = false)]
     pub door_id: Uuid,
-    #[sea_orm(primary_key, auto_increment = false)]
     pub used_at: DateTime,
+    pub success: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -32,6 +32,8 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblKeycard,
+    #[sea_orm(has_many = "super::tbl_log::Entity")]
+    TblLog,
 }
 
 impl Related<super::tbl_door::Entity> for Entity {
@@ -43,6 +45,12 @@ impl Related<super::tbl_door::Entity> for Entity {
 impl Related<super::tbl_keycard::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeycard.def()
+    }
+}
+
+impl Related<super::tbl_log::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblLog.def()
     }
 }
 

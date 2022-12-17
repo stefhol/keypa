@@ -8,48 +8,44 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub keycard_id: Uuid,
+    pub is_lost: bool,
+    pub is_locked: bool,
+    pub is_deactivated: bool,
+    pub is_given_back: bool,
     pub request_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_request_base::Entity",
+        belongs_to = "super::tbl_request::Entity",
         from = "Column::RequestId",
-        to = "super::tbl_request_base::Column::RequestId",
+        to = "super::tbl_request::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblRequestBase,
-    #[sea_orm(has_many = "super::tbl_keycard_request::Entity")]
-    TblKeycardRequest,
+    TblRequest,
+    #[sea_orm(has_many = "super::tbl_request_history::Entity")]
+    TblRequestHistory,
     #[sea_orm(has_many = "super::tbl_keycard_history::Entity")]
     TblKeycardHistory,
-    #[sea_orm(has_many = "super::tbl_temp_keycard_request::Entity")]
-    TblTempKeycardRequest,
 }
 
-impl Related<super::tbl_request_base::Entity> for Entity {
+impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequestBase.def()
+        Relation::TblRequest.def()
     }
 }
 
-impl Related<super::tbl_keycard_request::Entity> for Entity {
+impl Related<super::tbl_request_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeycardRequest.def()
+        Relation::TblRequestHistory.def()
     }
 }
 
 impl Related<super::tbl_keycard_history::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeycardHistory.def()
-    }
-}
-
-impl Related<super::tbl_temp_keycard_request::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblTempKeycardRequest.def()
     }
 }
 

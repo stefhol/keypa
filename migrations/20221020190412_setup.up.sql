@@ -1,5 +1,5 @@
 create extension if not exists "uuid-ossp";
-CREATE TYPE history_action AS ENUM ('remove', 'add', 'create','change');
+CREATE  TYPE history_action AS ENUM ('remove', 'add', 'create','change');
 CREATE TYPE history_role AS ENUM ('worker', 'user', 'leader', 'admin');
 CREATE TYPE history_request_type AS ENUM ('keycard', 'door', 'temp');
 
@@ -71,26 +71,9 @@ create table if not exists tbl_room_department
 );
 -- End Extern Room DB
 
-create table if not exists tbl_worker
-(
-    user_id uuid primary key,
-    foreign key (user_id) REFERENCES tbl_user (user_id)
-);
-create table if not exists tbl_leader
-(
-    --leader is a user and a worker is a user
-    user_id uuid primary key,
-    foreign key (user_id) references tbl_user (user_id)
-);
-create table if not exists tbl_admin
-(
-    user_id uuid primary key,
-    foreign key (user_id) references tbl_user (user_id)
-);
-
 create table if not exists tbl_change_rights_history
 (
-    change_rights_history_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    change_rights_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
     action                   history_action              not null,
     internal_role            history_role                not null,
     target_user_id           uuid                        not null,
@@ -151,7 +134,7 @@ create table if not exists tbl_request
 );
 create table if not exists tbl_request_history
 (
-    request_history_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
     changed_by         uuid                        not null,
     request_id         uuid                        not null,
     action             history_action              not null,
@@ -178,7 +161,7 @@ create table if not exists tbl_request_history
 );
 create table if not exists tbl_door_to_request_history
 (
-    door_to_request_history_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    door_to_request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
     door_id                    uuid           not null,
     request_id                 uuid           not null,
     action                     history_action not null,
@@ -195,7 +178,7 @@ alter table tbl_request_department
     ADD constraint fk_request_request_department foreign key (request_id) references tbl_request (request_id);
 create table if not exists tbl_keycard_history
 (
-    keycard_history_id BIGINT GENERATED ALWAYS AS IDENTITY,
+    keycard_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
     keycard_id         uuid                        not null,
     door_id            uuid                        not null,
     used_at            timestamp without time zone not null default timezone('utc', now()),
@@ -213,11 +196,6 @@ create table if not exists tbl_door_to_request
     primary key (door_id, request_id)
 );
 
-create table if not exists tbl_door_request
-(
-    request_id uuid primary key,
-    foreign key (request_id) references tbl_request (request_id)
-);
 create table if not exists tbl_request_comment
 (
     comment_id uuid primary key                     DEFAULT uuid_generate_v4(),
@@ -228,12 +206,23 @@ create table if not exists tbl_request_comment
     foreign key (request_id) references tbl_request (request_id),
     foreign key (user_id) references tbl_user (user_id)
 );
-
+create table if not exists tbl_log(
+ log_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
+ message text,
+ keycard_history_id bigint,
+ foreign key(keycard_history_id) references tbl_keycard_history(keycard_history_id),
+ door_to_request_history_id bigint,
+ foreign key(door_to_request_history_id) references tbl_door_to_request_history(door_to_request_history_id),
+ request_history_id bigint,
+ foreign key (request_history_id) references tbl_request_history(request_history_id),
+ changed_at timestamp without time zone not null default timezone('utc', now()),
+ changed_by uuid not null,
+ foreign key (changed_by) references tbl_user(user_id)
+);
 
 create view view_active_doors_by_user as
 select tbl_request.requester_id as user_id, tbl_door_to_request.door_id, tbl_request.active_until
 from tbl_request
-         join tbl_door_request on tbl_request.request_id = tbl_door_request.request_id
          join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
 where tbl_request.active = true;
 -- Nutzer Id, Tür Id und Ablaufzeit des Zugriffs von Nutzer auf die Tür

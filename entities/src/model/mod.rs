@@ -2,22 +2,23 @@
 
 pub mod prelude;
 
-pub mod tbl_admin;
+pub mod sea_orm_active_enums;
 pub mod tbl_building;
+pub mod tbl_change_rights_history;
+pub mod tbl_department;
 pub mod tbl_door;
-pub mod tbl_door_access_history;
-pub mod tbl_door_group;
-pub mod tbl_door_request;
-pub mod tbl_door_to_group_door;
+pub mod tbl_door_to_request;
+pub mod tbl_door_to_request_history;
 pub mod tbl_keycard;
 pub mod tbl_keycard_history;
-pub mod tbl_keycard_request;
-pub mod tbl_leader;
-pub mod tbl_request_base;
+pub mod tbl_log;
+pub mod tbl_request;
 pub mod tbl_request_comment;
+pub mod tbl_request_department;
+pub mod tbl_request_entrance;
+pub mod tbl_request_history;
 pub mod tbl_role;
 pub mod tbl_room;
+pub mod tbl_room_department;
 pub mod tbl_status;
-pub mod tbl_temp_keycard_request;
 pub mod tbl_user;
-pub mod tbl_worker;

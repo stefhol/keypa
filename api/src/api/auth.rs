@@ -13,8 +13,7 @@ use utoipa::ToSchema;
 use crate::{
     crud::{
         self,
-        user::is_admin_by_user_id,
-        worker::{is_leader_by_user_id, is_worker_by_user_id},
+        user::{is_admin_by_user_id, is_leader_by_user_id, is_worker_by_user_id},
     },
     util::{crypto::create_jwt, error::CrudError},
 };

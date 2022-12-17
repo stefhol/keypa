@@ -28,18 +28,14 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblRole,
-    #[sea_orm(has_many = "super::tbl_worker::Entity")]
-    TblWorker,
-    #[sea_orm(has_many = "super::tbl_leader::Entity")]
-    TblLeader,
-    #[sea_orm(has_many = "super::tbl_admin::Entity")]
-    TblAdmin,
-    #[sea_orm(has_many = "super::tbl_request_base::Entity")]
-    TblRequestBase,
+    #[sea_orm(has_many = "super::tbl_request::Entity")]
+    TblRequest,
+    #[sea_orm(has_many = "super::tbl_door_to_request_history::Entity")]
+    TblDoorToRequestHistory,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
-    #[sea_orm(has_many = "super::tbl_door_access_history::Entity")]
-    TblDoorAccessHistory,
+    #[sea_orm(has_many = "super::tbl_log::Entity")]
+    TblLog,
 }
 
 impl Related<super::tbl_role::Entity> for Entity {
@@ -48,27 +44,15 @@ impl Related<super::tbl_role::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_worker::Entity> for Entity {
+impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblWorker.def()
+        Relation::TblRequest.def()
     }
 }
 
-impl Related<super::tbl_leader::Entity> for Entity {
+impl Related<super::tbl_door_to_request_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblLeader.def()
-    }
-}
-
-impl Related<super::tbl_admin::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblAdmin.def()
-    }
-}
-
-impl Related<super::tbl_request_base::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestBase.def()
+        Relation::TblDoorToRequestHistory.def()
     }
 }
 
@@ -78,9 +62,9 @@ impl Related<super::tbl_request_comment::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_door_access_history::Entity> for Entity {
+impl Related<super::tbl_log::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoorAccessHistory.def()
+        Relation::TblLog.def()
     }
 }
 

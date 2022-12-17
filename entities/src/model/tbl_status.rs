@@ -14,13 +14,21 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_request_base::Entity")]
-    TblRequestBase,
+    #[sea_orm(has_many = "super::tbl_request::Entity")]
+    TblRequest,
+    #[sea_orm(has_many = "super::tbl_request_history::Entity")]
+    TblRequestHistory,
 }
 
-impl Related<super::tbl_request_base::Entity> for Entity {
+impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblRequestBase.def()
+        Relation::TblRequest.def()
+    }
+}
+
+impl Related<super::tbl_request_history::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRequestHistory.def()
     }
 }
 

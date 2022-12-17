@@ -1,7 +1,7 @@
 use crate::crud;
 use crate::util::error::CrudError;
 use chrono::{DateTime, Utc};
-use entities::model::{tbl_door_request, tbl_request_base, tbl_request_comment};
+use entities::model::{tbl_request, tbl_request_comment};
 use sea_orm::{
     prelude::DateTimeUtc, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
 };
@@ -16,7 +16,6 @@ pub struct GetRequestWithComments {
     pub request_id: Uuid,
     pub requester_id: Uuid,
     pub requester: Option<GetUser>,
-    pub door_group_id: Uuid,
     pub created_at: DateTimeUtc,
     pub changed_at: DateTimeUtc,
     pub description: Option<String>,
@@ -24,26 +23,18 @@ pub struct GetRequestWithComments {
     pub reject: bool,
     pub pending: bool,
     pub comments: Vec<GetComments>,
+    pub active_until: Option<DateTimeUtc>,
+    pub status_id: Option<Uuid>,
+    pub is_proposal: bool,
+    pub active: bool,
+    pub keycard_id: Option<Uuid>,
 }
-impl
-    From<(
-        &tbl_request_base::Model,
-        &tbl_door_request::Model,
-        &Vec<GetComments>,
-    )> for GetRequestWithComments
-{
-    fn from(
-        (request, door_request, comments): (
-            &tbl_request_base::Model,
-            &tbl_door_request::Model,
-            &Vec<GetComments>,
-        ),
-    ) -> Self {
+impl From<(&tbl_request::Model, &Vec<GetComments>)> for GetRequestWithComments {
+    fn from((request, comments): (&tbl_request::Model, &Vec<GetComments>)) -> Self {
         Self {
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: None,
-            door_group_id: door_request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -51,16 +42,22 @@ impl
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: comments.clone(),
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
-impl From<(&tbl_request_base::Model, &tbl_door_request::Model)> for GetRequestWithComments {
-    fn from((request, door_request): (&tbl_request_base::Model, &tbl_door_request::Model)) -> Self {
+impl From<&tbl_request::Model> for GetRequestWithComments {
+    fn from(request: &tbl_request::Model) -> Self {
         Self {
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: None,
-            door_group_id: door_request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -68,23 +65,18 @@ impl From<(&tbl_request_base::Model, &tbl_door_request::Model)> for GetRequestWi
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: vec![],
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
-impl
-    From<(
-        &tbl_request_base::Model,
-        &tbl_door_request::Model,
-        &Vec<GetUser>,
-    )> for GetRequestWithComments
-{
-    fn from(
-        (request, door_request, user): (
-            &tbl_request_base::Model,
-            &tbl_door_request::Model,
-            &Vec<GetUser>,
-        ),
-    ) -> Self {
+impl From<(&tbl_request::Model, &Vec<GetUser>)> for GetRequestWithComments {
+    fn from((request, user): (&tbl_request::Model, &Vec<GetUser>)) -> Self {
         let user = user
             .iter()
             .find(|f| f.user_id == request.requester_id)
@@ -93,7 +85,6 @@ impl
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: user,
-            door_group_id: door_request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -101,6 +92,13 @@ impl
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: vec![],
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
@@ -133,15 +131,14 @@ pub async fn get_request_from_user_id(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetRequestWithComments>, CrudError> {
-    let model = tbl_request_base::Entity::find()
-        .find_also_related(tbl_door_request::Entity)
-        .filter(tbl_request_base::Column::RequesterId.eq(user_id.clone()))
+    let model = tbl_request::Entity::find()
+        .filter(tbl_request::Column::RequesterId.eq(user_id.clone()))
         .all(db)
         .await?;
 
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((&f.0, f.1.as_ref().unwrap())))
+        .map(|f| GetRequestWithComments::from(f))
         .collect())
 }
 pub async fn get_request_from_user_id_and_request_id(
@@ -158,35 +155,32 @@ pub async fn get_request_from_user_id_and_request_id(
 pub async fn get_all_open_requests(
     db: &DatabaseConnection,
 ) -> Result<Vec<GetRequestWithComments>, CrudError> {
-    let model = tbl_request_base::Entity::find()
-        .find_also_related(tbl_door_request::Entity)
-        .filter(tbl_request_base::Column::Pending.eq(true))
+    let model = tbl_request::Entity::find()
+        .filter(tbl_request::Column::Pending.eq(true))
         .all(db)
         .await?;
     let user_vec = crud::user::get_all_user(db).await?;
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((&f.0, f.1.as_ref().unwrap(), &user_vec)))
+        .map(|f| GetRequestWithComments::from((f, &user_vec)))
         .collect())
 }
 pub async fn get_single_request(
     db: &DatabaseConnection,
     request_id: &Uuid,
 ) -> Result<GetRequestWithComments, CrudError> {
-    let model = tbl_request_base::Entity::find_by_id(request_id.clone())
-        .find_also_related(tbl_door_request::Entity)
+    let model = tbl_request::Entity::find_by_id(request_id.clone())
         .one(db)
         .await?;
     match &model {
         Some(request) => {
             let comments = tbl_request_comment::Entity::find()
-                .filter(tbl_request_comment::Column::RequestId.eq(request.0.request_id.clone()))
+                .filter(tbl_request_comment::Column::RequestId.eq(request.request_id.clone()))
                 .order_by_asc(tbl_request_comment::Column::WrittenAt)
                 .all(db)
                 .await?;
             let user_vec = crud::user::get_all_user(db).await?;
-            let mut request =
-                GetRequestWithComments::from((&request.0, request.1.as_ref().unwrap(), &user_vec));
+            let mut request = GetRequestWithComments::from((request, &user_vec));
             request.comments = comments.iter().map(|f| (f, &user_vec).into()).collect();
             Ok(request)
         }
