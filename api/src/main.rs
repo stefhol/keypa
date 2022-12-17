@@ -33,6 +33,8 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::door::get_user_authorized_doors,
         api::door::get_doors_of_door_group,
         //keycard
+        api::keycard::get_self_keycard,
+        api::keycard::get_user_keycard,
         
         //key_group
         api::request::get_self_requests,
@@ -52,7 +54,7 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
-
+        crud::keycard::GetKeycard,
 
         crud::request::GetRequestWithComments,
         crud::request::GetComments,
@@ -113,6 +115,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::door::get_user_authorized_doors)
                     .service(api::door::get_doors_of_door_group)
                     //keycard
+                    .service(api::keycard::get_self_keycard)
+                    .service(api::keycard::get_user_keycard)
 
                     //request
                     .service(api::request::get_self_requests)
