@@ -20,8 +20,8 @@ const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
     return await Rest.getSingleRequest(requestId)
 }
 const getBuildingWithDoorGroups = async ({ queryKey }: { queryKey: string[] }) => {
-    const doorGroupId = queryKey[1]
-    return await Rest.getDoorsWithDoorGroupId(doorGroupId)
+    const requestId = queryKey[1]
+    return await Rest.getDoorsWithRequestId(requestId)
 }
 export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
     const { requestId } = useParams()
@@ -38,7 +38,7 @@ export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
 
 export interface ChangeRequestFormProps { data: Request, }
 export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
-    const { data: building } = useQuery(["building", props.data.door_group_id], getBuildingWithDoorGroups)
+    const { data: building } = useQuery(["building", props.data.request_id], getBuildingWithDoorGroups)
 
     const [accept, setAccept] = React.useState(props.data.accept);
     const [reject, setReject] = React.useState(props.data.reject);

@@ -13,6 +13,9 @@ pub struct GetUser {
     pub name: String,
     pub role: Option<GetRole>,
     pub email: String,
+    pub tel: Option<String>,
+    pub address: Option<String>,
+    pub picture_url: Option<String>,
 }
 
 impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
@@ -22,6 +25,9 @@ impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
             name: user.name.to_string(),
             role: role.to_owned().map(|f| GetRole::from(&f)),
             email: user.email.to_owned(),
+            tel: user.tel.to_owned(),
+            address: user.address.to_owned(),
+            picture_url: user.address.to_owned(),
         }
     }
 }

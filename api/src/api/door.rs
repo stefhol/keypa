@@ -69,15 +69,18 @@ pub async fn get_user_authorized_doors(
     (status = 500),
 )
 )]
-#[get("/doors/{door_group_id}")]
+#[get("/request/{request_id}/doors")]
 pub async fn get_doors_of_door_group(
     db: Data<DatabaseConnection>,
-    door_group_id: Path<Uuid>,
+    request_id: Path<Uuid>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let keys =
-        crud::access::get_building_by_door_group_with_only_authorized_doors(&door_group_id, &db)
-            .await?;
+    let request = crud::request::get_single_request(&db, &request_id).await?;
+    let keys = crud::access::get_building_by_user_id_with_only_authorized_doors(
+        &request.requester_id,
+        &db,
+    )
+    .await?;
     Ok(HttpResponse::Ok().json(keys))
 }

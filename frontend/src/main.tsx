@@ -15,7 +15,6 @@ import { KeycardsFromUser } from './routes/keycard/Keycard';
 import { KeycardBase } from './routes/keycard/KeycardBase';
 import { KeycardRequest } from './routes/keycard/KeycardRequest';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
-import { ChangeWorker } from './routes/leader/ChangeWorker';
 import { LeaderBase } from './routes/leader/LeaderBase';
 import { ShowAllUsers } from './routes/leader/ShowAllUsers';
 import { Login } from './routes/login/Login';
@@ -24,7 +23,7 @@ import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
 import { RequestBase } from './routes/request/WorkerBase';
-import { RoomRequest, RequestPicker, TempRequest } from './routes/user/request/Request';
+import { RequestPicker, TempRequest } from './routes/user/request/Request';
 import { UserChange } from './routes/user/UseChange';
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
@@ -143,10 +142,6 @@ const router = createBrowserRouter([
             path: "",
             element: <ShowAllUsers />
 
-          },
-          {
-            path: "change-worker/:userId",
-            element: <ChangeWorker />
           },
         ]
       },

@@ -26,8 +26,8 @@ export class Rest {
     static getKeycard = async () => {
         return await this.quickFetchJson<Keycard>("keycard", "GET")
     }
-    static getDoorsWithDoorGroupId = async (doorGroupId: string) => {
-        return await this.quickFetchJson<Building[]>(`doors/${doorGroupId}`, "GET")
+    static getDoorsWithRequestId = async (requestId: string) => {
+        return await this.quickFetchJson<Building[]>(`request/${requestId}/doors`, "GET")
     }
     static getSelf = async () => {
         return await this.quickFetchJson<User>("self", "GET")

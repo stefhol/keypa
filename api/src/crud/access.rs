@@ -17,11 +17,10 @@ pub async fn get_doors_of_user_id(
         .from_raw_sql(Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"select (tbl_door.*) from tbl_user
-            join tbl_door_group on tbl_user.user_id = tbl_door_group.owner_id
-            join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
-            join tbl_door on tbl_door_to_group_door.door_id = tbl_door.door_id
-            where tbl_door_group.is_active = true and
-            tbl_user.user_id = $1"#,
+            join tbl_request on tbl_user.user_id = tbl_request.requester_id
+            join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
+            join tbl_door on tbl_door_to_request.door_id = tbl_door.door_id
+            where tbl_user.user_id = $1"#,
             vec![user_id.clone().into()],
         ))
         .all(db)
@@ -29,17 +28,21 @@ pub async fn get_doors_of_user_id(
 
     Ok(values.iter().map(|f| f.into()).collect())
 }
-pub async fn get_doors_of_door_group_id(
+pub async fn get_doors_of_department_user_id(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetDoor>, CrudError> {
     let values = tbl_door::Entity::find()
         .from_raw_sql(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"select (tbl_door.*) from tbl_door_group
-            join tbl_door_to_group_door on tbl_door_group.door_group_id = tbl_door_to_group_door.door_group_id
-            join tbl_door on tbl_door_to_group_door.door_id = tbl_door.door_id
-            where tbl_door_group.door_group_id = $1"#,
+            r#"select (d.*) from tbl_user
+            join tbl_request tr on tbl_user.user_id = tr.requester_id
+            join tbl_request_department trd on tr.request_id = trd.request_id
+            join tbl_department td on trd.department_id = td.department_id
+            join tbl_room_department t on td.department_id = t.department_id
+            join tbl_room r on t.room_id = r.room_id
+            join tbl_door d on r.room_id = d.room_id
+            where tbl_user.user_id = $1"#,
             vec![user_id.clone().into()],
         ))
         .all(db)
@@ -47,22 +50,15 @@ pub async fn get_doors_of_door_group_id(
 
     Ok(values.iter().map(|f| f.into()).collect())
 }
+
 pub async fn get_building_by_user_id_with_only_authorized_doors(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let buildings = crud::building::get_building_complex(db).await?;
-    let authorized_doors = get_doors_of_user_id(user_id, db).await?;
-    let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
-    Ok(filtered_buildings)
-    // Ok(values.iter().map(|f| f.into()).collect())
-}
-pub async fn get_building_by_door_group_with_only_authorized_doors(
-    door_group_id: &Uuid,
-    db: &DatabaseConnection,
-) -> Result<Vec<GetCompleteBuilding>, CrudError> {
-    let buildings = crud::building::get_building_complex(db).await?;
-    let authorized_doors = get_doors_of_door_group_id(door_group_id, db).await?;
+    let mut department_authorized_doors = get_doors_of_department_user_id(user_id, db).await?;
+    let mut authorized_doors = get_doors_of_user_id(user_id, db).await?;
+    authorized_doors.append(&mut department_authorized_doors);
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }
