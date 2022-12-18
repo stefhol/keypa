@@ -1,9 +1,8 @@
+use chrono::{DateTime, Utc};
 use entities::model::{
     tbl_door_to_request, tbl_keycard, tbl_request, tbl_request_department, tbl_request_entrance,
 };
-use sea_orm::{
-    prelude::DateTimeUtc, ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, Set,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, EntityTrait, IntoActiveModel, Set};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -16,7 +15,7 @@ pub struct IndividualRooms {
 }
 #[derive(Debug, Clone, ToSchema, Serialize, Deserialize)]
 pub struct CreateRequest {
-    pub active_until: Option<DateTimeUtc>,
+    pub active_until: Option<DateTime<Utc>>,
     pub description: Option<String>,
     pub create_keycard: bool,
     pub departments: Option<Vec<Uuid>>,
