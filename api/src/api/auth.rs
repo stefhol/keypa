@@ -4,10 +4,10 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use log::error;
 
 use sea_orm::DatabaseConnection;
 use serde::Deserialize;
+use tracing::error;
 use utoipa::ToSchema;
 
 use crate::{
