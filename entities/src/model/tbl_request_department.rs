@@ -4,43 +4,43 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_door_to_group_door")]
+#[sea_orm(table_name = "tbl_request_department")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub door_id: Uuid,
+    pub request_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
-    pub door_group_id: Uuid,
+    pub department_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_door_group::Entity",
-        from = "Column::DoorGroupId",
-        to = "super::tbl_door_group::Column::DoorGroupId",
+        belongs_to = "super::tbl_request::Entity",
+        from = "Column::RequestId",
+        to = "super::tbl_request::Column::RequestId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblDoorGroup,
+    TblRequest,
     #[sea_orm(
-        belongs_to = "super::tbl_door::Entity",
-        from = "Column::DoorId",
-        to = "super::tbl_door::Column::DoorId",
+        belongs_to = "super::tbl_department::Entity",
+        from = "Column::DepartmentId",
+        to = "super::tbl_department::Column::DepartmentId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblDoor,
+    TblDepartment,
 }
 
-impl Related<super::tbl_door_group::Entity> for Entity {
+impl Related<super::tbl_request::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoorGroup.def()
+        Relation::TblRequest.def()
     }
 }
 
-impl Related<super::tbl_door::Entity> for Entity {
+impl Related<super::tbl_department::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblDoor.def()
+        Relation::TblDepartment.def()
     }
 }
 

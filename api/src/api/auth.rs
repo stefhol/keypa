@@ -13,8 +13,7 @@ use utoipa::ToSchema;
 use crate::{
     crud::{
         self,
-        user::is_admin_by_user_id,
-        worker::{is_leader_by_user_id, is_worker_by_user_id},
+        user::{is_admin_by_user_id, is_leader_by_user_id, is_worker_by_user_id},
     },
     util::{crypto::create_jwt, error::CrudError},
 };
@@ -110,8 +109,9 @@ pub async fn login(
 )]
 #[get("/logout")]
 pub async fn logout(_db: Data<DatabaseConnection>) -> actix_web::Result<HttpResponse, CrudError> {
-    let mut token = Cookie::build("token", "").finish();
+    let mut token = Cookie::build("token", "").path("/").finish();
     token.make_removal();
-    let bearer = Cookie::build("bearer", "").finish();
+    let mut bearer = Cookie::build("bearer", "").http_only(true).finish();
+    bearer.make_removal();
     return Ok(HttpResponse::Ok().cookie(token).cookie(bearer).finish());
 }

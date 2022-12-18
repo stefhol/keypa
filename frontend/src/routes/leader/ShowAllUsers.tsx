@@ -16,32 +16,30 @@ export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
         {
             userData &&
             <Table data={userData}
+                filter={
+                    <><span>
+                        <span className="container">Ist Verwaltung <input type={"checkbox"} /></span>
+                        <span className="container">Ist Vorgesetzter <input type={"checkbox"} /></span>
+                        <br />
+                        <span className="container">Ist Admin <input type={"checkbox"} /></span>
+                    </span></>
+
+                }
                 rowAction={
                     [
+
                         {
-                            element: <button>Ändern</button>,
-                            onClick(idx) {
-                                navigate(`change-worker/${userData[idx].user_id}`)
-                            },
-                        },
-                        {
-                            element: <button>Keycards</button>,
-                            onClick(idx) {
-                                navigate(`/user/${userData[idx].user_id}/keycard`)
-                            },
-                        },
-                        {
-                            element: <button>User</button>,
+                            element: <button>Nutzer anpassen</button>,
                             onClick(idx) {
                                 navigate(`/user/${userData[idx].user_id}`)
                             },
                         },
-                        {
-                            element: <button>Antraege</button>,
-                            onClick(idx) {
-                                navigate(`/user/${userData[idx].user_id}/request`)
-                            },
-                        }
+                        // {
+                        //     element: <button>Anträge</button>,
+                        //     onClick(idx) {
+                        //         navigate(`/user/${userData[idx].user_id}/request`)
+                        //     },
+                        // }
                     ]
                 }
                 columns={columns} />

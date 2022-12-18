@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
 import { useNavigate, useParams } from "react-router-dom"
 import { Building } from "../../util/intefaces/Buildings"
 import { User } from "../../util/intefaces/Request"
@@ -13,9 +14,7 @@ export const SelfUser: React.FC<SelfUserProps> = (props) => {
     const { data: user } = useQuery(["self", "users"], Rest.getSelf)
 
     return (<>
-        {(buildings && user) && <UserFc buildings={buildings || []} user={user} />}
-        <h2>Meine Schluesselkarten</h2>
-        <KeycardSelf />
+        {(buildings && user) && <UserFc buildings={buildings || []} user={user} isSelf />}
     </>)
 }
 export const UserByUserId: React.FC<SelfUserProps> = (props) => {
@@ -24,10 +23,9 @@ export const UserByUserId: React.FC<SelfUserProps> = (props) => {
     const { data: user } = useQuery(["user", userId || ""], getUserById)
     return (<>
         {
-            (buildings && user) && <UserFc buildings={buildings} user={user} />
+            (buildings && user) && <UserFc buildings={buildings} user={user} isSelf={false} />
         }
-        <h2>Meine Schluesselkarten</h2>
-        <KeycardsFromUser />
+
     </>)
 }
 
@@ -43,6 +41,7 @@ const getUserById = async ({ queryKey }: { queryKey: string[] }) => {
 export interface UserProps {
     buildings: Building[]
     user: User
+    isSelf: boolean
 }
 
 const UserFc: React.FC<UserProps> = (props) => {
@@ -50,24 +49,159 @@ const UserFc: React.FC<UserProps> = (props) => {
 
     return (<>
         <h1>
-            Nutzerbereich 
+            Nutzerbereich von {props.user.name}
         </h1>
-        <h2>{props.user.name}</h2>
-        <p>
-            {props.user.email}
+        <div className="container">
+            <h2>Kontaktinformationen</h2>
+            <p>
+                {props.user.email}
+            </p>
+            <p>
+                +49 151 25894930
+            </p>
+        </div>
+        <div className="container">
+            {props.isSelf && <button onClick={(e) => {
+                e.preventDefault()
+                navigate("/request/add-request")
+            }}>Neuen Antrag stellen</button>
+            }
+            <button onClick={(e) => {
+                e.preventDefault()
+                navigate("account")
+            }}>Account</button>
+        </div>
+        <div className="container">
+            <AuthorizedBuildings data={props.buildings} />
 
-        </p>
-        <button onClick={(e) => {
-            e.preventDefault()
-            navigate("/request/add-request")
-        }}>Neue Zugaenge anfragen</button>
-        <button onClick={(e) => {
-            e.preventDefault()
-            navigate("account")
-        }}>Account</button>
-        <AuthorizedBuildings data={props.buildings} />
+        </div>
+        <div className="container">
+            <h2>Schlüsselkarten</h2>
+            <KeycardSelf />
+        </div>
+        <div className="container">
+            <h2>Anträge</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>
 
+                        </th>
+                        <th>
+                            created_at
+                        </th>
+                        <th>
+                            changed_at
+                        </th>
+                        <th>
+                            comments
+                        </th>
+                        <th>
+                            accept
+                        </th>
+                        <th>
+                            reject
+                        </th>
+                        <th>
+                            pending
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            3
+                        </td>
+                        <td>
+                            x
+                        </td>
+                        <td>
 
+                        </td>
+                        <td>
 
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            1
+                        </td>
+                        <td>
+
+                        </td>
+                        <td>
+
+                        </td>
+                        <td>
+                            x
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div className="container">
+            <h2>Noch nicht bearbeitete Anfragen</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>
+
+                        </th>
+                        <th>
+                            created_at
+                        </th>
+                        <th>
+                            changed_at
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <button>Ändern</button>
+                            <button>Löschen</button>
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                        <td>
+                            {format(new Date(), "dd.MM.yyyy hh:mm")}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </>)
 }

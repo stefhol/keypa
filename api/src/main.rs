@@ -2,12 +2,12 @@ pub mod api;
 pub mod crud;
 pub mod util;
 
-use std::{net::Ipv4Addr, env};
+use std::{net::Ipv4Addr};
 
 use actix_cors::Cors;
 
-use actix_web::{ App, HttpServer, get, error::HttpError, web};
-use actix_web_lab::web::spa;
+use actix_web::{ App, HttpServer, web};
+
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;
@@ -26,32 +26,17 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::auth::logout,
         //user
         api::user::get_users,
-        api::user::add_user,
-        api::user::delete_user,
-        api::user::update_user,
         api::user::get_single_user,
         api::user::get_self,
-        //worker
-        api::worker::add_worker,
-        api::worker::update_worker,
-        api::worker::delete_worker,
         //key
         api::door::get_self_door,
         api::door::get_user_authorized_doors,
         api::door::get_doors_of_door_group,
         //keycard
         api::keycard::get_self_keycard,
-        api::keycard::get_keycard_of_user_id,
-        api::keycard::get_single_keycard,
+        api::keycard::get_user_keycard,
         
         //key_group
-        api::door_group::add_key_into_key_group,
-        api::door_group::delete_key_from_key_group,
-        api::door_group::get_key_group,
-        api::door_group::get_keys_of_key_group,
-        api::door_group::get_self_key_group,
-        api::door_group::add_key_group,
-        api::door_group::upate_key_group,
         api::request::get_self_requests,
         api::request::get_requests_from_user,
         api::request::get_single_requests_from_user,
@@ -64,24 +49,18 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
     components(schemas(
         api::auth::Login,
         crud::role::GetRole,
-        crud::user::CreateUser,
-        crud::user::ChangeUser,
+
         crud::door::GetDoor,
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
-        crud::user::GetUserSmall,
-        crud::worker::GetSmallWorker,
-        crud::worker::CreateWorker,
-        crud::door_group::CreateKeyGroup,
-        crud::door_group::ChangeKeyGroup,
-        crud::door_group::GetKeyGroup,
+        crud::keycard::GetKeycard,
+
         crud::request::GetRequestWithComments,
         crud::request::GetComments,
         crud::building::GetCompleteBuilding,
         crud::building::GetCompleteRoom,
         crud::building::GetCompleteDoor,
-        crud::keycard::GetKeycard,
     ))
 )]
 struct ApiDoc;
@@ -126,32 +105,19 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::auth::logout)
                     //user services
                     .service(api::user::get_users)
-                    .service(api::user::add_user)
-                    .service(api::user::delete_user)
-                    .service(api::user::update_user)
+
                     .service(api::user::get_single_user)
                     .service(api::user::get_self)
                     //woker services
-                    .service(api::worker::add_worker)
-                    .service(api::worker::update_worker)
-                    .service(api::worker::delete_worker)
+
                     //key
                     .service(api::door::get_self_door)
                     .service(api::door::get_user_authorized_doors)
                     .service(api::door::get_doors_of_door_group)
                     //keycard
                     .service(api::keycard::get_self_keycard)
-                    .service(api::keycard::get_keycard_of_user_id)
-                    .service(api::keycard::get_single_keycard)
-                    
-                    //key_group
-                    .service(api::door_group::add_key_into_key_group)
-                    .service(api::door_group::delete_key_from_key_group)
-                    .service(api::door_group::get_key_group)
-                    .service(api::door_group::get_self_key_group)
-                    .service(api::door_group::get_keys_of_key_group)
-                    .service(api::door_group::add_key_group)
-                    .service(api::door_group::upate_key_group)
+                    .service(api::keycard::get_user_keycard)
+
                     //request
                     .service(api::request::get_self_requests)
                     .service(api::request::get_requests_from_user)

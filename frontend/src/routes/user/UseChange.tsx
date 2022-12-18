@@ -35,8 +35,8 @@ export interface UserInfoProps { data: User }
 export const UserInfo: React.FC<UserInfoProps> = ({ data }) => {
     const navigate = useNavigate()
 
-    return (<>
-        <h1>Account</h1>
+    return (<div className="container" >
+        <h1>Account Informationen</h1>
         <p>
             Name: {data.name}<br />
             Email: {data.email}<br />
@@ -44,6 +44,5 @@ export const UserInfo: React.FC<UserInfoProps> = ({ data }) => {
             Ist momentan Verwaltungsmitarbeiter:
             {data.worker ? "Ja" : "Nein"}
         </p>
-        <button onClick={(e) => navigate("/")}>Inaktiv schalten</button>
-    </>)
+    </div>)
 }

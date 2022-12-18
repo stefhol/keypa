@@ -4,43 +4,43 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_key_group_key")]
+#[sea_orm(table_name = "tbl_room_department")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub key_id: Uuid,
+    pub department_id: Uuid,
     #[sea_orm(primary_key, auto_increment = false)]
-    pub key_group_id: Uuid,
+    pub room_id: Uuid,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::tbl_key_group::Entity",
-        from = "Column::KeyGroupId",
-        to = "super::tbl_key_group::Column::KeyGroupId",
+        belongs_to = "super::tbl_department::Entity",
+        from = "Column::DepartmentId",
+        to = "super::tbl_department::Column::DepartmentId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKeyGroup,
+    TblDepartment,
     #[sea_orm(
-        belongs_to = "super::tbl_key::Entity",
-        from = "Column::KeyId",
-        to = "super::tbl_key::Column::KeyId",
+        belongs_to = "super::tbl_room::Entity",
+        from = "Column::RoomId",
+        to = "super::tbl_room::Column::RoomId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKey,
+    TblRoom,
 }
 
-impl Related<super::tbl_key_group::Entity> for Entity {
+impl Related<super::tbl_department::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeyGroup.def()
+        Relation::TblDepartment.def()
     }
 }
 
-impl Related<super::tbl_key::Entity> for Entity {
+impl Related<super::tbl_room::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKey.def()
+        Relation::TblRoom.def()
     }
 }
 

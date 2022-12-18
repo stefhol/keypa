@@ -9,7 +9,7 @@ export interface LoginRequest {
 }
 export interface LoginProps { }
 export const Login: React.FC<LoginProps> = (props) => {
-    const [name, setName] = React.useState("aric_architecto@gmail.com");
+    const [name, setName] = React.useState("deonte_quia@yahoo.com");
     const [password, setPassword] = React.useState("1234");
     const { startLoading, stopLoading } = useLoading()
     const [error, setError] = React.useState("");

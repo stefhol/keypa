@@ -33,7 +33,11 @@ jobs:
       run: |
           ln -s /root/.cargo $HOME/.cargo
           ln -s /root/.rustup $HOME/.rustup
-    
+    - name: Cache Cargo dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo
+        key: cargo-cache-${{ hashFiles('**/Cargo.lock') }}
     - name: Build
       run: cargo build --release
     - name: Print Dir

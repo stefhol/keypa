@@ -1,56 +1,53 @@
-use chrono::{DateTime, Utc};
 use entities::model::tbl_keycard;
-use sea_orm::prelude::DateTimeUtc;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::crud;
 use crate::util::error::CrudError;
-
-use super::user::GetUser;
-#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetKeycard {
     pub keycard_id: Uuid,
-    pub active: bool,
-    pub user: GetUser,
-    pub active_until: Option<DateTimeUtc>,
+    pub is_lost: bool,
+    pub is_locked: bool,
+    pub is_deactivated: bool,
+    pub is_given_back: bool,
+    pub request_id: Uuid,
 }
-impl From<(&tbl_keycard::Model, &GetUser)> for GetKeycard {
-    fn from((keycard, user): (&tbl_keycard::Model, &GetUser)) -> Self {
-        let keycard = keycard.clone();
+impl From<&tbl_keycard::Model> for GetKeycard {
+    fn from(model: &tbl_keycard::Model) -> Self {
+        let keycard = model.clone();
         Self {
             keycard_id: keycard.keycard_id,
-            user: user.clone(),
-            active: keycard.active,
-            active_until: keycard.active_until.map(|f| DateTime::from_local(f, Utc)),
+            is_lost: keycard.is_lost,
+            is_locked: keycard.is_locked,
+            is_deactivated: keycard.is_deactivated,
+            is_given_back: keycard.is_given_back,
+            request_id: keycard.request_id,
         }
     }
 }
-pub async fn get_keycards_by_user_id(
-    user_id: &Uuid,
+async fn get_keycard_query(
     db: &DatabaseConnection,
+    user_id: &Uuid,
 ) -> Result<Vec<GetKeycard>, CrudError> {
-    let model = tbl_keycard::Entity::find()
-        .filter(tbl_keycard::Column::UserId.eq(user_id.clone()))
+    let values = tbl_keycard::Entity::find()
+        .from_raw_sql(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"select (tk.*) from tbl_user
+            join tbl_request tr on tbl_user.user_id = tr.requester_id
+            join tbl_keycard tk on tr.keycard_id = tk.keycard_id
+            where tbl_user.user_id = $1"#,
+            vec![user_id.clone().into()],
+        ))
         .all(db)
         .await?;
-    let user = crud::user::get_single_user(db, user_id).await?;
-    Ok(model.iter().map(|f| GetKeycard::from((f, &user))).collect())
+    Ok(values.iter().map(|f| f.into()).collect())
 }
-pub async fn get_single_keycard(
-    key_card_id: &Uuid,
+
+pub async fn get_keycards_from_user(
     db: &DatabaseConnection,
-) -> Result<GetKeycard, CrudError> {
-    let model = tbl_keycard::Entity::find_by_id(key_card_id.clone())
-        .one(db)
-        .await?;
-    match &model {
-        Some(model) => {
-            let user = crud::user::get_single_user(db, &model.user_id).await?;
-            Ok(GetKeycard::from((model, &user)))
-        }
-        None => Err(CrudError::NotFound),
-    }
+    user_id: &Uuid,
+) -> Result<Vec<GetKeycard>, CrudError> {
+    Ok(get_keycard_query(db, user_id).await?)
 }

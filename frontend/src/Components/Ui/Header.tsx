@@ -9,25 +9,33 @@ export const Header: React.FC<HeaderProps> = (props) => {
         <>
             <header>
                 <LogoSmall width={40} onClick={() => { navigate("/") }} />
-                <button onClick={(e) => {
+                {
+                    window.document.cookie !== "" &&
+                    <button onClick={(e) => {
                     e.preventDefault()
                     navigate("/dashboard")
                 }}>
                     Dashboard
-                </button>
+                    </button>}
                 <span className="spacer"> </span>
-                <button onClick={(e) => {
-                    e.preventDefault()
-                    Rest.sendLogout().then(res => console.log(res))
-                }}>
-                    Logout
-                </button>
+                {
+                    window.document.cookie.match("token") &&
+                    <button onClick={(e) => {
+                            e.preventDefault()
+                        Rest.sendLogout().then(res => console.log(res))
+                    }}>
+                        Logout
+                    </button>
+                }
 
-                <button onClick={(e) => {
-                    navigate("/login")
-                }}>
-                    Login
-                </button>
+                {
+                    (!window.document.cookie.match("token") && !window.location.pathname.match("login")) &&
+                    <button onClick={(e) => {
+                        navigate("/login")
+                    }}>
+                        Login
+                    </button>
+                }
             </header>
             <Outlet />
         </>)

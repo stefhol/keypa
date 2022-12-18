@@ -1,11 +1,11 @@
 use anyhow;
 
-use chrono::{NaiveDateTime, Utc};
+use chrono::Utc;
 use dotenv;
 use entities::model::{
-    tbl_building, tbl_door, tbl_door_group, tbl_door_to_group_door, tbl_door_user_access,
-    tbl_keycard, tbl_keycard_history, tbl_leader, tbl_request, tbl_request_comment, tbl_role,
-    tbl_room, tbl_user, tbl_worker,
+    tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard, tbl_keycard_history,
+    tbl_request, tbl_request_comment, tbl_request_department, tbl_request_entrance, tbl_role,
+    tbl_room, tbl_room_department, tbl_user,
 };
 use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
 
@@ -13,15 +13,18 @@ use fake::faker::chrono::en::DateTimeAfter;
 
 use fake::faker::chrono::zh_tw::DateTimeBefore;
 use fake::faker::company::en::BsNoun;
-use fake::faker::company::raw::{Industry, Profession};
+use fake::faker::company::raw::Profession;
 use fake::faker::internet::raw::FreeEmail;
 use fake::faker::lorem::zh_tw::Sentence;
 use fake::faker::name::raw::*;
 use fake::locales::*;
 use fake::{self, Fake};
+use rand::rngs::ThreadRng;
 use rand::Rng;
 use sea_orm::prelude::DateTimeUtc;
-use sea_orm::{ActiveModelTrait, ActiveValue, Database, EntityTrait, IntoActiveModel};
+use sea_orm::{
+    ActiveModelTrait, ActiveValue, Database, DatabaseConnection, EntityTrait, IntoActiveModel,
+};
 use tracing::log::info;
 
 #[tokio::main]
@@ -32,7 +35,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
     let database_url = dotenv::var("DATABASE_URL")?;
     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
-    println!("{}/{}", database_url, db_name);
+    info!("{}/{}", database_url, db_name);
 
     let err = migration_helper::drop_database(database_url, db_name).await;
     if let Err(err) = err {
@@ -46,7 +49,25 @@ async fn main() -> anyhow::Result<()> {
     if let Err(err) = err {
         info!("{}", err.to_string());
     }
-
+    let reasons = vec![
+        "Ich brauche Zutritt, um meine tägliche Arbeit erledigen zu können.",
+"                    Ich benötige Zutritt, um an Meetings teilnehmen zu können.",
+"Ich brauche Zutritt, um Zugang zu wichtigen Dokumenten und Materialien zu haben.",
+"Ich benötige Zutritt, um mich mit Kollegen treffen und Austausch pflegen zu können.",
+"Ich brauche Zutritt, um an Fortbildungen teilnehmen zu können.",
+"Ich benötige Zutritt, um an Vorlesungen teilnehmen zu können, um mich fortzubilden.",
+"Ich brauche Zutritt, um an Veranstaltungen teilnehmen zu können, die für meine Arbeit relevant sind.",
+"Ich benötige Zutritt, um an Konferenzen teilnehmen zu können, um meine Kenntnisse zu erweitern.",
+"Ich brauche Zutritt, um Zugang zu verschiedenen Einrichtungen und Services zu haben, die für meine Arbeit wichtig sind.",
+"Ich benötige Zutritt, um an Diskussionen und Debatten teilnehmen zu können, die für meine Arbeit von Bedeutung sind.",
+"Ich brauche Zutritt, um an Projektmeetings teilnehmen zu können.",
+"Ich benötige Zutritt, um meine Arbeitsmaterialien und -ausrüstung zugänglich zu haben.",
+"Ich brauche Zutritt, um an Schulungen und Workshops teilnehmen zu können.",
+"Ich benötige Zutritt, um an Vorstandssitzungen teilnehmen zu können.",
+"Ich brauche Zutritt, um an Research-Meetings teilnehmen zu können.",
+"Ich benötige Zutritt, um an Kontrollbesuchen teilnehmen zu können.",
+"Ich benötige Zutritt, um an Supervisionen teilnehmen zu können"
+    ];
     let db = Database::connect(format!("{}/{}", database_url, db_name)).await?;
     let mut rng = rand::thread_rng();
     let profession: String = Profession(EN).fake_with_rng(&mut rng);
@@ -57,7 +78,19 @@ async fn main() -> anyhow::Result<()> {
     .insert(&db)
     .await?;
     tbl_role::ActiveModel {
-        name: ActiveValue::Set("Angestellter".to_string()),
+        name: ActiveValue::Set("administrative staff".to_string()),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await?;
+    tbl_role::ActiveModel {
+        name: ActiveValue::Set("administrative leader".to_string()),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await?;
+    tbl_role::ActiveModel {
+        name: ActiveValue::Set("administrative admin".to_string()),
         ..Default::default()
     }
     .insert(&db)
@@ -98,82 +131,6 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let users = tbl_user::Entity::find().all(&db).await?;
-
-    for user in &users {
-        let mut active_until: Option<NaiveDateTime> = None;
-        let mut active = false;
-        if rng.gen_ratio(2, 5) {
-            active = rng.gen_bool(0.5);
-            let due_date: DateTimeUtc =
-                DateTimeAfter(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
-            active_until = Some(due_date.naive_utc());
-        };
-        tbl_keycard::ActiveModel {
-            user_id: ActiveValue::Set(user.user_id.to_owned()),
-            active_until: ActiveValue::Set(active_until),
-            active: ActiveValue::Set(active),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-
-        for _ in 0..rng.gen_range(1..4) {
-            let sentence: String = Sentence(0..5).fake_with_rng(&mut rng);
-            tbl_door_group::ActiveModel {
-                name: ActiveValue::Set(Industry(EN).fake_with_rng(&mut rng)),
-                description: ActiveValue::Set(Some(sentence)),
-                owner_id: ActiveValue::Set(user.user_id.clone()),
-                ..Default::default()
-            }
-            .insert(&db)
-            .await?;
-        }
-    }
-    let door_groups = tbl_door_group::Entity::find().all(&db).await?;
-    let keycards = tbl_keycard::Entity::find().all(&db).await?;
-    let users_filtered: Vec<tbl_user::Model> = users
-        .iter()
-        .filter(|f| {
-            f.role_id.unwrap()
-                == roles
-                    .iter()
-                    .find(|f| f.name == "Angestellter")
-                    .unwrap()
-                    .role_id
-        })
-        .map(|f| f.to_owned())
-        .collect();
-    //insert workers
-    for user in users_filtered {
-        println!("{:#?}", user);
-        tbl_worker::ActiveModel {
-            user_id: ActiveValue::Set(user.user_id.to_owned()),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-    }
-    let workers = tbl_worker::Entity::find().all(&db).await?;
-    //select leaders out of workers
-    for idx in 0..3 {
-        tbl_leader::ActiveModel {
-            user_id: ActiveValue::Set(workers.get(idx).unwrap().user_id),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await?;
-    }
-    let leaders = tbl_leader::Entity::find().all(&db).await?;
-    for worker in &workers {
-        if leaders.iter().any(|f| f.user_id == worker.user_id) {
-            //worker is leader skip
-            continue;
-        }
-        let mut worker: tbl_worker::ActiveModel = worker.clone().into();
-        worker.boss_user_id =
-            ActiveValue::Set(Some(leaders[rng.gen_range(0..leaders.len())].user_id));
-        worker.update(&db).await?;
-    }
     for _ in 0..4 {
         let suffix: String = StreetSuffix(EN).fake_with_rng(&mut rng);
         let name: String = StreetName(EN).fake_with_rng(&mut rng);
@@ -225,58 +182,151 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     }
     let doors = tbl_door::Entity::find().all(&db).await?;
-
-    for group in &door_groups {
-        for _ in 0..rng.gen_range(0..20) {
-            let res = tbl_door_to_group_door::ActiveModel {
-                door_group_id: ActiveValue::Set(group.door_group_id),
-                door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id),
-            }
-            .insert(&db)
-            .await;
-            if let Err(res) = res {
-                info!("{}", res.to_string());
-            }
-        }
-    }
-    for _ in 0..200 {
-        let lent_date = DateTimeBefore(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
-        let due_date = DateTimeAfter(lent_date).fake_with_rng(&mut rng);
-        let is_active = chrono::offset::Utc::now() < due_date || rng.gen_ratio(1, 20);
-        let sentence: String = Sentence(0..3).fake_with_rng(&mut rng);
-        tbl_door_user_access::ActiveModel {
-            comment: ActiveValue::Set(Some(sentence)),
-            due_at: ActiveValue::Set(Some(due_date.naive_utc())),
-            lent_at: ActiveValue::Set(Some(lent_date.naive_utc())),
-            has_problem: ActiveValue::Set(Some(rng.gen_ratio(1, 20))),
-            is_active: ActiveValue::Set(Some(is_active)),
-            lent: ActiveValue::Set(Some(is_active)),
-            door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id),
-            user_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
-        }
-        .insert(&db)
-        .await?;
-    }
-    for _ in 0..100 {
-        let accept = rng.gen_ratio(1, 10);
-        let reject = rng.gen_ratio(1, 10);
-        tbl_request::ActiveModel {
-            accept: ActiveValue::Set(accept && !reject),
-            pending: ActiveValue::Set(accept == reject),
-            reject: ActiveValue::Set(!accept && reject),
-            description: ActiveValue::Set(Sentence(0..10).fake_with_rng(&mut rng)),
-            door_group_id: ActiveValue::Set(
-                door_groups[rng.gen_range(0..door_groups.len())]
-                    .door_group_id
-                    .to_owned(),
-            ),
-            requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id),
+    let department_names = vec![
+        "Hausmeister",
+        "Winfo",
+        "ITSec",
+        "BWL",
+        "KI",
+        "Verwaltung",
+        "Küche",
+    ];
+    for name in department_names {
+        let res = tbl_department::ActiveModel {
+            description: ActiveValue::Set(Some(name.to_owned())),
+            name: ActiveValue::Set(name.to_owned()),
             ..Default::default()
         }
         .insert(&db)
         .await?;
+        for _ in 0..rng.gen_range(5..100) {
+            let _ = tbl_room_department::ActiveModel {
+                department_id: ActiveValue::Set(res.department_id),
+                room_id: ActiveValue::Set(rooms[rng.gen_range(0..rooms.len())].room_id.to_owned()),
+            }
+            .insert(&db)
+            .await;
+        }
+    }
+    let departments = tbl_department::Entity::find().all(&db).await?;
+    //request that are in step 1
+
+    for _ in 0..100 {
+        let active_until: DateTimeUtc =
+            DateTimeAfter(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
+        let changed_at: DateTimeUtc =
+            DateTimeBefore(chrono::offset::Utc::now()).fake_with_rng(&mut rng);
+        let created_at: DateTimeUtc = DateTimeBefore(changed_at).fake_with_rng(&mut rng);
+        let request = tbl_request::ActiveModel {
+            active_until: ActiveValue::Set(Some(active_until.naive_utc())),
+            changed_at: ActiveValue::Set(changed_at.naive_utc()),
+            created_at: ActiveValue::Set(created_at.naive_utc()),
+            is_proposal: ActiveValue::Set(true),
+            requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id.to_owned()),
+            ..Default::default()
+        }
+        .insert(&db)
+        .await?;
+        // decide which type a request is
+        let type_of_request = rng.gen_range(1..=3);
+
+        async fn gen_keycard_proposal(
+            request: &tbl_request::Model,
+            db: &DatabaseConnection,
+        ) -> anyhow::Result<()> {
+            // keycard
+            let keycard = tbl_keycard::ActiveModel {
+                request_id: ActiveValue::Set(request.request_id.to_owned()),
+                ..Default::default()
+            }
+            .insert(db)
+            .await?;
+            let mut request = request.clone().into_active_model();
+            request.keycard_id = ActiveValue::Set(Some(keycard.keycard_id.to_owned()));
+            request.update(db).await?;
+            Ok(())
+        }
+        async fn gen_access_proposal(
+            request: &tbl_request::Model,
+            db: &DatabaseConnection,
+            rng: &mut ThreadRng,
+            departments: &Vec<tbl_department::Model>,
+            buildings: &Vec<tbl_building::Model>,
+            reasons: &Vec<&str>,
+        ) -> anyhow::Result<()> {
+            for _ in 0..rng.gen_range(1..3) {
+                let _ = tbl_request_department::ActiveModel {
+                    department_id: ActiveValue::Set(
+                        departments[rng.gen_range(0..departments.len())]
+                            .department_id
+                            .to_owned(),
+                    ),
+                    request_id: ActiveValue::Set(request.request_id.to_owned()),
+                }
+                .insert(db)
+                .await;
+            }
+
+            if rng.gen_bool(0.3) {
+                tbl_request_entrance::ActiveModel {
+                    building_id: ActiveValue::Set(
+                        buildings[rng.gen_range(0..buildings.len())]
+                            .building_id
+                            .to_owned(),
+                    ),
+                    request_id: ActiveValue::Set(request.request_id.to_owned()),
+                    proposed_rooms: ActiveValue::Set("H230".to_string()),
+                    ..Default::default()
+                }
+                .insert(db)
+                .await?;
+            }
+
+            let mut request = request.clone().into_active_model();
+
+            request.description =
+                ActiveValue::Set(Some(reasons[rng.gen_range(0..reasons.len())].to_owned()));
+            request.update(db).await?;
+            Ok(())
+        }
+        match type_of_request {
+            1 => {
+                gen_keycard_proposal(&request, &db).await?;
+            }
+            2 => {
+                gen_access_proposal(&request, &db, &mut rng, &departments, &buildings, &reasons)
+                    .await?;
+            }
+            3 => {
+                gen_keycard_proposal(&request, &db).await?;
+                gen_access_proposal(&request, &db, &mut rng, &departments, &buildings, &reasons)
+                    .await?;
+            }
+            _ => {
+                panic!()
+            }
+        };
+    }
+    // 80 of 100 get to the next stage
+    let requests = tbl_request::Entity::find().all(&db).await?;
+    for idx in 0..80 {
+        let request = &requests[idx];
+        let mut request_active_model = request.clone().into_active_model();
+        request_active_model.is_proposal = ActiveValue::Set(false);
+        request_active_model.update(&db).await?;
+        for _ in 0..rng.gen_range(1..10) {
+            let _ = tbl_door_to_request::ActiveModel {
+                door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id.to_owned()),
+                request_id: ActiveValue::Set(request.request_id.to_owned()),
+            }
+            .insert(&db)
+            .await;
+        }
     }
     let requests = tbl_request::Entity::find().all(&db).await?;
+    // requests can now be finalised
+
+    //comments between workers and user
     for _ in 0..500 {
         let request = &requests[rng.gen_range(0..requests.len())];
         let user_who_writes_comment;
@@ -285,6 +335,15 @@ async fn main() -> anyhow::Result<()> {
             let user = request.requester_id.to_owned();
             user_who_writes_comment = Some(user);
         } else {
+            let workers: Vec<_> = users
+                .iter()
+                .filter(|f| {
+                    roles
+                        .iter()
+                        .filter(|f| f.name.starts_with("administrative"))
+                        .any(|role| Some(role.role_id) == f.role_id)
+                })
+                .collect();
             let worker = workers[rng.gen_range(0..workers.len())].user_id.to_owned();
             user_who_writes_comment = Some(worker)
         }
@@ -306,22 +365,44 @@ async fn main() -> anyhow::Result<()> {
             request.update(&db).await?;
         }
     }
+    for x in requests.iter().filter(|f| !f.is_proposal) {
+        let accept = rng.gen_bool(0.2);
+        let reject = rng.gen_bool(0.2);
+        if accept && !reject || reject && !accept {
+            let mut request = x.clone().into_active_model();
+            request.accept = ActiveValue::Set(accept);
+            request.reject = ActiveValue::Set(reject);
+            request.pending = ActiveValue::Set(false);
+            request.update(&db).await?;
+        }
+    }
+    let requests = tbl_request::Entity::find().all(&db).await?;
+    let keycards = tbl_keycard::Entity::find().all(&db).await?;
     for _ in 0..1000 {
+        let requests: Vec<_> = requests.iter().filter(|f| f.accept).collect();
+        let keycards: Vec<_> = keycards
+            .iter()
+            .filter(|f| requests.iter().any(|req| req.request_id == f.request_id))
+            .collect();
         let keycard = &keycards[rng.gen_range(0..keycards.len())];
+        let keycard_request = requests
+            .iter()
+            .find(|f| f.request_id == keycard.request_id)
+            .unwrap();
         let door = &doors[rng.gen_range(0..doors.len())];
         let mut used_at: chrono::DateTime<chrono::Utc> =
             DateTimeBefore(chrono::Utc::now()).fake_with_rng(&mut rng);
-        if let Some(val) = keycard.active_until {
-            // active_until smaller than now time
-            // to prevent assigning historie values into the future
-            if val < used_at.naive_utc() {
-                used_at = DateTimeBefore(DateTimeUtc::from_utc(val, Utc)).fake_with_rng(&mut rng);
-            }
+        // active_until smaller than now time
+        // to prevent assigning historie values into the future
+        if keycard_request.changed_at < used_at.naive_utc() {
+            used_at = DateTimeBefore(DateTimeUtc::from_utc(keycard_request.changed_at, Utc))
+                .fake_with_rng(&mut rng);
         }
         tbl_keycard_history::ActiveModel {
             keycard_id: ActiveValue::Set(keycard.keycard_id.to_owned()),
             door_id: ActiveValue::Set(door.door_id.to_owned()),
             used_at: ActiveValue::Set(used_at.naive_utc()),
+            success: ActiveValue::Set(rng.gen_bool(0.6)),
             ..Default::default()
         }
         .insert(&db)

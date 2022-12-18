@@ -4,18 +4,26 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_room")]
+#[sea_orm(table_name = "tbl_request_entrance")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub room_id: Uuid,
-    pub name: String,
-    pub floor: i32,
-    pub is_sensitive: Option<bool>,
+    pub request_entrance_id: Uuid,
+    pub request_id: Uuid,
     pub building_id: Uuid,
+    #[sea_orm(column_type = "Text")]
+    pub proposed_rooms: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::tbl_request::Entity",
+        from = "Column::RequestId",
+        to = "super::tbl_request::Column::RequestId",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    TblRequest,
     #[sea_orm(
         belongs_to = "super::tbl_building::Entity",
         from = "Column::BuildingId",
@@ -24,27 +32,17 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblBuilding,
-    #[sea_orm(has_many = "super::tbl_door::Entity")]
-    TblDoor,
-    #[sea_orm(has_many = "super::tbl_room_department::Entity")]
-    TblRoomDepartment,
+}
+
+impl Related<super::tbl_request::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::TblRequest.def()
+    }
 }
 
 impl Related<super::tbl_building::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblBuilding.def()
-    }
-}
-
-impl Related<super::tbl_door::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblDoor.def()
-    }
-}
-
-impl Related<super::tbl_room_department::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRoomDepartment.def()
     }
 }
 

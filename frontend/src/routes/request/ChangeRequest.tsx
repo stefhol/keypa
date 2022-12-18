@@ -20,8 +20,8 @@ const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
     return await Rest.getSingleRequest(requestId)
 }
 const getBuildingWithDoorGroups = async ({ queryKey }: { queryKey: string[] }) => {
-    const doorGroupId = queryKey[1]
-    return await Rest.getDoorsWithDoorGroupId(doorGroupId)
+    const requestId = queryKey[1]
+    return await Rest.getDoorsWithRequestId(requestId)
 }
 export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
     const { requestId } = useParams()
@@ -38,7 +38,7 @@ export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
 
 export interface ChangeRequestFormProps { data: Request, }
 export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
-    const { data: building } = useQuery(["building", props.data.door_group_id], getBuildingWithDoorGroups)
+    const { data: building } = useQuery(["building", props.data.request_id], getBuildingWithDoorGroups)
 
     const [accept, setAccept] = React.useState(props.data.accept);
     const [reject, setReject] = React.useState(props.data.reject);
@@ -46,11 +46,30 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
     const selection = React.useRef({ getCurrentSelection: () => Selection }) as unknown as SelectionRef;
 
     return (<>
+        <h1>Antrag</h1>
         <form>
-            <UserInfo data={props.data.requester} />
+            <div className="container">
+                <h2>Kontaktinformationen</h2>
+                <p>
+                    Name: {props.data.requester.name}
+                </p>
+                <p>
+                    Email: {props.data.requester.email}
+                </p>
+                <p>
+                    Beruf: {props.data.requester.role.name}
+                </p>
+                <p>
+                    Tel: +49 151 2549983
+                </p>
+            </div>
 
-            <h2>Beschreibung</h2>
-            <p>{props.data.description}</p>
+            <div className="container">
+                <h2>Beschreibung</h2>
+                <p>
+                    Ich brauche Zugang zum Labor damit ich ein Experiment durchführen kann.
+                </p>
+            </div>
             <label>
                 Status:
                 <select name="status" onChange={(e) => {
@@ -76,22 +95,27 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     <option value="3" selected={pending}>Ausstehend</option>
                 </select>
             </label>
+            <div className="container">
+                <h2>Angefragte Räume</h2>
+                {(building && building?.length || 0) > 0 && <>
+                    <>Raumanzahl: {getCountOfRooms(building || [])}</>
+                    <TreeView selectionRef={selection} data={prepareData(building || [])} filter expanded />
+                </>
+
+
+                }
+            </div>
             <button>
-                Aenderung Speichern
+                Änderung Speichern
             </button>
-            <h2>Angefragte Raeume</h2>
-            {(building && building?.length || 0) > 0 && <>
-                <>Raumanzahl: {getCountOfRooms(building || [])}</>
-                <TreeView selectionRef={selection} data={prepareData(building || [])} filter expanded /></>
-
-
-            }
         </form>
 
-        <CommentBoxFC
-            data={props.data.comments || []}
-            requester={props.data.requester_id}
-        />
+        <div className="container">
+            <CommentBoxFC
+                data={props.data.comments || []}
+                requester={props.data.requester_id}
+            />
+        </div>
     </>)
 }
 

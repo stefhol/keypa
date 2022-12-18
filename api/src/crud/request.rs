@@ -16,7 +16,6 @@ pub struct GetRequestWithComments {
     pub request_id: Uuid,
     pub requester_id: Uuid,
     pub requester: Option<GetUser>,
-    pub door_group_id: Uuid,
     pub created_at: DateTimeUtc,
     pub changed_at: DateTimeUtc,
     pub description: Option<String>,
@@ -24,6 +23,11 @@ pub struct GetRequestWithComments {
     pub reject: bool,
     pub pending: bool,
     pub comments: Vec<GetComments>,
+    pub active_until: Option<DateTimeUtc>,
+    pub status_id: Option<Uuid>,
+    pub is_proposal: bool,
+    pub active: bool,
+    pub keycard_id: Option<Uuid>,
 }
 impl From<(&tbl_request::Model, &Vec<GetComments>)> for GetRequestWithComments {
     fn from((request, comments): (&tbl_request::Model, &Vec<GetComments>)) -> Self {
@@ -31,7 +35,6 @@ impl From<(&tbl_request::Model, &Vec<GetComments>)> for GetRequestWithComments {
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: None,
-            door_group_id: request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -39,6 +42,13 @@ impl From<(&tbl_request::Model, &Vec<GetComments>)> for GetRequestWithComments {
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: comments.clone(),
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
@@ -48,7 +58,6 @@ impl From<&tbl_request::Model> for GetRequestWithComments {
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: None,
-            door_group_id: request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -56,6 +65,13 @@ impl From<&tbl_request::Model> for GetRequestWithComments {
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: vec![],
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
@@ -69,7 +85,6 @@ impl From<(&tbl_request::Model, &Vec<GetUser>)> for GetRequestWithComments {
             request_id: request.request_id.clone(),
             requester_id: request.requester_id.clone(),
             requester: user,
-            door_group_id: request.door_group_id.clone(),
             created_at: DateTime::from_local(request.created_at.clone(), Utc),
             changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
             description: request.description.clone(),
@@ -77,6 +92,13 @@ impl From<(&tbl_request::Model, &Vec<GetUser>)> for GetRequestWithComments {
             reject: request.reject.clone(),
             pending: request.pending.clone(),
             comments: vec![],
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            status_id: request.status_id,
+            is_proposal: request.is_proposal,
+            active: request.active,
+            keycard_id: request.keycard_id,
         }
     }
 }
@@ -114,7 +136,10 @@ pub async fn get_request_from_user_id(
         .all(db)
         .await?;
 
-    Ok(model.iter().map(|f| f.into()).collect())
+    Ok(model
+        .iter()
+        .map(|f| GetRequestWithComments::from(f))
+        .collect())
 }
 pub async fn get_request_from_user_id_and_request_id(
     user_id: &Uuid,
