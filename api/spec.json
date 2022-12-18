@@ -1,0 +1,1168 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "api",
+    "description": "",
+    "contact": {
+      "name": ""
+    },
+    "license": {
+      "name": ""
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/buildings": {
+      "get": {
+        "tags": [
+          "api::building"
+        ],
+        "description": "",
+        "operationId": "get_buldings",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetCompleteBuilding"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/login": {
+      "post": {
+        "tags": [
+          "api::auth"
+        ],
+        "description": "",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Login"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/logout": {
+      "get": {
+        "tags": [
+          "api::auth"
+        ],
+        "description": "",
+        "operationId": "logout",
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/request": {
+      "get": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "get_all_pending_requests",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetRequestWithComments"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      },
+      "put": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "create_requests",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/request/{request_id}": {
+      "get": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "get_single_requests",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRequestWithComments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/request/{request_id}/doors": {
+      "get": {
+        "tags": [
+          "api::door"
+        ],
+        "description": "",
+        "operationId": "get_doors_of_door_group",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetCompleteBuilding"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/self": {
+      "get": {
+        "tags": [
+          "api::user"
+        ],
+        "description": "",
+        "operationId": "get_self",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/self/doors": {
+      "get": {
+        "tags": [
+          "api::door"
+        ],
+        "description": "",
+        "operationId": "get_self_door",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetCompleteBuilding"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/self/keycard": {
+      "get": {
+        "tags": [
+          "api::keycard"
+        ],
+        "description": "",
+        "operationId": "get_self_keycard",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetKeycard"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/self/request": {
+      "get": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "get_self_requests",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetRequestWithComments"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/self/request/{request_id}": {
+      "get": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "get_self_requests_from_request_id",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRequestWithComments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/user/{user_id}/keycard": {
+      "get": {
+        "tags": [
+          "api::keycard"
+        ],
+        "description": "",
+        "operationId": "get_user_keycard",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetKeycard"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/user/{user_id}/request": {
+      "get": {
+        "tags": [
+          "api::request"
+        ],
+        "description": "",
+        "operationId": "get_single_requests_from_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetRequestWithComments"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/users": {
+      "get": {
+        "tags": [
+          "api::user"
+        ],
+        "description": "",
+        "operationId": "get_users",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetUser"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/users/{user_id}": {
+      "get": {
+        "tags": [
+          "api::user"
+        ],
+        "description": "",
+        "operationId": "get_single_user",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
+    "/api/v1/users/{user_id}/doors": {
+      "get": {
+        "tags": [
+          "api::door"
+        ],
+        "description": "",
+        "operationId": "get_user_authorized_doors",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "deprecated": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetCompleteBuilding"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CreateRequest": {
+        "type": "object",
+        "required": [
+          "create_keycard"
+        ],
+        "properties": {
+          "active_until": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "create_keycard": {
+            "type": "boolean"
+          },
+          "departments": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "doors": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "indivdual_rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IndividualRooms"
+            }
+          }
+        }
+      },
+      "GetBuilding": {
+        "type": "object",
+        "required": [
+          "building_id",
+          "name"
+        ],
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "GetComments": {
+        "type": "object",
+        "required": [
+          "comment_id",
+          "request_id",
+          "user_id",
+          "comment",
+          "written_at"
+        ],
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "comment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "user": {
+            "$ref": "#/components/schemas/GetUser"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "written_at": {
+            "$ref": "#/components/schemas/DateTimeUtc"
+          }
+        }
+      },
+      "GetCompleteBuilding": {
+        "type": "object",
+        "required": [
+          "building_id",
+          "name",
+          "rooms"
+        ],
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetCompleteRoom"
+            }
+          }
+        }
+      },
+      "GetCompleteDoor": {
+        "type": "object",
+        "required": [
+          "door_id",
+          "name",
+          "owner",
+          "room_id"
+        ],
+        "properties": {
+          "door_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "owner": {
+            "type": "boolean"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetCompleteRoom": {
+        "type": "object",
+        "required": [
+          "room_id",
+          "name",
+          "floor",
+          "building_id",
+          "doors"
+        ],
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "doors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetCompleteDoor"
+            }
+          },
+          "floor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "is_sensitive": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetDoor": {
+        "type": "object",
+        "required": [
+          "door_id",
+          "name",
+          "room_id"
+        ],
+        "properties": {
+          "door_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "room": {
+            "$ref": "#/components/schemas/GetRoom"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetKeycard": {
+        "type": "object",
+        "required": [
+          "keycard_id",
+          "is_lost",
+          "is_locked",
+          "is_deactivated",
+          "is_given_back",
+          "request_id"
+        ],
+        "properties": {
+          "is_deactivated": {
+            "type": "boolean"
+          },
+          "is_given_back": {
+            "type": "boolean"
+          },
+          "is_locked": {
+            "type": "boolean"
+          },
+          "is_lost": {
+            "type": "boolean"
+          },
+          "keycard_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetRequestWithComments": {
+        "type": "object",
+        "required": [
+          "request_id",
+          "requester_id",
+          "created_at",
+          "changed_at",
+          "accept",
+          "reject",
+          "pending",
+          "comments",
+          "is_proposal",
+          "active"
+        ],
+        "properties": {
+          "accept": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "active_until": {
+            "$ref": "#/components/schemas/DateTimeUtc"
+          },
+          "changed_at": {
+            "$ref": "#/components/schemas/DateTimeUtc"
+          },
+          "comments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetComments"
+            }
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/DateTimeUtc"
+          },
+          "description": {
+            "type": "string"
+          },
+          "is_proposal": {
+            "type": "boolean"
+          },
+          "keycard_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "reject": {
+            "type": "boolean"
+          },
+          "request_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requester": {
+            "$ref": "#/components/schemas/GetUser"
+          },
+          "requester_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetRole": {
+        "type": "object",
+        "required": [
+          "role_id",
+          "name"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "role_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetRoom": {
+        "type": "object",
+        "required": [
+          "room_id",
+          "name",
+          "floor",
+          "building_id"
+        ],
+        "properties": {
+          "building": {
+            "$ref": "#/components/schemas/GetBuilding"
+          },
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "floor": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "is_sensitive": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "room_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "GetUser": {
+        "type": "object",
+        "required": [
+          "user_id",
+          "name",
+          "email"
+        ],
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "picture_url": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/GetRole"
+          },
+          "tel": {
+            "type": "string"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "IndividualRooms": {
+        "type": "object",
+        "required": [
+          "building_id",
+          "rooms"
+        ],
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rooms": {
+            "type": "string"
+          }
+        }
+      },
+      "Login": {
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

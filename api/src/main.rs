@@ -1,13 +1,14 @@
 pub mod api;
 pub mod crud;
+pub mod openapi;
 pub mod util;
-
 use std::net::Ipv4Addr;
 
 use actix_cors::Cors;
 
-use actix_web::{ App, HttpServer, web};
+use actix_web::{web, App, HttpServer};
 
+use openapi::ApiDoc;
 use tracing::{info, log};
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -15,58 +16,11 @@ use dotenv;
 
 use sea_orm::Database;
 
-use utoipa::{OpenApi, openapi::{Server, Info}};
+use utoipa::{
+    openapi::{Info, Server},
+    OpenApi,
+};
 
-#[derive(OpenApi)]
-#[openapi(
-    
-    paths(
-        //login
-        api::auth::login,
-        api::auth::logout,
-        //user
-        api::user::get_users,
-        api::user::get_single_user,
-        api::user::get_self,
-        //key
-        api::door::get_self_door,
-        api::door::get_user_authorized_doors,
-        api::door::get_doors_of_door_group,
-        //keycard
-        api::keycard::get_self_keycard,
-        api::keycard::get_user_keycard,
-        
-        //requests
-        api::request::get_self_requests,
-        api::request::get_requests_from_user,
-        api::request::get_single_requests_from_user,
-        api::request::get_self_requests_from_request_id,
-        api::request::get_all_pending_requests,
-        api::request::get_single_requests,
-        api::request::create_requests,
-        //buildings
-        api::building::get_buldings,
-    ),
-    components(schemas(
-        api::auth::Login,
-        crud::role::GetRole,
-
-        crud::door::GetDoor,
-        crud::room::GetRoom,
-        crud::building::GetBuilding,
-        crud::user::GetUser,
-        crud::keycard::GetKeycard,
-
-        crud::request::get::GetRequestWithComments,
-        crud::request::get::GetComments,
-        crud::request::create::CreateRequest,
-        crud::request::create::IndividualRooms,
-        crud::building::GetCompleteBuilding,
-        crud::building::GetCompleteRoom,
-        crud::building::GetCompleteDoor,
-    ))
-)]
-struct ApiDoc;
 #[actix_web::main]
 async fn main() -> anyhow::Result<()> {
     // let wwwroot = dotenv::var("WWWROOT")?;
@@ -77,9 +31,11 @@ async fn main() -> anyhow::Result<()> {
         .init();
     // Make instance variable of ApiDoc so all worker threads gets the same instance.
     let mut openapi = ApiDoc::openapi();
-    openapi.servers = Some(vec![
-       Server::new(format!("{}:{}",Ipv4Addr::UNSPECIFIED, 8080))
-    ]);
+    openapi.servers = Some(vec![Server::new(format!(
+        "{}:{}",
+        Ipv4Addr::UNSPECIFIED,
+        8080
+    ))]);
     openapi.info = Info::new("KeyPa", "0.0.1");
 
     let database_url = dotenv::var("DATABASE_URL")?;
@@ -99,7 +55,6 @@ async fn main() -> anyhow::Result<()> {
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-doc/openapi.json", openapi.clone()),
             )
-            
             .service(
                 web::scope("/api/v1")
                     .wrap(util::middleware::Auth)
@@ -108,11 +63,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::auth::logout)
                     //user services
                     .service(api::user::get_users)
-
                     .service(api::user::get_single_user)
                     .service(api::user::get_self)
-                    
-
                     //door
                     .service(api::door::get_self_door)
                     .service(api::door::get_user_authorized_doors)
@@ -120,7 +72,6 @@ async fn main() -> anyhow::Result<()> {
                     //keycard
                     .service(api::keycard::get_self_keycard)
                     .service(api::keycard::get_user_keycard)
-
                     //request
                     .service(api::request::get_self_requests)
                     .service(api::request::get_requests_from_user)
@@ -130,15 +81,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_single_requests)
                     .service(api::request::create_requests)
                     // building
-                    .service(api::building::get_buldings)
-                ,
+                    .service(api::building::get_buldings),
             )
-            // .service(
-            //     spa().index_file("./index.html")
-            //         .static_resources_location("./assets")
-            //         .static_resources_mount("/assets")
-            //         .finish()
-            // )
             .app_data(web::Data::new(db.clone()))
             .wrap(Cors::permissive())
     })
