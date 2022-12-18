@@ -1,6 +1,6 @@
 use actix_web::{
-    get,
-    web::{Data, Path, Query},
+    get, put,
+    web::{Data, Json, Path, Query},
     HttpResponse,
 };
 use sea_orm::DatabaseConnection;
@@ -8,7 +8,10 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
-    crud,
+    crud::{
+        self,
+        request::create::{create_request, CreateRequest},
+    },
     util::{
         error::CrudError,
         middleware::{extractor::Authenticated, SecurityLevel},
@@ -33,7 +36,7 @@ pub async fn get_self_requests(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
-    let requests = crud::request::get_request_from_user_id(&user_id, db.get_ref()).await?;
+    let requests = crud::request::get::get_request_from_user_id(&user_id, db.get_ref()).await?;
     Ok(HttpResponse::Ok().json(requests))
 }
 
@@ -48,14 +51,14 @@ pub async fn get_self_requests(
     (status = 500),
 )
 )]
-#[get("user/{user_id}/request")]
+#[get("/user/{user_id}/request")]
 pub async fn get_requests_from_user(
     db: Data<DatabaseConnection>,
     user_id: Path<Uuid>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let requests = crud::request::get_request_from_user_id(&user_id, &db).await?;
+    let requests = crud::request::get::get_request_from_user_id(&user_id, &db).await?;
     Ok(HttpResponse::Ok().json(requests))
 }
 #[derive(Debug, Serialize, Deserialize)]
@@ -81,9 +84,12 @@ pub async fn get_self_requests_from_request_id(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
-    let request =
-        crud::request::get_request_from_user_id_and_request_id(&user_id, &request_id, db.get_ref())
-            .await?;
+    let request = crud::request::get::get_request_from_user_id_and_request_id(
+        &user_id,
+        &request_id,
+        db.get_ref(),
+    )
+    .await?;
     Ok(HttpResponse::Ok().json(request))
 }
 
@@ -106,7 +112,7 @@ pub async fn get_single_requests_from_user(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let request = crud::request::get_request_from_user_id_and_request_id(
+    let request = crud::request::get::get_request_from_user_id_and_request_id(
         &user_id,
         &query.request_id,
         db.get_ref(),
@@ -131,7 +137,7 @@ pub async fn get_all_pending_requests(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let request = crud::request::get_all_open_requests(&db).await?;
+    let request = crud::request::get::get_all_open_requests(&db).await?;
     Ok(HttpResponse::Ok().json(request))
 }
 #[utoipa::path(
@@ -152,6 +158,29 @@ pub async fn get_single_requests(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let request = crud::request::get_single_request(&db, &request_id).await?;
+    let request = crud::request::get::get_single_request(&db, &request_id).await?;
+    Ok(HttpResponse::Ok().json(request))
+}
+#[utoipa::path(
+    context_path = "/api/v1",
+    request_body = CreateRequest,
+    responses(
+    (status = 200),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[put("/request")]
+pub async fn create_requests(
+    db: Data<DatabaseConnection>,
+    request: Json<CreateRequest>,
+    auth: Authenticated,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
+    let user_id = auth.try_get_user_id()?;
+    create_request(&db, &user_id, &request, auth.to_sercurity_level()).await?;
     Ok(HttpResponse::Ok().json(request))
 }

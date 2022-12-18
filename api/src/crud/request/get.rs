@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use super::user::GetUser;
+use crate::crud::user::GetUser;
 
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
 pub struct GetRequestWithComments {
