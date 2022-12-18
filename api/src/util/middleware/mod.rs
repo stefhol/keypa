@@ -58,11 +58,8 @@ impl AuthenticationResult {
         &self,
         security_level: SecurityLevel,
     ) -> Result<(), CrudError> {
-        if self.to_sercurity_level() < security_level {
-            return Err(CrudError::Unauthorized);
-        } else {
-            return Ok(());
-        }
+        self.to_sercurity_level()
+            .has_high_enough_security_level(security_level)
     }
     pub fn try_get_user_id(&self) -> Result<Uuid, CrudError> {
         match self {
@@ -89,7 +86,18 @@ pub enum SecurityLevel {
     Leader = 3,
     Admin = 4,
 }
-
+impl SecurityLevel {
+    pub fn has_high_enough_security_level(
+        &self,
+        security_level: SecurityLevel,
+    ) -> Result<(), CrudError> {
+        if self < &security_level {
+            return Err(CrudError::Unauthorized);
+        } else {
+            return Ok(());
+        }
+    }
+}
 pub type AuthenticationInfo = Rc<AuthenticationResult>;
 // Middleware factory is `Transform` trait
 // `S` - type of the next service

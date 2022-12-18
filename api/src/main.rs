@@ -2,16 +2,16 @@ pub mod api;
 pub mod crud;
 pub mod util;
 
-use std::{net::Ipv4Addr};
+use std::net::Ipv4Addr;
 
 use actix_cors::Cors;
 
 use actix_web::{ App, HttpServer, web};
 
+use tracing::{info, log};
 use utoipa_swagger_ui::SwaggerUi;
 
 use dotenv;
-use log::info;
 
 use sea_orm::Database;
 
@@ -36,15 +36,16 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         api::keycard::get_self_keycard,
         api::keycard::get_user_keycard,
         
-        //key_group
+        //requests
         api::request::get_self_requests,
         api::request::get_requests_from_user,
         api::request::get_single_requests_from_user,
         api::request::get_self_requests_from_request_id,
-        api::building::get_buldings,
         api::request::get_all_pending_requests,
         api::request::get_single_requests,
-        
+        api::request::create_requests,
+        //buildings
+        api::building::get_buldings,
     ),
     components(schemas(
         api::auth::Login,
@@ -56,8 +57,10 @@ use utoipa::{OpenApi, openapi::{Server, Info}};
         crud::user::GetUser,
         crud::keycard::GetKeycard,
 
-        crud::request::GetRequestWithComments,
-        crud::request::GetComments,
+        crud::request::get::GetRequestWithComments,
+        crud::request::get::GetComments,
+        crud::request::create::CreateRequest,
+        crud::request::create::IndividualRooms,
         crud::building::GetCompleteBuilding,
         crud::building::GetCompleteRoom,
         crud::building::GetCompleteDoor,
@@ -108,9 +111,9 @@ async fn main() -> anyhow::Result<()> {
 
                     .service(api::user::get_single_user)
                     .service(api::user::get_self)
-                    //woker services
+                    
 
-                    //key
+                    //door
                     .service(api::door::get_self_door)
                     .service(api::door::get_user_authorized_doors)
                     .service(api::door::get_doors_of_door_group)
@@ -125,6 +128,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_self_requests_from_request_id)
                     .service(api::request::get_all_pending_requests)
                     .service(api::request::get_single_requests)
+                    .service(api::request::create_requests)
                     // building
                     .service(api::building::get_buldings)
                 ,
