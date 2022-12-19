@@ -33,7 +33,9 @@ jobs:
     - name: Cache Cargo dependencies
       uses: actions/cache@v3
       with:
-        path: ~/.cargo
+        path: |
+          ~/.cargo
+          target
         key: cargo-cache-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           cargo-cache-
