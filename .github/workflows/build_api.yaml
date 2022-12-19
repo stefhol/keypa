@@ -48,14 +48,14 @@ jobs:
         ls
         cd ./target/x86_64-unknown-linux-musl/release/
         ls
-        mkdir ./builds
-        cp ./api ./builds/api
-        cp ./mock ./builds/mock
+        mkdir $GITHUB_WORKSPACE/builds
+        cp ./api $GITHUB_WORKSPACE/builds/api
+        cp ./mock $GITHUB_WORKSPACE/builds/mock
     - uses: actions/upload-artifact@v3
       with:
         name: keypa_x86_musl
         path: |
-          ./target/x86_64-unknown-linux-musl/release/builds
+          ./builds
           ./Dockerfile
           - name: Build image
     
