@@ -12,13 +12,13 @@ use crate::{
 #[utoipa::path(
     context_path = "/api/v1",
     responses(
-    (status = 200 ,body = [GetCompleteBuilding]),
-    (status = 400),
-    (status = 401),
-    (status = 404),
-    (status = 406),
-    (status = 500),
-)
+        (status = 200 ,body = [GetCompleteBuilding]),
+        (status = 400),
+        (status = 401),
+        (status = 404),
+        (status = 406),
+        (status = 500),
+    )
 )]
 #[get("/buildings")]
 pub async fn get_buldings(
@@ -26,7 +26,10 @@ pub async fn get_buldings(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let buildings = crud::building::get_building_complex(&db).await?;
+    let buildings = match auth.to_sercurity_level() {
+        SecurityLevel::User => crud::building::get_building_without_rooms(&db).await?,
+        _ => crud::building::get_building(&db).await?,
+    };
 
     Ok(HttpResponse::Ok().json(buildings))
 }

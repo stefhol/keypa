@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
     // let wwwroot = dotenv::var("WWWROOT")?;
     // env::set_current_dir(&wwwroot)?;
     env_logger::builder()
-        .filter_level(log::LevelFilter::Error)
+        .filter_level(log::LevelFilter::Debug)
         .is_test(true)
         .init();
     // Make instance variable of ApiDoc so all worker threads gets the same instance.
@@ -81,7 +81,9 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_single_requests)
                     .service(api::request::create_requests)
                     // building
-                    .service(api::building::get_buldings),
+                    .service(api::building::get_buldings)
+                    //department
+                    .service(api::department::get_departments),
             )
             .app_data(web::Data::new(db.clone()))
             .wrap(Cors::permissive())

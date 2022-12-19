@@ -31,6 +31,8 @@ use crate::{crud, api};
         api::request::create_requests,
         //buildings
         api::building::get_buldings,
+        //department
+        api::department::get_departments,
     ),
     components(schemas(
         api::auth::Login,
@@ -46,9 +48,10 @@ use crate::{crud, api};
         crud::request::get::GetComments,
         crud::request::create::CreateRequest,
         crud::request::create::IndividualRooms,
-        crud::building::GetCompleteBuilding,
-        crud::building::GetCompleteRoom,
-        crud::building::GetCompleteDoor,
+        crud::access::GetCompleteBuilding,
+        crud::access::GetCompleteRoom,
+        crud::access::GetCompleteDoor,
+        crud::department::GetDepartment,
     ))
 )]
 pub struct ApiDoc;
