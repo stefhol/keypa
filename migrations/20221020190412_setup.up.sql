@@ -1,5 +1,5 @@
 create extension if not exists "uuid-ossp";
-CREATE  TYPE history_action AS ENUM ('remove', 'add', 'create','change');
+CREATE TYPE history_action AS ENUM ('remove', 'add', 'create','change');
 CREATE TYPE history_role AS ENUM ('worker', 'user', 'leader', 'admin');
 CREATE TYPE history_request_type AS ENUM ('keycard', 'door', 'temp');
 
@@ -73,7 +73,7 @@ create table if not exists tbl_room_department
 
 create table if not exists tbl_change_rights_history
 (
-    change_rights_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
+    change_rights_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
     action                   history_action              not null,
     internal_role            history_role                not null,
     target_user_id           uuid                        not null,
@@ -90,7 +90,7 @@ create table if not exists tbl_keycard
     is_lost        bool    not null default false,
     is_locked      boolean not null default false,
     is_deactivated boolean not null default false,
-    is_given_back boolean not null default false,
+    is_given_back  boolean not null default false,
     request_id     uuid    not null
 );
 
@@ -122,10 +122,11 @@ create table if not exists tbl_request
     active_until timestamp without time zone,
     description  text,
     status_id    uuid,
-    is_proposal   boolean                     not null default false,
+    is_proposal  boolean                     not null default false,
     active       boolean                     not null default true,
     accept       boolean                     not null default false,
     reject       boolean                     not null default false,
+    payed        boolean,
     pending      boolean                     not null default true,
     foreign key (requester_id) references tbl_user (user_id),
     foreign key (status_id) references tbl_status (status_id),
@@ -151,8 +152,8 @@ create table if not exists tbl_request_history
     pending            boolean                     not null,
     keycard_id         uuid,
     is_lost            bool                        not null default false,
-    is_payed      bool not null DEFAULT false,
-    is_given_back bool not null DEFAULT false,
+    is_payed           bool                        not null DEFAULT false,
+    is_given_back      bool                        not null DEFAULT false,
     foreign key (keycard_id) references tbl_keycard (keycard_id),
     foreign key (requester_id) references tbl_user (user_id),
     foreign key (changed_by) references tbl_user (user_id),
@@ -161,7 +162,7 @@ create table if not exists tbl_request_history
 );
 create table if not exists tbl_door_to_request_history
 (
-    door_to_request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
+    door_to_request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
     door_id                    uuid           not null,
     request_id                 uuid           not null,
     action                     history_action not null,
@@ -178,7 +179,7 @@ alter table tbl_request_department
     ADD constraint fk_request_request_department foreign key (request_id) references tbl_request (request_id);
 create table if not exists tbl_keycard_history
 (
-    keycard_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
+    keycard_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
     keycard_id         uuid                        not null,
     door_id            uuid                        not null,
     used_at            timestamp without time zone not null default timezone('utc', now()),
@@ -206,18 +207,19 @@ create table if not exists tbl_request_comment
     foreign key (request_id) references tbl_request (request_id),
     foreign key (user_id) references tbl_user (user_id)
 );
-create table if not exists tbl_log(
- log_id BIGINT GENERATED ALWAYS AS IDENTITY primary key ,
- message text,
- keycard_history_id bigint,
- foreign key(keycard_history_id) references tbl_keycard_history(keycard_history_id),
- door_to_request_history_id bigint,
- foreign key(door_to_request_history_id) references tbl_door_to_request_history(door_to_request_history_id),
- request_history_id bigint,
- foreign key (request_history_id) references tbl_request_history(request_history_id),
- changed_at timestamp without time zone not null default timezone('utc', now()),
- changed_by uuid not null,
- foreign key (changed_by) references tbl_user(user_id)
+create table if not exists tbl_log
+(
+    log_id                     BIGINT GENERATED ALWAYS AS IDENTITY primary key,
+    message                    text,
+    keycard_history_id         bigint,
+    foreign key (keycard_history_id) references tbl_keycard_history (keycard_history_id),
+    door_to_request_history_id bigint,
+    foreign key (door_to_request_history_id) references tbl_door_to_request_history (door_to_request_history_id),
+    request_history_id         bigint,
+    foreign key (request_history_id) references tbl_request_history (request_history_id),
+    changed_at                 timestamp without time zone not null default timezone('utc', now()),
+    changed_by                 uuid                        not null,
+    foreign key (changed_by) references tbl_user (user_id)
 );
 
 create view view_active_doors_by_user as
