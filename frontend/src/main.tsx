@@ -22,7 +22,7 @@ import { Main } from './routes/Main';
 import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
-import { RequestBase } from './routes/request/WorkerBase';
+import { RequestBase } from './routes/request/RequestBase';
 import { RequestPicker, TempRequest } from './routes/user/request/Request';
 import { UserChange } from './routes/user/UseChange';
 import { SelfUser, UserByUserId } from './routes/user/User';
