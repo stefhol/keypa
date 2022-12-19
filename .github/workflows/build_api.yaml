@@ -43,6 +43,7 @@ jobs:
     - name: Build
       run: cargo build --release
     - name: Print Dir
+      continue-on-error: true
       run: |
         ls
         cd ./target/x86_64-unknown-linux-musl/release/
