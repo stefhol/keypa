@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { Dispatch, SetStateAction, useState } from "react";
-import { Building, Department } from "../../util/intefaces/Departments";
+import { TreeView } from "../../Components/tree-view/TreeView";
+import { Building } from "../../util/intefaces/Buildings";
+import { Department } from "../../util/intefaces/Departments";
 import { Rest } from "../../util/Rest";
+import { prepareData } from "../user/request/Request";
 interface ILocalObjectType<T> {
     [key: number]: T
 }
@@ -29,7 +32,7 @@ const send = async (data: CreateRequest) => {
     await Rest.quickAdd("request", "PUT", data);
 }
 
-const LocalContext = React.createContext<ILocalContext>({} as ILocalContext)
+export const LocalContext = React.createContext<ILocalContext>({} as ILocalContext)
 export const CreatePropostion: React.FC<{}> = (props) => {
 
     const [activeUntil, setActiveUntil] = React.useState(null as Date | null);
@@ -56,6 +59,21 @@ export const CreatePropostion: React.FC<{}> = (props) => {
                 </label>
                 <DepartmentGroupWrapper />
                 <AdditionalRoomsWrapper />
+
+                <div>
+                    <div className="container">
+                        <label>
+                            Gebäude auswählen
+                            <select value={1}><option value={1}>FIM</option></select>
+                        </label>
+                        <label>
+                            Räume auswählen
+                            <TreeView filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
+                        </label>
+                        <button>Räume in einen anderen Gebäude hinzufügen</button>
+                    </div>
+                </div>
+
                 <button onClick={e => {
                     e.preventDefault()
                     send({
@@ -69,6 +87,8 @@ export const CreatePropostion: React.FC<{}> = (props) => {
                         alert("Success")
                     })
                 }}>Absenden</button>
+
+
             </form>
 
         </LocalContext.Provider>
@@ -125,16 +145,14 @@ const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
 
     </>)
 }
-const DepartmentGroupWrapper: React.FC<{}> = (props) => {
+export const DepartmentGroupWrapper: React.FC<{}> = (props) => {
     const [count, setCount] = React.useState([0] as number[]);
     const { data: availableDepartments } = useQuery(["department"], Rest.getDepartments)
 
     return (
-        <>
+        <div>
             <div className="container">
                 <h2>Gruppen</h2>
-                Departments:
-
                 <>
                     {
                         count.map((_, idx) =>
@@ -142,7 +160,6 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                                 department={availableDepartments} />
                         )
                     }</>
-            </div>
             <button onClick={e => {
                 e.preventDefault()
                 setCount(prev => {
@@ -151,7 +168,8 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                     return arr
                 })
             }}>Anderen Gruppe hinzufügen</button>
-        </>
+            </div>
+        </div>
     )
 }
 interface AdditionalRoomsProps extends SingelItemProp {
@@ -186,23 +204,67 @@ export const AdditionalRoomsWrapper: React.FC<{}> = (props) => {
     const [count, setCount] = React.useState([0] as number[]);
     const { data } = useQuery(["buildings"], Rest.getBuildings)
 
-    return (<>
+    return (<div>
         <div className="container">
+            <p>
+                Sonstige Räume
+            </p>
             <>
-                {
-                    count.map((_, idx) =>
-                        <AdditionalRooms key={idx} nmbr={idx} buildings={data} />
-                    )
-                }</>
+                <textarea />
+            </>
         </div>
-        <button onClick={e => {
-            e.preventDefault()
-            setCount(prev => {
-                let arr = [...prev]
-                arr.push(0);
-                return arr
-            })
-        }}>Anderen Gruppe hinzufügen</button>
 
-    </>)
+    </div>)
 }
+
+const demoData: Building[] = [
+
+    {
+        building_id: "FIM",
+        name: "Fim",
+        rooms: [
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: false,
+                name: "104",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 2,
+                is_sensitive: false,
+                name: "204",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: true,
+                name: "105",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            }
+        ]
+    }
+]

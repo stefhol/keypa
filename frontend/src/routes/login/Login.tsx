@@ -9,7 +9,7 @@ export interface LoginRequest {
 }
 export interface LoginProps { }
 export const Login: React.FC<LoginProps> = (props) => {
-    const [name, setName] = React.useState("devante_rem@yahoo.com");
+    const [name, setName] = React.useState("monserrate_est@yahoo.com");
     const [password, setPassword] = React.useState("1234");
     const { startLoading, stopLoading } = useLoading()
     const [error, setError] = React.useState("");
@@ -27,7 +27,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     password
                 }).then(res => {
                     setError("")
-                    navigate("/dashboard")
+                    navigate("/home")
                 })
                     .catch(err => {
                         console.log(err);
@@ -49,6 +49,12 @@ export const Login: React.FC<LoginProps> = (props) => {
                 type="password"
                 onChange={e => setPassword(e.target.value)}
             />
+            <label>
+                Angemeldet bleiben:
+                <input type={
+                    "checkbox"
+                } />
+            </label>
             <button>
                 Login
             </button>

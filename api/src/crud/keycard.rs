@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use entities::model::tbl_keycard;
 use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
 use serde::{Deserialize, Serialize};
@@ -8,11 +9,13 @@ use crate::util::error::CrudError;
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetKeycard {
     pub keycard_id: Uuid,
+    pub user_id: Uuid,
     pub is_lost: bool,
     pub is_locked: bool,
     pub is_deactivated: bool,
     pub is_given_back: bool,
-    pub request_id: Uuid,
+    pub request_id: Option<Uuid>,
+    pub given_out: Option<DateTime<Utc>>,
 }
 impl From<&tbl_keycard::Model> for GetKeycard {
     fn from(model: &tbl_keycard::Model) -> Self {
@@ -24,6 +27,8 @@ impl From<&tbl_keycard::Model> for GetKeycard {
             is_deactivated: keycard.is_deactivated,
             is_given_back: keycard.is_given_back,
             request_id: keycard.request_id,
+            user_id: keycard.user_id,
+            given_out: keycard.given_out.map(|f|DateTime::from_utc(f,Utc)),
         }
     }
 }

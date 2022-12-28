@@ -42,7 +42,7 @@ pub async fn create_request(
     // add keycard and update request with keycard info
     if request.create_keycard {
         let keycard = tbl_keycard::ActiveModel {
-            request_id: Set(db_request.request_id),
+            request_id: Set(Some(db_request.request_id)),
             ..Default::default()
         }
         .insert(db)

@@ -27,12 +27,6 @@ export const KeycardTable: React.FC<KeycardTableProps> = ({ data }) => {
     const navigate = useNavigate()
 
     return (<>
-        <button onClick={(e) => {
-            e.preventDefault();
-            navigate("/keycard/add-request")
-        }}>
-            Fuege neue Keycard hinzu
-        </button>
         <Table data={data}
             rowAction={
                 [

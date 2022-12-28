@@ -40,7 +40,7 @@ export const UserInfo: React.FC<UserInfoProps> = ({ data }) => {
         <p>
             Name: {data.name}<br />
             Email: {data.email}<br />
-            Berufsbezeichnung: {data.role.name} <br />
+            Role: {data.role.name} <br />
             Ist momentan Verwaltungsmitarbeiter:
             {data.worker ? "Ja" : "Nein"}
         </p>

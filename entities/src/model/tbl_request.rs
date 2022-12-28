@@ -14,13 +14,12 @@ pub struct Model {
     pub active_until: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    pub status_id: Option<Uuid>,
     pub is_proposal: bool,
     pub active: bool,
     pub accept: bool,
     pub reject: bool,
-    pub pending: bool,
     pub payed: Option<bool>,
+    pub pending: bool,
     pub keycard_id: Option<Uuid>,
 }
 
@@ -40,16 +39,6 @@ pub enum Relation {
     TblRequestComment,
     #[sea_orm(has_many = "super::tbl_request_entrance::Entity")]
     TblRequestEntrance,
-    #[sea_orm(has_many = "super::tbl_request_history::Entity")]
-    TblRequestHistory,
-    #[sea_orm(
-        belongs_to = "super::tbl_status::Entity",
-        from = "Column::StatusId",
-        to = "super::tbl_status::Column::StatusId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblStatus,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::RequesterId",
@@ -81,18 +70,6 @@ impl Related<super::tbl_request_comment::Entity> for Entity {
 impl Related<super::tbl_request_entrance::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequestEntrance.def()
-    }
-}
-
-impl Related<super::tbl_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestHistory.def()
-    }
-}
-
-impl Related<super::tbl_status::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblStatus.def()
     }
 }
 

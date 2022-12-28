@@ -66,21 +66,21 @@ const UserFc: React.FC<UserProps> = (props) => {
                 navigate("/request/add-request")
             }}>Neuen Antrag stellen</button>
             }
-            <button onClick={(e) => {
+            {/* <button onClick={(e) => {
                 e.preventDefault()
                 navigate("account")
-            }}>Account</button>
+            }}>Account</button> */}
         </div>
         <div className="container">
             <AuthorizedBuildings data={props.buildings} />
 
         </div>
         <div className="container">
-            <h2>Schlüsselkarten</h2>
+            <h2>Keycards</h2>
             <KeycardSelf />
         </div>
         <div className="container">
-            <h2>Anträge</h2>
+            <h2>Genehmigte Anträge</h2>
             <table>
                 <thead>
                     <tr>
@@ -110,7 +110,6 @@ const UserFc: React.FC<UserProps> = (props) => {
                 <tbody>
                     <tr>
                         <td>
-                            <button>Ändern</button>
                             <button>Löschen</button>
                         </td>
                         <td>
@@ -132,9 +131,42 @@ const UserFc: React.FC<UserProps> = (props) => {
 
                         </td>
                     </tr>
+                </tbody>
+            </table>
+        </div>
+        <div className="container">
+            <h2>Ausstehende Anträge</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>
+
+                        </th>
+                        <th>
+                            created_at
+                        </th>
+                        <th>
+                            changed_at
+                        </th>
+                        <th>
+                            comments
+                        </th>
+                        <th>
+                            accept
+                        </th>
+                        <th>
+                            reject
+                        </th>
+                        <th>
+                            pending
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
                     <tr>
                         <td>
-                            <button>Ändern</button>
+                            <button>Ansehen</button>
                             <button>Löschen</button>
                         </td>
                         <td>
@@ -154,50 +186,6 @@ const UserFc: React.FC<UserProps> = (props) => {
                         </td>
                         <td>
                             x
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div className="container">
-            <h2>Noch nicht bearbeitete Anfragen</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>
-
-                        </th>
-                        <th>
-                            created_at
-                        </th>
-                        <th>
-                            changed_at
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>
-                            <button>Ändern</button>
-                            <button>Löschen</button>
-                        </td>
-                        <td>
-                            {format(new Date(), "dd.MM.yyyy hh:mm")}
-                        </td>
-                        <td>
-                            {format(new Date(), "dd.MM.yyyy hh:mm")}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <button>Ändern</button>
-                            <button>Löschen</button>
-                        </td>
-                        <td>
-                            {format(new Date(), "dd.MM.yyyy hh:mm")}
-                        </td>
-                        <td>
-                            {format(new Date(), "dd.MM.yyyy hh:mm")}
                         </td>
                     </tr>
                 </tbody>

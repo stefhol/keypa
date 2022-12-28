@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { SelectionRef, TreeData, TreeView } from "../../../Components/tree-view/TreeView";
 import { Building, Room } from "../../../util/intefaces/Buildings";
 import { Rest } from "../../../util/Rest";
+import { AdditionalRoomsWrapper, DepartmentGroupWrapper, LocalContext } from "../../propositons/CreatePropostion";
 const getData = async () => {
     return await Rest.getBuildings()
 }
@@ -72,55 +73,43 @@ export const TempRequest: React.FC<RequestProps> = (props) => {
     const [keygroup, setKeygroup] = React.useState("");
 
     return (<>
-
+        <LocalContext.Provider value={{ departments: { value: {} }, individualRooms: { value: {} } }}>
         <form>
             <h1>Neue Pfand Keycard Anfrage</h1>
             <h2>Hinweis: Pfand muss vor Abholung bezahtlt werden</h2>
-            <p>Zahlungsinformationen erscheinen im angenommenen Antrag</p>
-            <form>
+                <p>Zahlungsinformationen erscheinen im angenommenen Antrag</p>
                 <label> Beschreibung:
-                    <textarea />
+                    <textarea
+                        value={description}
+                        onChange={e => setDescription(e.target.value)}
+                    />
                 </label>
                 <label> Bis wann:
                     <input type={"date"} />
                 </label>
-                <div className="container">
-                    <h2>Gruppen</h2>
-                    <div className="container">
-                        <label> 1.
+                <DepartmentGroupWrapper />
+                <AdditionalRoomsWrapper />
 
-                            <select>
-                                <option>Lehrstuhl IT-Sec</option>
-                                <option>Lehrstuhl Wirtschaft</option>
-                                <option>Lehrstuhl Operational Science</option>
-                            </select>
-                        </label>
-                        <p>Info: Beinhaltet Gebäude ITZ: Raum 204, Raum 203, Gebäude Fim: Raum 200</p>
-                    </div>
-                    <button>Anderen Gruppe hinzufügen</button>
-                </div>
-                <div className="container">
-                    <h2>Zusaetzliche Räume</h2>
+                <div>
                     <div className="container">
                         <label>
                             Gebäude auswählen
-                            <select>
-                                <option>Gebäude ITZ</option>
-                                <option>Gebäude Fim</option>
-                            </select>
+                            <select value={1}><option value={1}>FIM</option></select>
                         </label>
                         <label>
                             Räume auswählen
-                            <textarea />
+                            <TreeView filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
                         </label>
+                        <button>Räume in einen anderen Gebäude hinzufügen</button>
                     </div>
-                    <button>Raum in anderen Gebäude hinzufügen</button>
                 </div>
-                <button>Speichern</button>
-            </form>
+
+                <button onClick={e => {
+                    e.preventDefault()
+                }}>Absenden</button>
 
         </form>
-
+        </LocalContext.Provider>
     </>)
 }
 
@@ -138,7 +127,7 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
             name: `Stockwerk: ${floor}`,
             children: data.filter(val => val.floor == floor).map((val, idx) => ({
                 name: `Raum: ${val.name}`,
-                value: !!val.doors.find(val => val.owner === true),
+                value: !!val.doors.find(val => val?.owner === true),
                 children: []
             }))
         })
@@ -163,6 +152,57 @@ export const RequestPicker: React.FC<RequestPickerProps> = (props) => {
         <button onClick={e => {
             e.preventDefault()
             navigate("/request/add-request/temp")
-        }} >Temporärer Zugang</button>
+        }} >Pfandkeykarte mit Zugang</button>
     </>)
 }
+const demoData: Building[] = [
+
+    {
+        building_id: "FIM",
+        name: "Fim",
+        rooms: [
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: false,
+                name: "104",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 2,
+                is_sensitive: false,
+                name: "204",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: true,
+                name: "105",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            }
+        ]
+    }
+]

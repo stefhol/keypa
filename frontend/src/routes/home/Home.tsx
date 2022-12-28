@@ -1,17 +1,14 @@
-export interface DashboardProps { }
-export const Dashboard: React.FC<DashboardProps> = (props) => {
+export interface HomeProps { }
+export const Home: React.FC<HomeProps> = (props) => {
     return (<>
         <main>
-            <h1>Dashboard</h1>
+            <h1>Home</h1>
             <a href="user">
                 Mein Bereich
             </a><br />
             <h3>Verwaltung</h3>
             <a href="request">
-                Austehende Antragsformulare
-            </a><br />
-            <a href="propositons">
-                Anfragen
+                Antragsformulare
             </a><br />
             <a href="/keycard">
                 Keycard Übersicht

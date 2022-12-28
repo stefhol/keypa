@@ -5,7 +5,8 @@ import { useParams } from "react-router-dom"
 import { SelectionRef, TreeView } from "../../Components/tree-view/TreeView"
 import "../../css/comment.css"
 import { useLoading } from "../../hooks/useLoading"
-import { Comment, Request } from "../../util/intefaces/Request"
+import { Building } from "../../util/intefaces/Buildings"
+import { Comment, Request, User } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
 import { getCountOfRooms } from "../user/keys/Key"
 import { prepareData } from "../user/request/Request"
@@ -57,7 +58,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     Email: {props.data.requester.email}
                 </p>
                 <p>
-                    Beruf: {props.data.requester.role.name}
+                    Rolle: {props.data.requester.role.name}
                 </p>
                 <p>
                     Tel: +49 151 2549983
@@ -70,44 +71,95 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     Ich brauche Zugang zum Labor damit ich ein Experiment durchführen kann.
                 </p>
             </div>
-            <label>
-                Status:
-                <select name="status" onChange={(e) => {
-                    let value = e.target.value
-                    if (value === "1") {
-                        setAccept(true)
-                        setReject(false)
-                        setPending(false)
-                    }
-                    if (value === "2") {
-                        setAccept(false)
-                        setReject(true)
-                        setPending(false)
-                    }
-                    if (value === "3") {
-                        setAccept(false)
-                        setReject(false)
-                        setPending(true)
-                    }
-                }}>
-                    <option value="1" selected={accept}>Akzeptieren</option>
-                    <option value="2" selected={reject}>Ablehnen</option>
-                    <option value="3" selected={pending}>Ausstehend</option>
-                </select>
-            </label>
+
             <div className="container">
                 <h2>Angefragte Räume</h2>
-                {(building && building?.length || 0) > 0 && <>
-                    <>Raumanzahl: {getCountOfRooms(building || [])}</>
-                    <TreeView selectionRef={selection} data={prepareData(building || [])} filter expanded />
-                </>
+                <div className="container">
+                    <h2>Angefragte Individuelle Räume</h2>
+                    <div className="container">
+                        <label>
+                            <b>Text aus Antrag</b>
+                        </label>
+                        <p>FIM</p>
+                        <p>
+                            S104, S105
+                        </p>
+                    </div>
+                    <label>
+                        Gebäude auswählen
+                        <select value={1}>
+                            <option value={1}>FIM</option>
+                        </select>
+                    </label>
+                    <div>
+                        <b>Nachtragen</b>
+                    </div>
+                    <TreeView expanded filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
+                    <button>Anderes Gebäude hinzufügen</button>
+                </div>
+                <div className="container">
+                    <h2>Angefragte Individuelle Räume</h2>
+                    <label>
+                        Gebäude auswählen
+                        <select value={1}>
+                            <option value={1}>FIM</option>
+                        </select>
+                    </label>
+                    <TreeView expanded filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
+                    <button>Anderes Gebäude hinzufügen</button>
+                </div>
+                <div className="container">
+                    <h2>Angefragte Raumgruppen</h2>
+                    <div className="container">
+                        <label>
+                            <b>IT Security</b>
+                        </label>
+
+                        <div>
+                            ITZ: S201, S203, S204
+                        </div>
+                        <div>
+                            FIM: S100, S101
+                        </div>
+                        <button>Löschen</button>
+                    </div>
+                    <button>Andere Raumgruppe hinzufügen</button>
+                </div>
 
 
-                }
+
             </div>
-            <button>
-                Änderung Speichern
-            </button>
+            <div className="container">
+                <label>
+                    Status:
+                    <select name="status" onChange={(e) => {
+                        let value = e.target.value
+                        if (value === "1") {
+                            setAccept(true)
+                            setReject(false)
+                            setPending(false)
+                        }
+                        if (value === "2") {
+                            setAccept(false)
+                            setReject(true)
+                            setPending(false)
+                        }
+                        if (value === "3") {
+                            setAccept(false)
+                            setReject(false)
+                            setPending(true)
+                        }
+                    }}>
+                        <option value="1" selected={accept}>Akzeptieren</option>
+                        <option value="2" selected={reject}>Ablehnen</option>
+                        <option value="3" selected={pending}>Ausstehend</option>
+                    </select>
+                </label>
+
+                <button>
+                    Änderung Speichern
+                </button>
+            </div>
         </form>
 
         <div className="container">
@@ -121,16 +173,16 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
 
 export interface CommentProps {
     isRequester: boolean,
-    comment: Comment
+    comment: Partial<Comment>
 }
 export const CommentFC: React.FC<CommentProps> = (props) => {
 
     return (<>
         <div className={`comment ${props.isRequester && "blue"}`}>
 
-            <span><strong>{props.comment.user.name}</strong></span>
+            <span><strong>{props?.comment?.user?.name}</strong></span>
             <span>{props.comment.comment}</span>
-            <span className="date">{format(new Date(props.comment.written_at), "dd.MM.yyyy hh:mm")}</span>
+            <span className="date">{format(new Date(props?.comment?.written_at || ""), "dd.MM.yyyy hh:mm")}</span>
         </div>
     </>)
 }
@@ -142,12 +194,30 @@ export const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
     const [newComment, setNewComment] = React.useState("");
     return (<div className="comment-box">
         <h2>
-            Kommentare
+            Kommunikationsverlauf
         </h2>
-        {props.data.map(val => <CommentFC
-            comment={val}
-            isRequester={val.user_id === props.requester}
-        />)}
+        <CommentFC
+            comment={{
+                user: {
+                    ...{} as User,
+                    name: "Peter Rolf"
+                },
+                written_at: Date(),
+                comment: "Einige Raueme existieren nicht"
+            }}
+            isRequester={false}
+        />
+        <CommentFC
+            comment={{
+                user: {
+                    ...{} as User,
+                    name: "Mike Fischer"
+                },
+                written_at: Date(),
+                comment: "Ohja stimmt ich meinte ITZ statt FIM"
+            }}
+            isRequester
+        />
         <div>
             Antwort:
             <textarea
@@ -159,3 +229,55 @@ export const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
         <button onClick={(e) => { e.preventDefault() }}>Sende Nachricht</button>
     </div>)
 }
+
+const demoData: Building[] = [
+
+    {
+        building_id: "FIM",
+        name: "Fim",
+        rooms: [
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: false,
+                name: "S104",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 2,
+                is_sensitive: false,
+                name: "S204",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            },
+            {
+                building_id: "FIM",
+                floor: 1,
+                is_sensitive: true,
+                name: "S105",
+                room_id: "1",
+                doors: [
+                    {
+                        door_id: "1",
+                        name: "",
+                        room_id: "1"
+                    }
+                ]
+            }
+        ]
+    }
+]

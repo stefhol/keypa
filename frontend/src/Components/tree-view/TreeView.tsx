@@ -12,6 +12,7 @@ export type SelectionRef =
     }>
 
 export interface TreeViewProps {
+    displayFilter?: boolean
     filter?: boolean
     isInitialValueTrue?: boolean
     selectionRef?: SelectionRef
@@ -60,13 +61,17 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
             {
                 !loading &&
                 <>
-                    <label>
-                        Filter
-                        <input
-                            checked={filter}
-                            onChange={() => setFilter(prev => !prev)}
-                            type={"checkbox"} />
-                    </label>
+                    {
+                        props.displayFilter
+                        &&
+                        <label>
+                            Filter
+                            <input
+                                checked={filter}
+                                onChange={() => setFilter(prev => !prev)}
+                                type={"checkbox"} />
+                        </label>
+                    }
                     <TreeComponentWrapper
                         readonly={props.readonly}
                         expanded={props.expanded}

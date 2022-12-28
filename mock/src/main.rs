@@ -4,7 +4,7 @@ use chrono::Utc;
 use dotenv;
 use entities::model::{
     tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard, tbl_keycard_history,
-    tbl_request, tbl_request_comment, tbl_request_department, tbl_request_entrance, tbl_role,
+    tbl_request, tbl_request_comment, tbl_request_department, tbl_request_entrance,
     tbl_room, tbl_room_department, tbl_user,
 };
 use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
@@ -13,7 +13,6 @@ use fake::faker::chrono::en::DateTimeAfter;
 
 use fake::faker::chrono::zh_tw::DateTimeBefore;
 use fake::faker::company::en::BsNoun;
-use fake::faker::company::raw::Profession;
 use fake::faker::internet::raw::FreeEmail;
 use fake::faker::lorem::zh_tw::Sentence;
 use fake::faker::name::raw::*;
@@ -70,51 +69,12 @@ async fn main() -> anyhow::Result<()> {
     ];
     let db = Database::connect(format!("{}/{}", database_url, db_name)).await?;
     let mut rng = rand::thread_rng();
-    let profession: String = Profession(EN).fake_with_rng(&mut rng);
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set(profession),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set("administrative staff".to_string()),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set("administrative leader".to_string()),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set("administrative admin".to_string()),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    let profession: String = Profession(EN).fake_with_rng(&mut rng);
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set(profession),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    let profession: String = Profession(EN).fake_with_rng(&mut rng);
-    tbl_role::ActiveModel {
-        name: ActiveValue::Set(profession),
-        ..Default::default()
-    }
-    .insert(&db)
-    .await?;
-    let roles = tbl_role::Entity::find().all(&db).await?;
+
     let password = orion::pwhash::Password::from_slice(b"1234").unwrap();
     let hash = orion::pwhash::hash_password(&password, 3, 1 << 16).unwrap();
     //user generation
-    for _ in 0..400 {
-        let role = &roles[rng.gen_range(0..roles.len())];
+    for idx in 1..400 {
+        
 
         let name: String = Name(EN).fake_with_rng(&mut rng);
         let email: String = FreeEmail(EN).fake_with_rng(&mut rng);
@@ -123,7 +83,7 @@ async fn main() -> anyhow::Result<()> {
             email: ActiveValue::Set(email),
             name: ActiveValue::Set(name),
             password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
-            role_id: ActiveValue::Set(Some(role.role_id.to_owned())),
+            role_id: ActiveValue::Set(Some(idx)),
             ..Default::default()
         }
         .insert(&db)
@@ -236,7 +196,7 @@ async fn main() -> anyhow::Result<()> {
         ) -> anyhow::Result<()> {
             // keycard
             let keycard = tbl_keycard::ActiveModel {
-                request_id: ActiveValue::Set(request.request_id.to_owned()),
+                request_id: ActiveValue::Set(Some(request.request_id.to_owned())),
                 ..Default::default()
             }
             .insert(db)
@@ -338,10 +298,7 @@ async fn main() -> anyhow::Result<()> {
             let workers: Vec<_> = users
                 .iter()
                 .filter(|f| {
-                    roles
-                        .iter()
-                        .filter(|f| f.name.starts_with("administrative"))
-                        .any(|role| Some(role.role_id) == f.role_id)
+                    f.role_id < Some(4)
                 })
                 .collect();
             let worker = workers[rng.gen_range(0..workers.len())].user_id.to_owned();
@@ -382,12 +339,12 @@ async fn main() -> anyhow::Result<()> {
         let requests: Vec<_> = requests.iter().filter(|f| f.accept).collect();
         let keycards: Vec<_> = keycards
             .iter()
-            .filter(|f| requests.iter().any(|req| req.request_id == f.request_id))
+            .filter(|f| requests.iter().any(|req| Some(req.request_id )== f.request_id))
             .collect();
         let keycard = &keycards[rng.gen_range(0..keycards.len())];
         let keycard_request = requests
             .iter()
-            .find(|f| f.request_id == keycard.request_id)
+            .find(|f| Some(f.request_id) == keycard.request_id)
             .unwrap();
         let door = &doors[rng.gen_range(0..doors.len())];
         let mut used_at: chrono::DateTime<chrono::Utc> =

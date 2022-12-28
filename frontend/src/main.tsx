@@ -10,7 +10,7 @@ import {
 import { Header } from './Components/Ui/Header';
 import ErrorPage from './ErrorPage';
 import "./index.css";
-import { Dashboard } from './routes/dashboard/Dashboard';
+import { Home as Home } from './routes/home/Home';
 import { KeycardsFromUser } from './routes/keycard/Keycard';
 import { KeycardBase } from './routes/keycard/KeycardBase';
 import { KeycardRequest } from './routes/keycard/KeycardRequest';
@@ -53,8 +53,8 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "/dashboard",
-        element: <Dashboard />,
+        path: "/home",
+        element: <Home />,
       },
       {
         path: "user",

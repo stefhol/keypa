@@ -32,8 +32,8 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblKeycard,
-    #[sea_orm(has_many = "super::tbl_log::Entity")]
-    TblLog,
+    #[sea_orm(has_many = "super::tbl_request_log::Entity")]
+    TblRequestLog,
 }
 
 impl Related<super::tbl_door::Entity> for Entity {
@@ -48,9 +48,9 @@ impl Related<super::tbl_keycard::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_log::Entity> for Entity {
+impl Related<super::tbl_request_log::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblLog.def()
+        Relation::TblRequestLog.def()
     }
 }
 

@@ -36,7 +36,6 @@ use crate::{crud, api};
     ),
     components(schemas(
         api::auth::Login,
-        crud::role::GetRole,
 
         crud::door::GetDoor,
         crud::room::GetRoom,

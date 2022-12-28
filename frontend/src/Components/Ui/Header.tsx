@@ -13,9 +13,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     window.document.cookie !== "" &&
                     <button onClick={(e) => {
                     e.preventDefault()
-                    navigate("/dashboard")
+                            navigate("/home")
                 }}>
-                    Dashboard
+                            Home
                     </button>}
                 <span className="spacer"> </span>
                 {

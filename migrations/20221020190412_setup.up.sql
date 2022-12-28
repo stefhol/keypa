@@ -1,27 +1,13 @@
 create extension if not exists "uuid-ossp";
 CREATE TYPE history_action AS ENUM ('remove', 'add', 'create','change');
-CREATE TYPE history_role AS ENUM ('worker', 'user', 'leader', 'admin');
 CREATE TYPE history_request_type AS ENUM ('keycard', 'door', 'temp');
 
-create table if not exists tbl_status
-(
-    status_id   uuid primary key DEFAULT uuid_generate_v4(),
-    description text
-);
-
 -- Extern User DB
-create table if not exists tbl_role
-(
-    role_id     uuid primary key DEFAULT uuid_generate_v4(),
-    name        varchar(255) not null,
-    description text
-);
 create table if not exists tbl_user
 (
     user_id     uuid primary key      DEFAULT uuid_generate_v4(),
     name        varchar(255) not null,
-    role_id     uuid,
-    foreign key (role_id) references tbl_role (role_id),
+    role_id     bigint,
     is_active   bool         not null DEFAULT true,
     tel         varchar(255),
     address     varchar(255),
@@ -87,11 +73,24 @@ create table if not exists tbl_change_rights_history
 create table if not exists tbl_keycard
 (
     keycard_id     uuid primary key DEFAULT uuid_generate_v4(),
-    is_lost        bool    not null default false,
+    user_id uuid not null,
+    foreign key(user_id) references tbl_user(user_id),
+    is_lost        boolean    not null default false,
     is_locked      boolean not null default false,
     is_deactivated boolean not null default false,
     is_given_back  boolean not null default false,
-    request_id     uuid    not null
+    request_id     uuid,
+    given_out  timestamp without time zone
+);create table if not exists tbl_keycard_archive
+(
+    keycard_id     uuid primary key DEFAULT uuid_generate_v4(),
+    user_id uuid not null,
+    foreign key(user_id) references tbl_user(user_id),
+    is_lost        boolean    not null default false,
+    is_locked      boolean not null default false,
+    is_deactivated boolean not null default false,
+    is_given_back  boolean not null default false,
+    given_out  timestamp without time zone
 );
 
 create table if not exists tbl_request_entrance
@@ -121,7 +120,6 @@ create table if not exists tbl_request
     changed_at   timestamp without time zone not null default timezone('utc', now()),
     active_until timestamp without time zone,
     description  text,
-    status_id    uuid,
     is_proposal  boolean                     not null default false,
     active       boolean                     not null default true,
     accept       boolean                     not null default false,
@@ -129,36 +127,8 @@ create table if not exists tbl_request
     payed        boolean,
     pending      boolean                     not null default true,
     foreign key (requester_id) references tbl_user (user_id),
-    foreign key (status_id) references tbl_status (status_id),
     keycard_id   uuid,
     foreign key (keycard_id) references tbl_keycard (keycard_id)
-);
-create table if not exists tbl_request_history
-(
-    request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
-    changed_by         uuid                        not null,
-    request_id         uuid                        not null,
-    action             history_action              not null,
-    request_type       history_request_type        not null,
-    requester_id       uuid                        not null,
-    created_at         timestamp without time zone not null,
-    changed_at         timestamp without time zone not null,
-    active_until       timestamp without time zone,
-    description        text,
-    status_id          uuid,
-    active             boolean                     not null,
-    accept             boolean                     not null,
-    reject             boolean                     not null,
-    pending            boolean                     not null,
-    keycard_id         uuid,
-    is_lost            bool                        not null default false,
-    is_payed           bool                        not null DEFAULT false,
-    is_given_back      bool                        not null DEFAULT false,
-    foreign key (keycard_id) references tbl_keycard (keycard_id),
-    foreign key (requester_id) references tbl_user (user_id),
-    foreign key (changed_by) references tbl_user (user_id),
-    foreign key (request_id) references tbl_request (request_id),
-    foreign key (status_id) references tbl_status (status_id)
 );
 create table if not exists tbl_door_to_request_history
 (
@@ -207,7 +177,7 @@ create table if not exists tbl_request_comment
     foreign key (request_id) references tbl_request (request_id),
     foreign key (user_id) references tbl_user (user_id)
 );
-create table if not exists tbl_log
+create table if not exists tbl_request_log
 (
     log_id                     BIGINT GENERATED ALWAYS AS IDENTITY primary key,
     message                    text,
@@ -215,8 +185,6 @@ create table if not exists tbl_log
     foreign key (keycard_history_id) references tbl_keycard_history (keycard_history_id),
     door_to_request_history_id bigint,
     foreign key (door_to_request_history_id) references tbl_door_to_request_history (door_to_request_history_id),
-    request_history_id         bigint,
-    foreign key (request_history_id) references tbl_request_history (request_history_id),
     changed_at                 timestamp without time zone not null default timezone('utc', now()),
     changed_by                 uuid                        not null,
     foreign key (changed_by) references tbl_user (user_id)

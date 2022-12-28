@@ -44,6 +44,23 @@ export const ConvertProposition: React.FC<{}> = (props) => {
             }}>
                 Absenden
             </button>
+
+            Wähle die Räume die Bernd Habeck zusätzlich Angefragt hat.
+            <div className="container">
+                <p> 1. Gebäude Fim: Raum 204</p>
+            </div>
+            <div className="container">
+
+                <TreeView selectionRef={selection} data={prepareData(demoData)} />
+            </div>
+            <br />
+            <button onClick={(e) => {
+                e.preventDefault()
+                console.log(selection.current.getCurrentSelection());
+            }}>
+                Absenden
+            </button>
+
         </form>
     </>)
 }

@@ -4,18 +4,27 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_role")]
+#[sea_orm(table_name = "tbl_keycard_archive")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub role_id: Uuid,
-    pub name: String,
-    #[sea_orm(column_type = "Text", nullable)]
-    pub description: Option<String>,
+    pub keycard_id: Uuid,
+    pub user_id: Uuid,
+    pub is_lost: bool,
+    pub is_locked: bool,
+    pub is_deactivated: bool,
+    pub is_given_back: bool,
+    pub given_out: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_user::Entity")]
+    #[sea_orm(
+        belongs_to = "super::tbl_user::Entity",
+        from = "Column::UserId",
+        to = "super::tbl_user::Column::UserId",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
     TblUser,
 }
 
