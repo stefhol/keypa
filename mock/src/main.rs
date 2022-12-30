@@ -4,8 +4,8 @@ use chrono::Utc;
 use dotenv;
 use entities::model::{
     tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard, tbl_keycard_history,
-    tbl_request, tbl_request_comment, tbl_request_department,
-    tbl_room, tbl_room_department, tbl_user,
+    tbl_request, tbl_request_comment, tbl_request_department, tbl_room, tbl_room_department,
+    tbl_user,
 };
 use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
 
@@ -73,8 +73,6 @@ async fn main() -> anyhow::Result<()> {
     let hash = orion::pwhash::hash_password(&password, 3, 1 << 16).unwrap();
     //user generation
     for idx in 1..400 {
-        
-
         let name: String = Name(EN).fake_with_rng(&mut rng);
         let email: String = FreeEmail(EN).fake_with_rng(&mut rng);
 
@@ -175,7 +173,7 @@ async fn main() -> anyhow::Result<()> {
             changed_at: ActiveValue::Set(changed_at.naive_utc()),
             created_at: ActiveValue::Set(created_at.naive_utc()),
             requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id.to_owned()),
-            additional_rooms:ActiveValue::Set(Some("230".to_owned())),
+            additional_rooms: ActiveValue::Set(Some("230".to_owned())),
             ..Default::default()
         }
         .insert(&db)
@@ -190,7 +188,7 @@ async fn main() -> anyhow::Result<()> {
             // keycard
             let keycard = tbl_keycard::ActiveModel {
                 request_id: ActiveValue::Set(Some(request.request_id.to_owned())),
-                user_id:ActiveValue::Set(request.requester_id),
+                user_id: ActiveValue::Set(request.requester_id),
                 ..Default::default()
             }
             .insert(db)
@@ -205,7 +203,6 @@ async fn main() -> anyhow::Result<()> {
             db: &DatabaseConnection,
             rng: &mut ThreadRng,
             departments: &Vec<tbl_department::Model>,
-            buildings: &Vec<tbl_building::Model>,
             reasons: &Vec<&str>,
         ) -> anyhow::Result<()> {
             for _ in 0..rng.gen_range(1..3) {
@@ -221,8 +218,6 @@ async fn main() -> anyhow::Result<()> {
                 .await;
             }
 
-           
-
             let mut request = request.clone().into_active_model();
 
             request.description =
@@ -235,13 +230,11 @@ async fn main() -> anyhow::Result<()> {
                 gen_keycard_proposal(&request, &db).await?;
             }
             2 => {
-                gen_access_proposal(&request, &db, &mut rng, &departments, &buildings, &reasons)
-                    .await?;
+                gen_access_proposal(&request, &db, &mut rng, &departments, &reasons).await?;
             }
             3 => {
                 gen_keycard_proposal(&request, &db).await?;
-                gen_access_proposal(&request, &db, &mut rng, &departments, &buildings, &reasons)
-                    .await?;
+                gen_access_proposal(&request, &db, &mut rng, &departments, &reasons).await?;
             }
             _ => {
                 panic!()
@@ -259,7 +252,6 @@ async fn main() -> anyhow::Result<()> {
             }
             .insert(&db)
             .await;
-            
         }
     }
     let requests = tbl_request::Entity::find().all(&db).await?;
@@ -274,12 +266,7 @@ async fn main() -> anyhow::Result<()> {
             let user = request.requester_id.to_owned();
             user_who_writes_comment = Some(user);
         } else {
-            let workers: Vec<_> = users
-                .iter()
-                .filter(|f| {
-                    f.role_id < Some(4)
-                })
-                .collect();
+            let workers: Vec<_> = users.iter().filter(|f| f.role_id < Some(4)).collect();
             let worker = workers[rng.gen_range(0..workers.len())].user_id.to_owned();
             user_who_writes_comment = Some(worker)
         }
@@ -318,7 +305,11 @@ async fn main() -> anyhow::Result<()> {
         let requests: Vec<_> = requests.iter().filter(|f| f.accept).collect();
         let keycards: Vec<_> = keycards
             .iter()
-            .filter(|f| requests.iter().any(|req| Some(req.request_id )== f.request_id))
+            .filter(|f| {
+                requests
+                    .iter()
+                    .any(|req| Some(req.request_id) == f.request_id)
+            })
             .collect();
         let keycard = &keycards[rng.gen_range(0..keycards.len())];
         let keycard_request = requests

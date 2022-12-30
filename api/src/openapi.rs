@@ -26,7 +26,7 @@ use crate::{crud, api};
         api::request::get_requests_from_user,
         api::request::get_single_requests_from_user,
         api::request::get_self_requests_from_request_id,
-        api::request::get_all_pending_requests,
+        api::request::get_all_requests,
         api::request::get_single_requests,
         api::request::create_requests,
         //buildings
@@ -45,7 +45,9 @@ use crate::{crud, api};
 
         crud::request::get::GetRequestWithComments,
         crud::request::get::GetComments,
+        crud::request::get::RequestType,
         crud::request::create::CreateRequest,
+        api::request::RequestStatus,
         crud::access::GetCompleteBuilding,
         crud::access::GetCompleteRoom,
         crud::access::GetCompleteDoor,

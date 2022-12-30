@@ -77,7 +77,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_requests_from_user)
                     .service(api::request::get_single_requests_from_user)
                     .service(api::request::get_self_requests_from_request_id)
-                    .service(api::request::get_all_pending_requests)
+                    .service(api::request::get_all_requests)
                     .service(api::request::get_single_requests)
                     .service(api::request::create_requests)
                     // building
