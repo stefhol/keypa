@@ -46,7 +46,6 @@ use crate::{crud, api};
         crud::request::get::GetRequestWithComments,
         crud::request::get::GetComments,
         crud::request::create::CreateRequest,
-        crud::request::create::IndividualRooms,
         crud::access::GetCompleteBuilding,
         crud::access::GetCompleteRoom,
         crud::access::GetCompleteDoor,

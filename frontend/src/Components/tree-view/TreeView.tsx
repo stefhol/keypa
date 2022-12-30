@@ -1,11 +1,7 @@
 import React, { MutableRefObject, Ref } from 'react';
 import '../../css/tree.css';
-interface Selection {
-    [key: string]: {
-        value: boolean,
-        children: Selection
-    }
-}
+import { Building, Room } from '../../util/intefaces/Buildings';
+
 export type SelectionRef =
     MutableRefObject<{
         getCurrentSelection: () => TreeData[]
@@ -13,6 +9,7 @@ export type SelectionRef =
 
 export interface TreeViewProps {
     displayFilter?: boolean
+    onChange?: (newVal: TreeData[]) => void
     filter?: boolean
     isInitialValueTrue?: boolean
     selectionRef?: SelectionRef
@@ -34,22 +31,27 @@ interface BaseTree {
 interface ITreeContext {
     selection?: TreeData[]
     filter?: boolean
+    onChange: () => void
+    reset: number
 }
 const TreeContext = React.createContext({} as ITreeContext)
 
 export const TreeView: React.FC<TreeViewProps> = (props) => {
     const [loading, setLoading] = React.useState(true);
     const [filter, setFilter] = React.useState(!!props.filter);
+    const [reset, setReset] = React.useState(0);
     const selection = React.useRef([] as TreeData[]);
+    const onChange = () => {
+        if (props.onChange) props.onChange(selection.current)
+    }
     React.useEffect(() => {
         selection.current = props.data
-
+        setReset(prev => prev + 1)
         setLoading(false)
     }, [props.data]);
-    const temp = React.useRef({});
-    let selectionRef = temp;
+    const selectionRef = React.useRef({});
     if (props.selectionRef) {
-        selectionRef = props.selectionRef
+        selectionRef.current = props.selectionRef.current
     }
     React.useImperativeHandle(
         selectionRef,
@@ -57,7 +59,7 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
         [selection],
     )
     return (<div className="tree">
-        <TreeContext.Provider value={{ selection: selection.current, filter }} >
+        <TreeContext.Provider value={{ selection: selection.current, filter, onChange, reset }} >
             {
                 !loading &&
                 <>
@@ -99,7 +101,7 @@ interface ICompProps extends BaseTree {
     value: TreeData
 }
 export const TreeComponent: React.FC<ICompProps> = (props) => {
-    const { selection, filter } = React.useContext(TreeContext);
+    const { selection, filter, onChange, reset } = React.useContext(TreeContext);
     const [checked, setChecked] = React.useState(!!props.value.value);
     const [hasATrueValueInTree, setHasATrueValueInTree] = React.useState(false);
     const [lastAction, setLastAction] = React.useState(props.value.name);
@@ -113,8 +115,12 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
 
             setHasATrueValueInTree(isTrueInChildren(currentSelection))
         }
+        onChange()
 
     }, [checked, filter]);
+    React.useEffect(() => {
+        setChecked(false)
+    }, [reset])
     React.useEffect(() => {
         if (props.parentActive?.[1] !== undefined && props.parentActive?.[0] === props.parent?.name) {
             setChecked(props.parentActive?.[1])
@@ -170,41 +176,10 @@ export interface TreeData {
     name: string,
     value?: boolean,
     children?: TreeData[]
+    id?: string
 }
-const data: TreeData[] = [
-    {
-        name: "Building 1",
-        children: [
-            {
-                name: "Room 1",
-                children: undefined
-            },
-            {
-                name: "Room 2",
-                children: [
-                    {
-                        name: "Door 1"
-                    }
-                ]
-            }
-        ]
-    },
-    {
-        name: "Building 2",
-        children: undefined
-
-    },
-]
 
 
-// const getCurrentSelection = (obj: Selection, keys: string[], currentKey: string) => {
-//     let select = obj as Selection
-//     keys.forEach(key => {
-//         // @ts-ignore
-//         select = select[key].children
-//     })
-//     return select[currentKey]
-// }
 const getCurrentTreeData = (obj: TreeData[] = [], keys: string[], currentKey: string): TreeData => {
     let curr = obj
     for (let index = 0; index < keys.length; index++) {
@@ -214,18 +189,6 @@ const getCurrentTreeData = (obj: TreeData[] = [], keys: string[], currentKey: st
     return curr.find(val => val.name === currentKey) || {} as TreeData
 }
 
-// const createSelectionOutOfTreeNodes = (input: TreeData[], output: Selection) => {
-//     for (let index = 0; index < input.length; index++) {
-//         const element = input[index];
-//         output[element.name] = {
-//             value: !!element.value,
-//             children: {}
-//         }
-//         if (element.children) {
-//             createSelectionOutOfTreeNodes(element.children, output[element.name].children)
-//         }
-//     }
-// }
 const isTrueInChildren = (input: TreeData): boolean => {
     if (input.value) {
         return true
@@ -239,4 +202,50 @@ const isTrueInChildren = (input: TreeData): boolean => {
         }
     }
     return false
+}
+export const prepareData = (data: Building[], filter?: boolean) => {
+
+    return data.map(val => ({
+        name: `Gebäude ${val.name}`,
+        children: prepareStockwerke(val.rooms)
+    }))
+}
+const prepareStockwerke = (data: Room[]): TreeData[] => {
+    let ret = [] as TreeData[]
+
+
+    let floors = new Set(data.map(val => val.floor) as number[])
+    floors.forEach(floor => {
+        ret.push({
+            name: `Stockwerk: ${floor}`,
+            children: data.filter(val => val.floor == floor)
+                .map((val, idx) => ({
+                    name: `Raum: ${val.name}`,
+                    id: val.room_id,
+                    value: !!val.doors.find(val => val?.owner === true),
+                    children: []
+                }))
+        })
+    })
+    return ret
+}
+
+export const treeDataToStringArr = (tree: TreeData[]): string[] => {
+    let rooms = []
+    for (let index = 0; index < tree.length; index++) {
+        const building = tree[index];
+        if (building.children) {
+            for (let index = 0; index < building.children.length; index++) {
+                const floor = building.children[index];
+                if (floor.children) {
+                    for (let index = 0; index < floor.children.length; index++) {
+                        const room = floor.children[index];
+                        if (room.value)
+                            rooms.push(room.id as string)
+                    }
+                }
+            }
+        }
+    }
+    return rooms;
 }

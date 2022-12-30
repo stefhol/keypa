@@ -1,5 +1,5 @@
 import './index.css';
-
+import * as jose from 'jose'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from "react";
 import ReactDOM from "react-dom/client";
@@ -13,7 +13,6 @@ import "./index.css";
 import { Home as Home } from './routes/home/Home';
 import { KeycardsFromUser } from './routes/keycard/Keycard';
 import { KeycardBase } from './routes/keycard/KeycardBase';
-import { KeycardRequest } from './routes/keycard/KeycardRequest';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
 import { LeaderBase } from './routes/leader/LeaderBase';
 import { ShowAllUsers } from './routes/leader/ShowAllUsers';
@@ -23,7 +22,6 @@ import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
 import { RequestBase } from './routes/request/RequestBase';
-import { RequestPicker, TempRequest } from './routes/user/request/Request';
 import { UserChange } from './routes/user/UseChange';
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
@@ -31,9 +29,8 @@ import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { StatsDemo } from './routes/stats/StatsDemo';
 import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
 import { Logs } from './routes/logs/Logs';
-import { PropositionBase } from './routes/propositons/PropositionBase';
-import { CreatePropostion } from './routes/propositons/CreatePropostion';
-import { ConvertProposition } from './routes/propositons/ConvertProposition';
+import UserContext, { IUserContext } from './context/UserContext';
+import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -99,15 +96,15 @@ const router = createBrowserRouter([
           },
           {
             path: "add-request/room",
-            element: <CreatePropostion />
+            element: <CreateRoomRequest />
           },
           {
             path: "add-request/keycard",
-            element: <KeycardRequest />
+            element: <CreateKeycardRequest />
           },
           {
             path: "add-request/temp",
-            element: <TempRequest />
+            element: <CreateTempRequest />
           },
           {
             path: "change-request/:requestId",
@@ -123,10 +120,6 @@ const router = createBrowserRouter([
           {
             path: "",
             element: <GlobalKeycardList />
-          },
-          {
-            path: "add-request",
-            element: <KeycardRequest />
           },
           {
             path: "change-request/:requestId",
@@ -156,31 +149,56 @@ const router = createBrowserRouter([
 
         ]
       },
-      {
-        path: "propositons",
-        element: <RequestBase />,
-        children: [
-          {
-            path: "",
-            element: <PropositionBase />
-          },
-          {
-            path: "demo",
-            element: <ConvertProposition />
-          }
-        ]
-      },
     ]
   }
 
 ]);
 const queryClient = new QueryClient()
+const Default: React.FC<DefaultProps> = (props) => {
+  const callback = () => {
+    const params = new window.URLSearchParams(document.cookie)
+    console.log(params);
+
+    if (params.has("token")) {
+      if (params.get("token")) {
+        const token = jose.decodeJwt(params.get("token") as string) as {
+          is_admin: boolean,
+          is_leader: boolean,
+          is_worker: boolean,
+          sub: string,
+        };
+        setjwt({ ...token })
+      }
+    }
+  }
+  React.useEffect(() => {
+    window.addEventListener("load", callback)
+    return () => {
+      window.removeEventListener("load", callback)
+    }
+  }, []);
+  const [jwt, setjwt] = React.useState({} as IUserContext);
+  return (<>
+    <UserContext.Provider value={{ ...jwt, set: setjwt }}>
+      {props.children}
+    </UserContext.Provider>
+  </>)
+}
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
+    <Default>
+
     <QueryClientProvider client={queryClient}>
       <LoadingProvider>
         <RouterProvider router={router} />
       </LoadingProvider>
     </QueryClientProvider>
+    </Default>
+
   </React.StrictMode>
 );
+
+interface DefaultProps {
+  children: any;
+}

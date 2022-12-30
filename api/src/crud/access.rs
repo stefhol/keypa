@@ -57,7 +57,6 @@ impl From<(&tbl_room::Model, &Vec<GetCompleteDoor>)> for GetCompleteRoom {
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct GetCompleteDoor {
     pub door_id: Uuid,
-    pub name: String,
     pub owner: bool,
     pub room_id: Uuid,
 }
@@ -66,7 +65,6 @@ impl From<&tbl_door::Model> for GetCompleteDoor {
         let door = door.clone();
         Self {
             door_id: door.door_id,
-            name: door.name,
             owner: false,
             room_id: door.room_id,
         }

@@ -11,7 +11,7 @@ create table if not exists tbl_user
     is_active   bool         not null DEFAULT true,
     tel         varchar(255),
     address     varchar(255),
-    email       varchar(255) not null,
+    email       varchar(255) unique not null,
     picture_url varchar(255),
     password    varchar(255) not null
 );
@@ -21,7 +21,7 @@ create table if not exists tbl_user
 create table if not exists tbl_building
 (
     building_id uuid primary key DEFAULT uuid_generate_v4(),
-    name        varchar(255) not null
+    name        varchar(255) unique not null
 );
 
 create table if not exists tbl_room
@@ -36,14 +36,13 @@ create table if not exists tbl_room
 create table if not exists tbl_door
 (
     door_id uuid primary key DEFAULT uuid_generate_v4(),
-    name    varchar(255) not null,
     room_id uuid         not null,
     foreign key (room_id) references tbl_room (room_id)
 );
 create table if not exists tbl_department
 (
     department_id uuid primary key default uuid_generate_v4(),
-    name          varchar(255) not null,
+    name          varchar(255) unique not null,
     description   text
 );
 create table if not exists tbl_room_department
@@ -56,19 +55,6 @@ create table if not exists tbl_room_department
 
 );
 -- End Extern Room DB
-
-create table if not exists tbl_change_rights_history
-(
-    change_rights_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
-    action                   history_action              not null,
-    internal_role            history_role                not null,
-    target_user_id           uuid                        not null,
-    changed_by               uuid                        not null,
-    changed_at               timestamp without time zone not null default timezone('utc', now()),
-    foreign key (target_user_id) references tbl_user (user_id),
-    foreign key (changed_by) references tbl_user (user_id)
-);
-
 
 create table if not exists tbl_keycard
 (
@@ -93,15 +79,7 @@ create table if not exists tbl_keycard
     given_out  timestamp without time zone
 );
 
-create table if not exists tbl_request_entrance
-(
-    request_entrance_id uuid primary key default uuid_generate_v4(),
-    request_id          uuid not null,
 
-    building_id         uuid not null,
-    foreign key (building_id) references tbl_building (building_id),
-    proposed_rooms      text not null
-);
 create table if not exists tbl_request_department
 (
     request_id    uuid not null,
@@ -120,7 +98,7 @@ create table if not exists tbl_request
     changed_at   timestamp without time zone not null default timezone('utc', now()),
     active_until timestamp without time zone,
     description  text,
-    is_proposal  boolean                     not null default false,
+    additional_rooms  text,
     active       boolean                     not null default true,
     accept       boolean                     not null default false,
     reject       boolean                     not null default false,
@@ -143,8 +121,6 @@ create table if not exists tbl_door_to_request_history
 );
 alter table tbl_keycard
     ADD constraint fk_request_keycard foreign key (request_id) references tbl_request (request_id);
-alter table tbl_request_entrance
-    ADD constraint fk_request_request_entrance foreign key (request_id) references tbl_request (request_id);
 alter table tbl_request_department
     ADD constraint fk_request_request_department foreign key (request_id) references tbl_request (request_id);
 create table if not exists tbl_keycard_history

@@ -24,7 +24,6 @@ pub struct GetRequestWithComments {
     pub pending: bool,
     pub comments: Vec<GetComments>,
     pub active_until: Option<DateTimeUtc>,
-    pub is_proposal: bool,
     pub active: bool,
     pub keycard_id: Option<Uuid>,
 }
@@ -44,7 +43,6 @@ impl From<(&tbl_request::Model, &Vec<GetComments>)> for GetRequestWithComments {
             active_until: request
                 .active_until
                 .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
-            is_proposal: request.is_proposal,
             active: request.active,
             keycard_id: request.keycard_id,
         }
@@ -66,7 +64,6 @@ impl From<&tbl_request::Model> for GetRequestWithComments {
             active_until: request
                 .active_until
                 .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
-            is_proposal: request.is_proposal,
             active: request.active,
             keycard_id: request.keycard_id,
         }
@@ -92,7 +89,6 @@ impl From<(&tbl_request::Model, &Vec<GetUser>)> for GetRequestWithComments {
             active_until: request
                 .active_until
                 .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
-            is_proposal: request.is_proposal,
             active: request.active,
             keycard_id: request.keycard_id,
         }

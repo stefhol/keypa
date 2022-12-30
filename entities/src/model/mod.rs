@@ -4,7 +4,6 @@ pub mod prelude;
 
 pub mod sea_orm_active_enums;
 pub mod tbl_building;
-pub mod tbl_change_rights_history;
 pub mod tbl_department;
 pub mod tbl_door;
 pub mod tbl_door_to_request;
@@ -15,7 +14,6 @@ pub mod tbl_keycard_history;
 pub mod tbl_request;
 pub mod tbl_request_comment;
 pub mod tbl_request_department;
-pub mod tbl_request_entrance;
 pub mod tbl_request_log;
 pub mod tbl_room;
 pub mod tbl_room_department;

@@ -2,14 +2,13 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import React from "react"
 import { useParams } from "react-router-dom"
-import { SelectionRef, TreeView } from "../../Components/tree-view/TreeView"
+import { prepareData, SelectionRef, TreeView } from "../../Components/tree-view/TreeView"
 import "../../css/comment.css"
 import { useLoading } from "../../hooks/useLoading"
 import { Building } from "../../util/intefaces/Buildings"
 import { Comment, Request, User } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
 import { getCountOfRooms } from "../user/keys/Key"
-import { prepareData } from "../user/request/Request"
 import { UserInfo } from "../user/UseChange"
 export interface ChangeRequestProps { }
 const getUser = async ({ queryKey }: { queryKey: string[] }) => {
@@ -58,7 +57,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     Email: {props.data.requester.email}
                 </p>
                 <p>
-                    Rolle: {props.data.requester.role.name}
+                    Rolle: {props.data.requester.role_id}
                 </p>
                 <p>
                     Tel: +49 151 2549983

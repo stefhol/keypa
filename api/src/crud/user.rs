@@ -76,6 +76,16 @@ pub async fn is_admin_by_user_id(
         None => Ok(false),
     };
 }
+pub async fn is_leader_by_user_id(
+    user_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<bool, CrudError> {
+    let user = get_single_user(user_id, db).await?;
+    return match user.role_id {
+        Some(role) => Ok(role == 2),
+        None => Ok(false),
+    };
+}
 pub async fn is_worker_by_user_id(
     user_id: &Uuid,
     db: &DatabaseConnection,
@@ -83,16 +93,6 @@ pub async fn is_worker_by_user_id(
     let user = get_single_user(user_id, db).await?;
     return match user.role_id {
         Some(role) => Ok(role == 3),
-        None => Ok(false),
-    };
-}
-pub async fn is_leader_by_user_id(
-    user_id: &Uuid,
-    db: &DatabaseConnection,
-) -> Result<bool, CrudError> {
-    let user = get_single_user(user_id, db).await?;
-    return match user.role_id {
-        Some(role) => Ok(role == 4),
         None => Ok(false),
     };
 }

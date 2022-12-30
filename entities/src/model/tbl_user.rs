@@ -13,6 +13,7 @@ pub struct Model {
     pub is_active: bool,
     pub tel: Option<String>,
     pub address: Option<String>,
+    #[sea_orm(unique)]
     pub email: String,
     pub picture_url: Option<String>,
     pub password: String,

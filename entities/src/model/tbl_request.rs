@@ -14,7 +14,8 @@ pub struct Model {
     pub active_until: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    pub is_proposal: bool,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub additional_rooms: Option<String>,
     pub active: bool,
     pub accept: bool,
     pub reject: bool,
@@ -37,8 +38,6 @@ pub enum Relation {
     TblKeycard,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
-    #[sea_orm(has_many = "super::tbl_request_entrance::Entity")]
-    TblRequestEntrance,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::RequesterId",
@@ -64,12 +63,6 @@ impl Related<super::tbl_keycard::Entity> for Entity {
 impl Related<super::tbl_request_comment::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequestComment.def()
-    }
-}
-
-impl Related<super::tbl_request_entrance::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestEntrance.def()
     }
 }
 

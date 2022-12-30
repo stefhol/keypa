@@ -5,14 +5,12 @@ alter table if exists tbl_keycard drop constraint if EXISTS fk_request_keycard;
 alter table if exists tbl_request_entrance drop constraint if EXISTS fk_request_request_entrance;
 alter table if exists tbl_request_department drop constraint if EXISTS fk_request_request_department;
 drop table if exists tbl_request_log;
-drop table if exists tbl_change_rights_history;
 drop table if exists tbl_request_history;
 drop table if exists tbl_door_to_request_history;
 drop table if exists tbl_door_to_request;
 drop table if exists tbl_request_comment;
 drop table if exists tbl_temp_keycard_request;
 drop table if exists tbl_request_department;
-drop table if exists tbl_request_entrance;
 
 
 --request

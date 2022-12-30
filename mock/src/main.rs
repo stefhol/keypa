@@ -4,7 +4,7 @@ use chrono::Utc;
 use dotenv;
 use entities::model::{
     tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard, tbl_keycard_history,
-    tbl_request, tbl_request_comment, tbl_request_department, tbl_request_entrance,
+    tbl_request, tbl_request_comment, tbl_request_department,
     tbl_room, tbl_room_department, tbl_user,
 };
 use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
@@ -12,7 +12,6 @@ use fake::faker::address::raw::{BuildingNumber, StreetName, StreetSuffix};
 use fake::faker::chrono::en::DateTimeAfter;
 
 use fake::faker::chrono::zh_tw::DateTimeBefore;
-use fake::faker::company::en::BsNoun;
 use fake::faker::internet::raw::FreeEmail;
 use fake::faker::lorem::zh_tw::Sentence;
 use fake::faker::name::raw::*;
@@ -79,7 +78,7 @@ async fn main() -> anyhow::Result<()> {
         let name: String = Name(EN).fake_with_rng(&mut rng);
         let email: String = FreeEmail(EN).fake_with_rng(&mut rng);
 
-        tbl_user::ActiveModel {
+        let _ = tbl_user::ActiveModel {
             email: ActiveValue::Set(email),
             name: ActiveValue::Set(name),
             password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
@@ -87,7 +86,7 @@ async fn main() -> anyhow::Result<()> {
             ..Default::default()
         }
         .insert(&db)
-        .await?;
+        .await;
     }
 
     let users = tbl_user::Entity::find().all(&db).await?;
@@ -96,23 +95,19 @@ async fn main() -> anyhow::Result<()> {
         let name: String = StreetName(EN).fake_with_rng(&mut rng);
         let number: String = BuildingNumber(EN).fake_with_rng(&mut rng);
         let name: String = format!("{} {}. {}", name, suffix, number);
-        tbl_building::ActiveModel {
+        let _ = tbl_building::ActiveModel {
             name: ActiveValue::Set(name),
             ..Default::default()
         }
         .insert(&db)
-        .await?;
+        .await;
     }
     let buildings = tbl_building::Entity::find().all(&db).await?;
     for _ in 0..100 {
         let floor = rng.gen_range(0..5);
         let room_number = rng.gen_range(1..20);
-        let mut room_prefix = "S";
-        if rng.gen_bool(0.2) {
-            room_prefix = "HS";
-        }
-        let name = format!("{}{}{:02}", room_prefix, &floor, &room_number);
-        tbl_room::ActiveModel {
+        let name = format!("{}{:02}", &floor, &room_number);
+        let _ = tbl_room::ActiveModel {
             building_id: ActiveValue::Set(buildings[rng.gen_range(0..buildings.len())].building_id),
             floor: ActiveValue::Set(floor),
             is_sensitive: ActiveValue::Set(Some(rng.gen_ratio(1, 8))),
@@ -120,12 +115,11 @@ async fn main() -> anyhow::Result<()> {
             ..Default::default()
         }
         .insert(&db)
-        .await?;
+        .await;
     }
     let rooms = tbl_room::Entity::find().all(&db).await?;
     for room in &rooms {
         tbl_door::ActiveModel {
-            name: ActiveValue::Set(BsNoun().fake_with_rng(&mut rng)),
             room_id: ActiveValue::Set(room.room_id),
             ..Default::default()
         }
@@ -134,7 +128,6 @@ async fn main() -> anyhow::Result<()> {
     }
     for _ in 0..200 {
         tbl_door::ActiveModel {
-            name: ActiveValue::Set(BsNoun().fake_with_rng(&mut rng)),
             room_id: ActiveValue::Set(rooms[rng.gen_range(0..rooms.len())].room_id.to_owned()),
             ..Default::default()
         }
@@ -181,8 +174,8 @@ async fn main() -> anyhow::Result<()> {
             active_until: ActiveValue::Set(Some(active_until.naive_utc())),
             changed_at: ActiveValue::Set(changed_at.naive_utc()),
             created_at: ActiveValue::Set(created_at.naive_utc()),
-            is_proposal: ActiveValue::Set(true),
             requester_id: ActiveValue::Set(users[rng.gen_range(0..users.len())].user_id.to_owned()),
+            additional_rooms:ActiveValue::Set(Some("230".to_owned())),
             ..Default::default()
         }
         .insert(&db)
@@ -197,6 +190,7 @@ async fn main() -> anyhow::Result<()> {
             // keycard
             let keycard = tbl_keycard::ActiveModel {
                 request_id: ActiveValue::Set(Some(request.request_id.to_owned())),
+                user_id:ActiveValue::Set(request.requester_id),
                 ..Default::default()
             }
             .insert(db)
@@ -227,20 +221,7 @@ async fn main() -> anyhow::Result<()> {
                 .await;
             }
 
-            if rng.gen_bool(0.3) {
-                tbl_request_entrance::ActiveModel {
-                    building_id: ActiveValue::Set(
-                        buildings[rng.gen_range(0..buildings.len())]
-                            .building_id
-                            .to_owned(),
-                    ),
-                    request_id: ActiveValue::Set(request.request_id.to_owned()),
-                    proposed_rooms: ActiveValue::Set("H230".to_string()),
-                    ..Default::default()
-                }
-                .insert(db)
-                .await?;
-            }
+           
 
             let mut request = request.clone().into_active_model();
 
@@ -271,9 +252,6 @@ async fn main() -> anyhow::Result<()> {
     let requests = tbl_request::Entity::find().all(&db).await?;
     for idx in 0..80 {
         let request = &requests[idx];
-        let mut request_active_model = request.clone().into_active_model();
-        request_active_model.is_proposal = ActiveValue::Set(false);
-        request_active_model.update(&db).await?;
         for _ in 0..rng.gen_range(1..10) {
             let _ = tbl_door_to_request::ActiveModel {
                 door_id: ActiveValue::Set(doors[rng.gen_range(0..doors.len())].door_id.to_owned()),
@@ -281,6 +259,7 @@ async fn main() -> anyhow::Result<()> {
             }
             .insert(&db)
             .await;
+            
         }
     }
     let requests = tbl_request::Entity::find().all(&db).await?;
@@ -322,7 +301,7 @@ async fn main() -> anyhow::Result<()> {
             request.update(&db).await?;
         }
     }
-    for x in requests.iter().filter(|f| !f.is_proposal) {
+    for x in requests.iter() {
         let accept = rng.gen_bool(0.2);
         let reject = rng.gen_bool(0.2);
         if accept && !reject || reject && !accept {
