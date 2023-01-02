@@ -8,7 +8,7 @@ use crate::util::error::CrudError;
 
 use super::building::{GetBuilding, GetDoor, GetRoom};
 
-#[derive(Serialize, Deserialize, ToSchema, Debug)]
+#[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct GetDepartment {
     pub department_id: Uuid,
     pub name: String,
@@ -19,7 +19,10 @@ pub struct GetDepartment {
 impl From<(&QueryResult, &Vec<QueryResult>)> for GetDepartment {
     fn from((item, all_items): (&QueryResult, &Vec<QueryResult>)) -> Self {
         let item = item.clone();
-        let all_items:Vec<_> = all_items.iter().filter(|f|item.department_id == f.department_id).collect();
+        let all_items: Vec<_> = all_items
+            .iter()
+            .filter(|f| item.department_id == f.department_id)
+            .collect();
         //Get out of raw query results a tree of departments with buildings rooms and doors
         Self {
             department_id: item.department_id,
@@ -27,18 +30,24 @@ impl From<(&QueryResult, &Vec<QueryResult>)> for GetDepartment {
             description: item.department_description.to_owned(),
             buildings: all_items
                 .iter()
-                .unique_by(|f|f.building_id)
+                .unique_by(|f| f.building_id)
                 .map(|building| {
-                    let all_items:Vec<_> = all_items.iter().filter(|f|building.building_id== f.building_id).collect();
+                    let all_items: Vec<_> = all_items
+                        .iter()
+                        .filter(|f| building.building_id == f.building_id)
+                        .collect();
                     let building = building.clone();
                     GetBuilding {
                         building_id: building.building_id,
                         name: building.building_name.to_owned(),
                         rooms: all_items
                             .iter()
-                            .unique_by(|f|f.room_id)
+                            .unique_by(|f| f.room_id)
                             .map(|room| {
-                                let all_items:Vec<_> = all_items.iter().filter(|f|room.room_id== f.room_id).collect();
+                                let all_items: Vec<_> = all_items
+                                    .iter()
+                                    .filter(|f| room.room_id == f.room_id)
+                                    .collect();
                                 let room = room.clone();
                                 GetRoom {
                                     building_id: room.building_id,
@@ -94,10 +103,10 @@ async fn query(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError>
     ))
     .all(db)
     .await?;
-    query_result.sort_by(|a,b|a.room_name.cmp(&b.room_name));
+    query_result.sort_by(|a, b| a.room_name.cmp(&b.room_name));
     Ok(query_result
         .iter()
-        .unique_by(|f|f.department_id)
+        .unique_by(|f| f.department_id)
         .map(|query| GetDepartment::from((query, &query_result)))
         .collect())
 }

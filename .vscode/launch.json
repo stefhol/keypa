@@ -14,7 +14,7 @@
     {
             "type": "lldb",
             "request": "launch",
-            "name": "Cargo launch",
+            "name": "Cargo launch api",
             "cargo": {
                 "args": [
                     "build",

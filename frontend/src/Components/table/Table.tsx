@@ -60,6 +60,7 @@ export const createBasicColumns = (obj: {}) => {
 
 
 interface ITableProps {
+    outerClassName?: string
     data?: {}[]
     columns: ColumnDef<{}>[]
     rowAction: IAction[]
@@ -76,64 +77,66 @@ export const Table: React.FC<ITableProps> = (props) => {
     })
 
     return (
-        <table>
-            <thead>
-                <tr key={-1}><td colSpan={100}>
-                    <span>
-                        Suche: <input></input>
-                    </span>
-                    {props.filter}
-                </td></tr>
-                {table.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                        <th key="edit"></th>
-                        {headerGroup.headers.map(header => (
+        <div className={`outer-table ${props.outerClassName || ""}`}>
+            <table>
+                <thead>
+                    <tr key={-1}><td colSpan={100}>
+                        <span>
+                            Suche: <input></input>
+                        </span>
+                        {props.filter}
+                    </td></tr>
+                    {table.getHeaderGroups().map(headerGroup => (
+                        <tr key={headerGroup.id}>
+                            <th key="edit"></th>
+                            {headerGroup.headers.map(header => (
 
-                            <th key={header.id}>
-                                {header.isPlaceholder
-                                    ? null
-                                    : flexRender(
-                                        header.column.columnDef.header,
-                                        header.getContext()
-                                    )}
-                            </th>
-                        ))}
-                    </tr>
-                ))}
-            </thead>
-            <tbody>
-                {table.getRowModel().rows.map(row => (
-                    <tr key={row.index}
-                    >
-                        <td>
-                            {props.rowAction.map((val, idx) => <ButtonTable {...val} rowIndex={row.index} key={`edit${idx}`} />)}
-                        </td>
-                        {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>
-                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                <th key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.header,
+                                            header.getContext()
+                                        )}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
+                </thead>
+                <tbody>
+                    {table.getRowModel().rows.map(row => (
+                        <tr key={row.index}
+                        >
+                            <td>
+                                {props.rowAction.map((val, idx) => <ButtonTable {...val} rowIndex={row.index} key={`edit${idx}`} />)}
                             </td>
-                        ))}
-                    </tr>
-                ))}
-            </tbody>
-            <tfoot>
-                {table.getFooterGroups().map(footerGroup => (
-                    <tr key={footerGroup.id}>
-                        <th key="edit"></th>
-                        {footerGroup.headers.map(header => (
-                            <th key={header.id}>
-                                {header.isPlaceholder
-                                    ? null
-                                    : flexRender(
-                                        header.column.columnDef.footer,
-                                        header.getContext()
-                                    )}
-                            </th>
-                        ))}
-                    </tr>
-                ))}
-            </tfoot>
-        </table>
+                            {row.getVisibleCells().map(cell => (
+                                <td key={cell.id}>
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                </td>
+                            ))}
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot>
+                    {table.getFooterGroups().map(footerGroup => (
+                        <tr key={footerGroup.id}>
+                            <th key="edit"></th>
+                            {footerGroup.headers.map(header => (
+                                <th key={header.id}>
+                                    {header.isPlaceholder
+                                        ? null
+                                        : flexRender(
+                                            header.column.columnDef.footer,
+                                            header.getContext()
+                                        )}
+                                </th>
+                            ))}
+                        </tr>
+                    ))}
+                </tfoot>
+            </table>
+        </div>
     )
 }
 export interface IAction {

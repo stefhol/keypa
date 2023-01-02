@@ -1,7 +1,7 @@
 use actix_web::{
     get, put,
     web::{Data, Json, Path, Query},
-    HttpResponse,
+    HttpResponse, post,
 };
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
@@ -13,7 +13,7 @@ use crate::{
         self,
         request::{
             create::{create_request, CreateRequest},
-            get::RequestType,
+            get::RequestType, change::ChangeRequest,
         },
     },
     util::{
@@ -220,5 +220,28 @@ pub async fn create_requests(
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
     create_request(&db, &user_id, &request, auth.to_sercurity_level()).await?;
+    Ok(HttpResponse::Ok().json(request))
+}
+#[utoipa::path(
+    context_path = "/api/v1",
+    request_body = ChangeRequest,
+    responses(
+    (status = 200),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[post("/request/{request_id}")]
+pub async fn change_requests(
+    db: Data<DatabaseConnection>,
+    request: Json<ChangeRequest>,
+    request_id: Path<Uuid>,
+    auth: Authenticated,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
+    crud::request::change::change_request(&db, &request_id, &request, auth.to_sercurity_level()).await?;
     Ok(HttpResponse::Ok().json(request))
 }

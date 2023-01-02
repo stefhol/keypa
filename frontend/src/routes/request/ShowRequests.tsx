@@ -1,0 +1,59 @@
+import { useQuery } from "@tanstack/react-query"
+import React from "react"
+import { useNavigate } from "react-router-dom"
+import { createBasicColumns, Table } from "../../Components/table/Table"
+import { useLoading } from "../../hooks/useLoading"
+import { Rest } from "../../util/Rest"
+
+export const ShowRequests: React.FC<{}> = (props) => {
+    const [filter, setFilter] = React.useState({ request_status: "", request_type: "" });
+    const queryParams = React.useMemo(() => {
+        const params = new window.URLSearchParams()
+        if (filter.request_status) params.set("request_status", filter.request_status)
+        if (filter.request_type) params.set("request_type", filter.request_type)
+        return params.toString()
+    }, [filter.request_status, filter.request_type])
+    const { data, isLoading, dataUpdatedAt } = useQuery(["request", "pending", queryParams],
+        ({ queryKey }) => Rest.getRequests(queryKey[2])
+    )
+    const navigate = useNavigate()
+    const { } = useLoading(isLoading)
+    return (<>
+        {data && <Table
+            outerClassName="absolute"
+            data={data} columns={createBasicColumns(data[0])}
+            filter={
+                <>
+                    <select style={{ width: "initial" }}
+                        value={filter.request_status}
+                        onChange={e => setFilter(prev => ({ ...prev, request_status: e.target.value }))}
+                    >
+                        <option value={""}></option>
+                        <option value={"accept"}>accept</option>
+                        <option value={"pending"}>pending</option>
+                        <option value={"reject"}>reject</option>
+                    </select>
+                    <select style={{ width: "initial" }}
+                        value={filter.request_type}
+                        onChange={e => setFilter(prev => ({ ...prev, request_type: e.target.value }))}
+                    >
+                        <option value={""}></option>
+                        <option value={"room"}>room</option>
+                        <option value={"temp"}>temp</option>
+                        <option value={"keycard"}>keycard</option></select>
+                </>
+            }
+            rowAction={
+                [
+                    {
+                        element: <button>Ändern</button>,
+                        onClick(idx) {
+                            navigate(`/request/change-request/${data[idx].request_id}`)
+                        },
+                    }
+                ]
+            }
+
+        />}
+    </>)
+}

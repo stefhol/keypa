@@ -88,7 +88,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let users = tbl_user::Entity::find().all(&db).await?;
-    for _ in 0..4 {
+
+    for _ in vec!["WIWI", "FIM", "AM", "JURA"] {
         let suffix: String = StreetSuffix(EN).fake_with_rng(&mut rng);
         let name: String = StreetName(EN).fake_with_rng(&mut rng);
         let number: String = BuildingNumber(EN).fake_with_rng(&mut rng);

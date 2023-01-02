@@ -2,14 +2,11 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import React from "react"
 import { useParams } from "react-router-dom"
-import { prepareData, SelectionRef, TreeView } from "../../Components/tree-view/TreeView"
-import "../../css/comment.css"
+import CommentView from "../../Components/comment/Comment"
+import { prepareData, TreeView } from "../../Components/tree-view/TreeView"
 import { useLoading } from "../../hooks/useLoading"
-import { Building } from "../../util/intefaces/Buildings"
-import { Comment, Request, User } from "../../util/intefaces/Request"
+import { Request } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
-import { getCountOfRooms } from "../user/keys/Key"
-import { UserInfo } from "../user/UseChange"
 export interface ChangeRequestProps { }
 const getUser = async ({ queryKey }: { queryKey: string[] }) => {
     const userId = queryKey[1]
@@ -19,10 +16,7 @@ const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
     const requestId = queryKey[1]
     return await Rest.getSingleRequest(requestId)
 }
-const getBuildingWithDoorGroups = async ({ queryKey }: { queryKey: string[] }) => {
-    const requestId = queryKey[1]
-    return await Rest.getDoorsWithRequestId(requestId)
-}
+
 export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
     const { requestId } = useParams()
 
@@ -38,16 +32,52 @@ export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
 
 export interface ChangeRequestFormProps { data: Request, }
 export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
-    const { data: building } = useQuery(["building", props.data.request_id], getBuildingWithDoorGroups)
+    const { data: building } = useQuery(["building", props.data.request_id], ({ queryKey }) => {
+        const requestId = queryKey[1]
+        return Rest.getDoorsWithRequestId(requestId)
+    })
+    const { data: departmentsData } = useQuery(["departments", props.data.request_id], Rest.getDepartments)
+    const [departments, setDepartments] = React.useState(props.data.departments);
+
+    // date input is here managed is a bit complicated because of using the native date picker with preset value
+    const [activeUntil, setActiveUntil] = React.useState(props.data?.active_until ? new Date(props.data?.active_until) : null);
+    const dateElRef = React.useRef(undefined as unknown as HTMLInputElement);
+    React.useEffect(() => {
+        if (dateElRef?.current) dateElRef.current.defaultValue = activeUntil ? format(activeUntil, "yyyy-MM-dd") : ""
+    }, [dateElRef.current]);
+    //
+
 
     const [accept, setAccept] = React.useState(props.data.accept);
     const [reject, setReject] = React.useState(props.data.reject);
     const [pending, setPending] = React.useState(props.data.pending);
-    const selection = React.useRef({ getCurrentSelection: () => Selection }) as unknown as SelectionRef;
-
+    const [rooms, setRooms] = React.useState(undefined as unknown as string[]);
+    const statusValue = React.useMemo(() => {
+        if (accept) {
+            return "1"
+        }
+        if (reject) {
+            return "2"
+        }
+        if (pending) {
+            return "3"
+        }
+    }, [accept, reject, pending])
+    const [addDepartmentOption, setAddDepartmentOption] = React.useState("");
+    const treeData = React.useMemo(() => building?.length ? prepareData(building) : [], [building?.length])
     return (<>
         <h1>Antrag</h1>
-        <form>
+        <form onSubmit={e => {
+            e.preventDefault()
+            send(props.data.request_id, {
+                accept: accept || undefined,
+                reject: reject || undefined,
+                pending: pending || undefined,
+                active_until: activeUntil?.toISOString() ?? null,
+                departments: departments,
+                rooms: rooms
+            })
+        }}>
             <div className="container">
                 <h2>Kontaktinformationen</h2>
                 <p>
@@ -60,78 +90,100 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     Rolle: {props.data.requester.role_id}
                 </p>
                 <p>
-                    Tel: +49 151 2549983
+                    Tel: {props.data.requester.tel}
                 </p>
             </div>
 
             <div className="container">
                 <h2>Beschreibung</h2>
                 <p>
-                    Ich brauche Zugang zum Labor damit ich ein Experiment durchführen kann.
+                    {props.data.description}
                 </p>
             </div>
-
-            <div className="container">
+            <div className="container"><label>
+                Aktiv bis
+                <input type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} />
+            </label></div>
+            {(props.data.additional_rooms && building) && <div className="container">
                 <h2>Angefragte Räume</h2>
                 <div className="container">
                     <h2>Angefragte Individuelle Räume</h2>
-                    <div className="container">
-                        <label>
-                            <b>Text aus Antrag</b>
-                        </label>
-                        <p>FIM</p>
-                        <p>
-                            S104, S105
-                        </p>
-                    </div>
-                    <label>
-                        Gebäude auswählen
-                        <select value={1}>
-                            <option value={1}>FIM</option>
-                        </select>
-                    </label>
+                    <p>
+                        {props.data.additional_rooms}
+                    </p>
+
                     <div>
                         <b>Nachtragen</b>
                     </div>
-                    <TreeView expanded filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
-                    <button>Anderes Gebäude hinzufügen</button>
-                </div>
-                <div className="container">
-                    <h2>Angefragte Individuelle Räume</h2>
-                    <label>
-                        Gebäude auswählen
-                        <select value={1}>
-                            <option value={1}>FIM</option>
-                        </select>
-                    </label>
-                    <TreeView expanded filter={false} selectionRef={{ current: {} } as any} data={prepareData(demoData)} />
+                    <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData}
+                        onChange={e => {
+                            setRooms(e.map(val =>
+                                val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
+                        }}
+                    />
                     <button>Anderes Gebäude hinzufügen</button>
                 </div>
                 <div className="container">
                     <h2>Angefragte Raumgruppen</h2>
-                    <div className="container">
-                        <label>
-                            <b>IT Security</b>
-                        </label>
+                    {(departments && departmentsData) && departments.map((val, idx) => {
+                        const currentDepartment = departmentsData.find(dep => dep.department_id === val)
+                        return <div className="container" key={idx}>
+                            <label>
+                                <b>{currentDepartment?.name}</b>
+                                <button onClick={e => {
+                                    e.preventDefault()
+                                    setDepartments(prev => {
+                                        return prev?.filter(f => f !== val)
+                                    })
+                                }}>X</button>
+                            </label>
+                            {currentDepartment?.buildings.map(building => (
+                                <div key={building.building_id}>
+                                    <b>{building.name}:</b> {building.rooms.map(room => room.name).join(", ")}
+                                </div>
+                            ))}
 
-                        <div>
-                            ITZ: S201, S203, S204
                         </div>
-                        <div>
-                            FIM: S100, S101
-                        </div>
-                        <button>Löschen</button>
-                    </div>
-                    <button>Andere Raumgruppe hinzufügen</button>
+                    })}
+                    {
+                        departmentsData &&
+                        <>
+                            <select value={addDepartmentOption} onChange={e => setAddDepartmentOption(e.target.value)}>
+                                <option value={""}></option>
+                                {departmentsData.map((val, idx) => <option value={val.department_id} key={idx}>
+                                    {val.name}
+                                </option>)}
+                            </select>
+                            <button
+                                disabled={!addDepartmentOption}
+                                onClick={e => {
+                                    e.preventDefault()
+
+                                    setDepartments(prev => {
+                                        let newState = []
+                                        if (prev) {
+                                            newState = [...prev, addDepartmentOption]
+                                        } else {
+                                            newState = [addDepartmentOption]
+                                        }
+                                        return newState;
+                                    })
+                                    setAddDepartmentOption("")
+                                }}
+                            >Raumgruppe hinzufügen</button>
+                        </>
+                    }
                 </div>
 
 
 
-            </div>
+            </div>}
             <div className="container">
                 <label>
                     Status:
-                    <select name="status" onChange={(e) => {
+                    <select name="status"
+                        value={statusValue}
+                        onChange={(e) => {
                         let value = e.target.value
                         if (value === "1") {
                             setAccept(true)
@@ -149,9 +201,9 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                             setPending(true)
                         }
                     }}>
-                        <option value="1" selected={accept}>Akzeptieren</option>
-                        <option value="2" selected={reject}>Ablehnen</option>
-                        <option value="3" selected={pending}>Ausstehend</option>
+                        <option value="1">Akzeptieren</option>
+                        <option value="2" >Ablehnen</option>
+                        <option value="3" >Ausstehend</option>
                     </select>
                 </label>
 
@@ -162,121 +214,22 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
         </form>
 
         <div className="container">
-            <CommentBoxFC
-                data={props.data.comments || []}
-                requester={props.data.requester_id}
+            <CommentView
+                requesterId={props.data.requester_id}
+                requestId={props.data.request_id}
+
             />
         </div>
     </>)
 }
-
-export interface CommentProps {
-    isRequester: boolean,
-    comment: Partial<Comment>
+interface ChangeRequest {
+    active_until?: string | null,
+    departments?: string[]
+    rooms?: string[]
+    accept?: boolean,
+    reject?: boolean,
+    pending?: boolean,
 }
-export const CommentFC: React.FC<CommentProps> = (props) => {
-
-    return (<>
-        <div className={`comment ${props.isRequester && "blue"}`}>
-
-            <span><strong>{props?.comment?.user?.name}</strong></span>
-            <span>{props.comment.comment}</span>
-            <span className="date">{format(new Date(props?.comment?.written_at || ""), "dd.MM.yyyy hh:mm")}</span>
-        </div>
-    </>)
+const send = async (requestId: string, data: ChangeRequest) => {
+    await Rest.quickAdd(`request/${requestId}`, "POST", data);
 }
-export interface CommentBoxProps {
-    data: Comment[]
-    requester: string
-}
-export const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
-    const [newComment, setNewComment] = React.useState("");
-    return (<div className="comment-box">
-        <h2>
-            Kommunikationsverlauf
-        </h2>
-        <CommentFC
-            comment={{
-                user: {
-                    ...{} as User,
-                    name: "Peter Rolf"
-                },
-                written_at: Date(),
-                comment: "Einige Raueme existieren nicht"
-            }}
-            isRequester={false}
-        />
-        <CommentFC
-            comment={{
-                user: {
-                    ...{} as User,
-                    name: "Mike Fischer"
-                },
-                written_at: Date(),
-                comment: "Ohja stimmt ich meinte ITZ statt FIM"
-            }}
-            isRequester
-        />
-        <div>
-            Antwort:
-            <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-            />
-
-        </div>
-        <button onClick={(e) => { e.preventDefault() }}>Sende Nachricht</button>
-    </div>)
-}
-
-const demoData: Building[] = [
-
-    {
-        building_id: "FIM",
-        name: "Fim",
-        rooms: [
-            {
-                building_id: "FIM",
-                floor: 1,
-                is_sensitive: false,
-                name: "S104",
-                room_id: "1",
-                doors: [
-                    {
-                        door_id: "1",
-                        name: "",
-                        room_id: "1"
-                    }
-                ]
-            },
-            {
-                building_id: "FIM",
-                floor: 2,
-                is_sensitive: false,
-                name: "S204",
-                room_id: "1",
-                doors: [
-                    {
-                        door_id: "1",
-                        name: "",
-                        room_id: "1"
-                    }
-                ]
-            },
-            {
-                building_id: "FIM",
-                floor: 1,
-                is_sensitive: true,
-                name: "S105",
-                room_id: "1",
-                doors: [
-                    {
-                        door_id: "1",
-                        name: "",
-                        room_id: "1"
-                    }
-                ]
-            }
-        ]
-    }
-]

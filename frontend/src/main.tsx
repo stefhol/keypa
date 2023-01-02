@@ -20,7 +20,7 @@ import { Login } from './routes/login/Login';
 import { Main } from './routes/Main';
 import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
-import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
+import { ShowRequests } from './routes/request/ShowRequests';
 import { RequestBase } from './routes/request/RequestBase';
 import { UserChange } from './routes/user/UseChange';
 import { SelfUser, UserByUserId } from './routes/user/User';
@@ -84,12 +84,12 @@ const router = createBrowserRouter([
       },
       {
         path: "request",
+        element: <ShowRequests />
+      },
+      {
+        path: "request",
         element: <RequestBase />,
         children: [
-          {
-            path: "",
-            element: <ShowPendingRequests />
-          },
           {
             path: "add-request",
             element: <RequestPicker />

@@ -115,7 +115,8 @@ pub async fn get_building_complex(
     db: &DatabaseConnection,
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let doors = tbl_door::Entity::find().all(db).await?;
-    let rooms = tbl_room::Entity::find().all(db).await?;
+    let mut rooms = tbl_room::Entity::find().all(db).await?;
+    rooms.sort_by(|a, b| a.floor.cmp(&b.floor));
     let buildings = tbl_building::Entity::find().all(db).await?;
     let doors: Vec<GetCompleteDoor> = doors.iter().map(|f| f.into()).collect();
     let rooms: Vec<GetCompleteRoom> = rooms.iter().map(|f| (f, &doors).into()).collect();
@@ -128,9 +129,8 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
     db: &DatabaseConnection,
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
     let buildings = get_building_complex(db).await?;
-    let mut department_authorized_doors = get_doors_of_department_user_id(user_id, db).await?;
-    let mut authorized_doors = get_doors_of_user_id(user_id, db).await?;
-    authorized_doors.append(&mut department_authorized_doors);
+
+    let authorized_doors = get_doors_of_user_id(user_id, db).await?;
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }

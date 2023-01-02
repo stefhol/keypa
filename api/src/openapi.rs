@@ -29,8 +29,13 @@ use crate::{crud, api};
         api::request::get_all_requests,
         api::request::get_single_requests,
         api::request::create_requests,
+        api::request::change_requests,
+        
         //buildings
         api::building::get_buldings,
+        //comment
+        api::comment::get_comments,
+        api::comment::insert_comment,
         //department
         api::department::get_departments,
     ),
@@ -43,14 +48,16 @@ use crate::{crud, api};
         crud::user::GetUser,
         crud::keycard::GetKeycard,
 
-        crud::request::get::GetRequestWithComments,
-        crud::request::get::GetComments,
+        crud::request::get::GetRequest,
         crud::request::get::RequestType,
         crud::request::create::CreateRequest,
+        crud::request::change::ChangeRequest,
         api::request::RequestStatus,
         crud::access::GetCompleteBuilding,
         crud::access::GetCompleteRoom,
         crud::access::GetCompleteDoor,
+        crud::comment::GetComment,
+        crud::comment::InsertComment,
         crud::department::GetDepartment,
     ))
 )]

@@ -1,10 +1,10 @@
-use crate::crud;
+use crate::crud::{self};
 use crate::util::error::CrudError;
 use chrono::{DateTime, Utc};
-use entities::model::{tbl_request, tbl_request_comment};
+use entities::model::{tbl_door_to_request, tbl_request, tbl_request_department};
 use sea_orm::{
-    prelude::DateTimeUtc, ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult,
-    QueryFilter, QueryOrder, Statement,
+    ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter,
+    Statement,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -20,7 +20,7 @@ pub enum RequestType {
     None,
 }
 #[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
-pub struct GetRequestWithComments {
+pub struct GetRequest {
     pub request_id: Uuid,
     pub requester_id: Uuid,
     pub requester: Option<GetUser>,
@@ -30,14 +30,16 @@ pub struct GetRequestWithComments {
     pub accept: bool,
     pub reject: bool,
     pub pending: bool,
-    pub comments: Vec<GetComments>,
     pub active_until: Option<DateTime<Utc>>,
     pub active: bool,
     pub keycard_id: Option<Uuid>,
     pub request_type: RequestType,
+    pub additional_rooms: Option<String>,
+    pub departments: Option<Vec<Uuid>>,
+    pub doors: Option<Vec<Uuid>>,
 }
 
-impl From<(&tbl_request::Model, &Vec<Uuid>)> for GetRequestWithComments {
+impl From<(&tbl_request::Model, &Vec<Uuid>)> for GetRequest {
     fn from((request, requests_with_doors): (&tbl_request::Model, &Vec<Uuid>)) -> Self {
         let request_has_doors = requests_with_doors.contains(&request.request_id);
         let request_type = match request.keycard_id {
@@ -61,17 +63,19 @@ impl From<(&tbl_request::Model, &Vec<Uuid>)> for GetRequestWithComments {
             accept: request.accept.clone(),
             reject: request.reject.clone(),
             pending: request.pending.clone(),
-            comments: vec![],
             active_until: request
                 .active_until
                 .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
             active: request.active,
             keycard_id: request.keycard_id,
             request_type,
+            departments: None,
+            doors: None,
+            additional_rooms: request.additional_rooms.to_owned(),
         }
     }
 }
-impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>)> for GetRequestWithComments {
+impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>)> for GetRequest {
     fn from(
         (request, user, requests_with_doors): (&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>),
     ) -> Self {
@@ -100,42 +104,20 @@ impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>)> for GetRequestWithCo
             accept: request.accept.clone(),
             reject: request.reject.clone(),
             pending: request.pending.clone(),
-            comments: vec![],
             active_until: request
                 .active_until
                 .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
             active: request.active,
             keycard_id: request.keycard_id,
             request_type,
-        }
-    }
-}
-#[derive(Serialize, Deserialize, Debug, ToSchema, Clone)]
-pub struct GetComments {
-    pub comment_id: Uuid,
-    pub request_id: Uuid,
-    pub user_id: Uuid,
-    pub user: Option<GetUser>,
-    pub comment: String,
-    pub written_at: DateTime<Utc>,
-}
-impl From<(&tbl_request_comment::Model, &Vec<GetUser>)> for GetComments {
-    fn from((comment, user_map): (&tbl_request_comment::Model, &Vec<GetUser>)) -> Self {
-        GetComments {
-            comment_id: comment.comment_id.clone(),
-            request_id: comment.request_id.clone(),
-            user_id: comment.user_id.clone(),
-            user: user_map
-                .iter()
-                .find(|f| &f.user_id == &comment.user_id)
-                .cloned(),
-            comment: comment.comment.clone(),
-            written_at: DateTimeUtc::from_utc(comment.written_at.clone(), Utc),
+            departments: None,
+            doors: None,
+            additional_rooms: request.additional_rooms.to_owned(),
         }
     }
 }
 
-pub async fn get_requests_id_with_departments_rooms(
+pub async fn get_requests_id_with_departments_or_rooms(
     db: &DatabaseConnection,
 ) -> Result<Vec<Uuid>, CrudError> {
     #[derive(Debug, Clone, FromQueryResult)]
@@ -144,8 +126,9 @@ pub async fn get_requests_id_with_departments_rooms(
     }
     let query_result: Vec<Temp> = Temp::find_by_statement(Statement::from_sql_and_values(
         DbBackend::Postgres,
-        "select distinct tbl_request_department.request_id from tbl_request_department
-        left outer join tbl_door_to_request tdtr on tbl_request_department.request_id = tdtr.request_id;",
+        "SELECT DISTINCT request_id FROM tbl_request_department
+        UNION
+        SELECT DISTINCT request_id FROM tbl_door_to_request",
         vec![],
     ))
     .all(db)
@@ -155,105 +138,107 @@ pub async fn get_requests_id_with_departments_rooms(
 pub async fn get_request_from_user_id(
     user_id: &Uuid,
     db: &DatabaseConnection,
-) -> Result<Vec<GetRequestWithComments>, CrudError> {
+) -> Result<Vec<GetRequest>, CrudError> {
     let model = tbl_request::Entity::find()
         .filter(tbl_request::Column::RequesterId.eq(user_id.clone()))
         .all(db)
         .await?;
-    let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
+    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((f, &request_with_doors)))
+        .map(|f| GetRequest::from((f, &request_with_doors)))
         .collect())
 }
 pub async fn get_request_from_user_id_and_request_id(
     user_id: &Uuid,
     request_id: &Uuid,
     db: &DatabaseConnection,
-) -> Result<GetRequestWithComments, CrudError> {
+) -> Result<GetRequest, CrudError> {
     let request = get_single_request(db, request_id).await?;
     if &request.requester_id == user_id {
         return Ok(request);
     }
     Err(CrudError::NotFound)
 }
-pub async fn get_all_requests(
-    db: &DatabaseConnection,
-) -> Result<Vec<GetRequestWithComments>, CrudError> {
+pub async fn get_all_requests(db: &DatabaseConnection) -> Result<Vec<GetRequest>, CrudError> {
     let model = tbl_request::Entity::find().all(db).await?;
     let user_vec = crud::user::get_all_user(db).await?;
-    let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
+    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
 
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((f, &user_vec, &request_with_doors)))
+        .map(|f| GetRequest::from((f, &user_vec, &request_with_doors)))
         .collect())
 }
 pub async fn get_all_pending_requests(
     db: &DatabaseConnection,
-) -> Result<Vec<GetRequestWithComments>, CrudError> {
+) -> Result<Vec<GetRequest>, CrudError> {
     let model = tbl_request::Entity::find()
         .filter(tbl_request::Column::Pending.eq(true))
         .all(db)
         .await?;
     let user_vec = crud::user::get_all_user(db).await?;
-    let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
+    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
 
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((f, &user_vec, &request_with_doors)))
+        .map(|f| GetRequest::from((f, &user_vec, &request_with_doors)))
         .collect())
 }
 pub async fn get_all_reject_requests(
     db: &DatabaseConnection,
-) -> Result<Vec<GetRequestWithComments>, CrudError> {
+) -> Result<Vec<GetRequest>, CrudError> {
     let model = tbl_request::Entity::find()
         .filter(tbl_request::Column::Reject.eq(true))
         .all(db)
         .await?;
     let user_vec = crud::user::get_all_user(db).await?;
-    let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
+    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
 
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((f, &user_vec, &request_with_doors)))
+        .map(|f| GetRequest::from((f, &user_vec, &request_with_doors)))
         .collect())
 }
 pub async fn get_all_accepted_requests(
     db: &DatabaseConnection,
-) -> Result<Vec<GetRequestWithComments>, CrudError> {
+) -> Result<Vec<GetRequest>, CrudError> {
     let model = tbl_request::Entity::find()
         .filter(tbl_request::Column::Accept.eq(true))
         .all(db)
         .await?;
     let user_vec = crud::user::get_all_user(db).await?;
-    let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
+    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
 
     Ok(model
         .iter()
-        .map(|f| GetRequestWithComments::from((f, &user_vec, &request_with_doors)))
+        .map(|f| GetRequest::from((f, &user_vec, &request_with_doors)))
         .collect())
 }
 pub async fn get_single_request(
     db: &DatabaseConnection,
     request_id: &Uuid,
-) -> Result<GetRequestWithComments, CrudError> {
+) -> Result<GetRequest, CrudError> {
     let model = tbl_request::Entity::find_by_id(request_id.clone())
         .one(db)
         .await?;
     match &model {
         Some(request) => {
-            let comments = tbl_request_comment::Entity::find()
-                .filter(tbl_request_comment::Column::RequestId.eq(request.request_id.clone()))
-                .order_by_asc(tbl_request_comment::Column::WrittenAt)
+            let user_vec = crud::user::get_all_user(db).await?;
+            let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
+
+            let mut request = GetRequest::from((request, &user_vec, &request_with_doors));
+            let request_department = tbl_request_department::Entity::find()
+                .filter(tbl_request_department::Column::RequestId.eq(request.request_id))
                 .all(db)
                 .await?;
-            let user_vec = crud::user::get_all_user(db).await?;
-            let request_with_doors = get_requests_id_with_departments_rooms(db).await?;
-
-            let mut request =
-                GetRequestWithComments::from((request, &user_vec, &request_with_doors));
-            request.comments = comments.iter().map(|f| (f, &user_vec).into()).collect();
+            let request_door = tbl_door_to_request::Entity::find()
+                .filter(tbl_door_to_request::Column::RequestId.eq(request.request_id))
+                .all(db)
+                .await?;
+            request.departments =
+                Some(request_department.iter().map(|f| f.department_id).collect());
+            request.doors = Some(request_door.iter().map(|f| f.door_id).collect());
             Ok(request)
         }
         None => Err(CrudError::NotFound),
