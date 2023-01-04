@@ -40,19 +40,15 @@ pub struct GetRequest {
     pub is_sensitive: Option<bool>,
 }
 
-#[derive(Serialize, Deserialize, FromQueryResult, Debug)]
-struct QueryResult {
-    request_id: Uuid,
-    is_sensitive: bool,
-}
-
-async fn query_is_request_sensitive(
-    db: &DatabaseConnection,
-) -> Result<Vec<QueryResult>, CrudError> {
+async fn query_is_request_sensitive(db: &DatabaseConnection) -> Result<Vec<Uuid>, CrudError> {
+    #[derive(Serialize, Deserialize, FromQueryResult, Debug)]
+    struct QueryResult {
+        request_id: Uuid,
+    }
     let  query_result: Vec<QueryResult> = QueryResult::find_by_statement(Statement::from_sql_and_values(
         DbBackend::Postgres,
         r#"
-        SELECT DISTINCT is_sensitive, sub.request_id
+        SELECT distinct sub.request_id
         FROM tbl_room
         JOIN (
         SELECT room_id, tbl_request.request_id
@@ -67,7 +63,7 @@ async fn query_is_request_sensitive(
         ) AS sub ON sub.room_id = tbl_room.room_id
         WHERE is_sensitive = true
         UNION
-        SELECT DISTINCT true, request_id
+        SELECT request_id
         FROM tbl_request
         JOIN tbl_user tu ON tbl_request.requester_id = tu.user_id
         WHERE tu.role_id = 2 OR tu.role_id = 3;
@@ -76,23 +72,16 @@ async fn query_is_request_sensitive(
     ))
     .all(db)
     .await?;
-    Ok(query_result)
+    Ok(query_result.iter().map(|f| f.request_id).collect())
 }
 
-impl
-    From<(
-        &tbl_request::Model,
-        &Vec<GetUser>,
-        &Vec<Uuid>,
-        &Vec<QueryResult>,
-    )> for GetRequest
-{
+impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>, &Vec<Uuid>)> for GetRequest {
     fn from(
         (request, user, requests_with_doors, query_sens): (
             &tbl_request::Model,
             &Vec<GetUser>,
             &Vec<Uuid>,
-            &Vec<QueryResult>,
+            &Vec<Uuid>,
         ),
     ) -> Self {
         let user = user
@@ -132,7 +121,7 @@ impl
             is_sensitive: Some(
                 query_sens
                     .iter()
-                    .any(|f| f.request_id.to_owned() == request.request_id && f.is_sensitive),
+                    .any(|f| f.to_owned() == request.request_id),
             ),
         }
     }

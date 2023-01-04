@@ -28,7 +28,7 @@ impl From<&tbl_keycard::Model> for GetKeycard {
             is_given_back: keycard.is_given_back,
             request_id: keycard.request_id,
             user_id: keycard.user_id,
-            given_out: keycard.given_out.map(|f|DateTime::from_utc(f,Utc)),
+            given_out: keycard.given_out.map(|f| DateTime::from_utc(f, Utc)),
         }
     }
 }
@@ -42,7 +42,10 @@ async fn get_keycard_query(
             r#"select (tk.*) from tbl_user
             join tbl_request tr on tbl_user.user_id = tr.requester_id
             join tbl_keycard tk on tr.keycard_id = tk.keycard_id
-            where tbl_user.user_id = $1"#,
+            where tbl_user.user_id = $1
+            and tr.accept = true
+            and tr.active = true
+            "#,
             vec![user_id.clone().into()],
         ))
         .all(db)

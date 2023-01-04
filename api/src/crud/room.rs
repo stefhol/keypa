@@ -1,5 +1,5 @@
 use entities::model::tbl_room;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Statement};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -39,4 +39,22 @@ pub async fn get_door_from_room_id(
         Some(model) => Ok((&model).into()),
         None => Err(CrudError::NotFound),
     }
+}
+pub async fn get_rooms_id_sensitive(db: &DatabaseConnection) -> Result<Vec<Uuid>, CrudError> {
+    #[derive(FromQueryResult)]
+    struct QueryResult {
+        room_id: Uuid,
+    }
+    let query_result: Vec<QueryResult> =
+        QueryResult::find_by_statement(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"
+        select room_id from tbl_room
+        where is_sensitive = true;
+        "#,
+            vec![],
+        ))
+        .all(db)
+        .await?;
+    Ok(query_result.iter().map(|f| f.room_id).collect())
 }

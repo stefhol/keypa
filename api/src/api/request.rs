@@ -283,6 +283,6 @@ pub async fn change_requests(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    crud::request::change::change_request(&db, &request_id, &request, auth.to_sercurity_level()).await?;
-    Ok(HttpResponse::Ok().json(request))
+    let result = crud::request::change::change_request(&db, &request_id, &request, auth.to_sercurity_level()).await?;
+    Ok(HttpResponse::Ok().json(result))
 }
