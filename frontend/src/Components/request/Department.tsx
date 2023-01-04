@@ -30,11 +30,10 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
                 setStyle({ display: "none" })
             }}>X</button>
             {selected_option &&
-                <p>
+                <div>
                     Beinahltet: {selected_option.buildings.map((val, idx) => <div key={idx}>
                         <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
-                    </div>)}
-                </p>
+                    </div>)}</div>
             }
 
         </div>

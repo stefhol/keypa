@@ -38,6 +38,8 @@ use crate::{crud, api};
         api::comment::insert_comment,
         //department
         api::department::get_departments,
+        api::department::get_departments_of_self,
+        api::department::get_departments_of_user,
     ),
     components(schemas(
         api::auth::Login,

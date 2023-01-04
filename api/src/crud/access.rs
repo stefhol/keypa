@@ -1,4 +1,4 @@
-use entities::model::{tbl_building, tbl_door, tbl_room};
+use entities::model::{tbl_building, tbl_door, tbl_room, tbl_user};
 use itertools::Itertools;
 use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
 
@@ -77,11 +77,10 @@ pub async fn get_doors_of_user_id(
     let values = tbl_door::Entity::find()
         .from_raw_sql(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"select (tbl_door.*) from tbl_user
-            join tbl_request on tbl_user.user_id = tbl_request.requester_id
+            r#"select (tbl_door.*) from tbl_request
             join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
             join tbl_door on tbl_door_to_request.door_id = tbl_door.door_id
-            where tbl_user.user_id = $1"#,
+            where tbl_request.requester_id = $1"#,
             vec![user_id.clone().into()],
         ))
         .all(db)
@@ -89,25 +88,8 @@ pub async fn get_doors_of_user_id(
 
     Ok(values.iter().map(|f| f.into()).collect())
 }
-pub async fn get_doors_of_department_user_id(
-    user_id: &Uuid,
-    db: &DatabaseConnection,
-) -> Result<Vec<GetDoor>, CrudError> {
-    let values = tbl_door::Entity::find()
-        .from_raw_sql(Statement::from_sql_and_values(
-            DbBackend::Postgres,
-            r#"select (d.*) from tbl_user
-            join tbl_request tr on tbl_user.user_id = tr.requester_id
-            join tbl_request_department trd on tr.request_id = trd.request_id
-            join tbl_department td on trd.department_id = td.department_id
-            join tbl_room_department t on td.department_id = t.department_id
-            join tbl_room r on t.room_id = r.room_id
-            join tbl_door d on r.room_id = d.room_id
-            where tbl_user.user_id = $1"#,
-            vec![user_id.clone().into()],
-        ))
-        .all(db)
-        .await?;
+pub async fn get_all_doors(db: &DatabaseConnection) -> Result<Vec<GetDoor>, CrudError> {
+    let values = tbl_door::Entity::find().all(db).await?;
 
     Ok(values.iter().map(|f| f.into()).collect())
 }
@@ -128,49 +110,25 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
     user_id: &Uuid,
     db: &DatabaseConnection,
 ) -> Result<Vec<GetCompleteBuilding>, CrudError> {
+    let user = tbl_user::Entity::find_by_id(user_id.to_owned())
+        .one(db)
+        .await?;
+    let Some(user) = user else { return Err(CrudError::NotFound) };
+
     let buildings = get_building_complex(db).await?;
 
-    let authorized_doors = get_doors_of_user_id(user_id, db).await?;
+    let authorized_doors = match user.role_id {
+        Some(val) => match val {
+            1 => get_all_doors(db).await?,
+            _ => get_doors_of_user_id(user_id, db).await?,
+        },
+        None => get_doors_of_user_id(user_id, db).await?,
+    };
+
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }
-/// get only buiding with authorized doors
-#[allow(dead_code)]
-fn get_only_authorized_complex_building(
-    buildings: Vec<GetCompleteBuilding>,
-    authorized_doors: Vec<GetDoor>,
-) -> Vec<GetCompleteBuilding> {
-    let mut filtered_buildings = vec![];
-    for builing in buildings {
-        let mut rooms = vec![];
-        for room in builing.rooms {
-            if authorized_doors
-                .iter()
-                .map(|f| f.room_id)
-                .contains(&room.room_id)
-            {
-                let mut doors = vec![];
-                for door in room.doors {
-                    if authorized_doors
-                        .iter()
-                        .map(|f| f.door_id)
-                        .contains(&door.door_id)
-                    {
-                        doors.push(GetCompleteDoor {
-                            owner: true,
-                            ..door
-                        })
-                    }
-                }
-                rooms.push(GetCompleteRoom { doors, ..room })
-            }
-        }
-        if rooms.len() > 0 {
-            filtered_buildings.push(GetCompleteBuilding { rooms, ..builing })
-        }
-    }
-    filtered_buildings
-}
+
 /// Returns complete structure with value in door changed
 fn get_complex_building_authorized(
     buildings: Vec<GetCompleteBuilding>,

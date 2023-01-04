@@ -60,7 +60,9 @@ const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
             />
 
         </div>
-        <button onClick={(e) => {
+        <button
+            disabled={!newComment}
+            onClick={(e) => {
             e.preventDefault()
             Rest.createComment(props.requestId, { comment: newComment }).then(() =>
                 props.refetch()

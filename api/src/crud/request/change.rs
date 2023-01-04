@@ -5,16 +5,12 @@ use sea_orm::{
     Set,
 };
 use serde::{Deserialize, Serialize};
-use tracing::log::info;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::{
-    crud,
-    util::{error::CrudError, middleware::SecurityLevel},
-};
+use crate::util::{error::CrudError, middleware::SecurityLevel};
 
-use super::get::{get_single_request, GetRequest, RequestType};
+use super::get::{get_single_request, RequestType};
 
 #[derive(Debug, Clone, ToSchema, Serialize, Deserialize)]
 pub struct ChangeRequest {
@@ -35,9 +31,14 @@ pub async fn change_request(
     let og_request = tbl_request::Entity::find_by_id(request_id.to_owned())
         .one(db)
         .await?;
+
     if let Some(og_request) = og_request {
         let mut active_request = og_request.to_owned().into_active_model();
         let trans_og_request = get_single_request(db, request_id).await?;
+        //check if sensitive if true then leader is required to change
+        if let Some(true) = trans_og_request.is_sensitive {
+            sercurity_level.has_high_enough_security_level(SecurityLevel::Leader)?;
+        }
         match trans_og_request.request_type {
             RequestType::Keycard => {}
             RequestType::None => {}
@@ -63,7 +64,7 @@ pub async fn change_request(
                 }
 
                 if let Some(_) = &trans_og_request.doors {
-                    let result = tbl_door_to_request::Entity::delete_many()
+                    tbl_door_to_request::Entity::delete_many()
                         .filter(tbl_door_to_request::Column::RequestId.eq(request_id.to_owned()))
                         .exec(db)
                         .await?;

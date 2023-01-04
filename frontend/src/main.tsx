@@ -5,7 +5,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import {
   createBrowserRouter,
-  RouterProvider
+  RouterProvider,
+  useNavigate
 } from "react-router-dom";
 import { Header } from './Components/Ui/Header';
 import ErrorPage from './ErrorPage';
@@ -14,8 +15,7 @@ import { Home as Home } from './routes/home/Home';
 import { KeycardsFromUser } from './routes/keycard/Keycard';
 import { KeycardBase } from './routes/keycard/KeycardBase';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
-import { LeaderBase } from './routes/leader/LeaderBase';
-import { ShowAllUsers } from './routes/leader/ShowAllUsers';
+import { ShowAllUsers } from './routes/users/ShowAllUsers';
 import { Login } from './routes/login/Login';
 import { Main } from './routes/Main';
 import { ChangeRequest } from './routes/request/ChangeRequest';
@@ -128,26 +128,12 @@ const router = createBrowserRouter([
         ]
       },
       {
-        path: "leader",
-        element: <LeaderBase />,
-        children: [
-          {
-            path: "",
-            element: <ShowAllUsers />
-
-          },
-        ]
+        path: "users",
+        element: <ShowAllUsers />
       },
       {
         path: "logs",
         element: <Logs />
-      },
-      {
-        path: "propositions",
-        element: <LeaderBase />,
-        children: [
-
-        ]
       },
     ]
   }
@@ -169,12 +155,17 @@ const Default: React.FC<DefaultProps> = (props) => {
         };
         setjwt({ ...token })
       }
+    } else {
+      if (!(window.location.pathname === "/" || window.location.pathname === "/login")) {
+        window.location.pathname = "/"
+
+      }
     }
   }
   React.useEffect(() => {
-    window.addEventListener("load", callback)
+    callback()
+
     return () => {
-      window.removeEventListener("load", callback)
     }
   }, []);
   const [jwt, setjwt] = React.useState({} as IUserContext);

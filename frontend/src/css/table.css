@@ -1,5 +1,6 @@
 table {
     border: 1px solid lightgray;
+    width: inherit;
 }
 
 .absolute {

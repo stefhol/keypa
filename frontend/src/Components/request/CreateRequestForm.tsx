@@ -143,7 +143,7 @@ export interface CreateRequest {
 
 
 const DepartmentGroupWrapper: React.FC<{}> = (props) => {
-    const [count, setCount] = React.useState([0] as number[]);
+    const [count, setCount] = React.useState([] as number[]);
     const { data: availableDepartments } = useQuery(["department"], Rest.getDepartments)
     const { departments } = React.useContext(LocalContext);
     const elements = React.useMemo(() => count.map((_, idx) =>
@@ -166,14 +166,14 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                         arr.push(0);
                         return arr
                     })
-                }}>Andere Gruppe hinzufügen</button>
+                }}>Gruppe hinzufügen</button>
             </div>
         </div>
     )
 }
 const RoomSelectionWrapper: React.FC<{}> = (props) => {
     const { data } = useQuery(["buildings"], Rest.getBuildings)
-    const [count, setCount] = React.useState([0]);
+    const [count, setCount] = React.useState([] as number[]);
     const { doors } = React.useContext(LocalContext);
     return (<>
         <div className="container">

@@ -9,6 +9,15 @@ import { User, Request, Comment } from "./intefaces/Request"
 const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
 const api = "/api/v1/"
 export class Rest {
+    static getSelfDepartments = async () => {
+        return await this.quickFetchJson<Department[]>("self/department", "GET")
+
+    }
+    static getUserDepartments = async (userId: string) => {
+        return await this.quickFetchJson<Department[]>(`users/${userId}/department`, "GET")
+
+
+    }
     static getDepartments = async () => {
         return await this.quickFetchJson<Department[]>("department", "GET")
 
@@ -47,8 +56,11 @@ export class Rest {
     static getRequests = async (queryParams?: string) => {
         return await this.quickFetchJson<Request[]>("request", "GET", undefined, queryParams)
     }
-    static getRequestsFromUser = async (userId: string) => {
-        return await this.quickFetchJson<Request[]>(`user/${userId}/request`, "GET")
+    static getRequestsFromUser = async (userId: string, queryParams?: string) => {
+        return await this.quickFetchJson<Request[]>(`user/${userId}/request`, "GET", undefined, queryParams)
+    }
+    static getSelfRequests = async (queryParams?: string) => {
+        return await this.quickFetchJson<Request[]>("self/request", "GET", undefined, queryParams)
     }
     static getSingleUser = async (userId: string) => {
         return await this.quickFetchJson<User>(`users/${userId}`, "GET")
@@ -68,9 +80,7 @@ export class Rest {
     static getDoorsByUser = async (userId: string) => {
         return await this.quickFetchJson<Building[]>(`users/${userId}/doors`, "GET")
     }
-    static getSelfRequests = async () => {
-        return await this.quickFetchJson<Request[]>("self/request", "GET")
-    }
+
     static getSingleRequest = async (requestId: string) => {
         return await this.quickFetchJson<Request>(`request/${requestId}`, "GET")
     }

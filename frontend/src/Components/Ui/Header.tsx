@@ -22,7 +22,9 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     window.document.cookie.match("token") &&
                     <button onClick={(e) => {
                             e.preventDefault()
-                        Rest.sendLogout().then(res => console.log(res))
+                            Rest.sendLogout().then(() => {
+                                navigate("/")
+                            })
                     }}>
                         Logout
                     </button>

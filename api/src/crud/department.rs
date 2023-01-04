@@ -110,9 +110,41 @@ async fn query(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError>
         .map(|query| GetDepartment::from((query, &query_result)))
         .collect())
 }
+///Get out of raw query results a tree of departments with buildings rooms and doors
+async fn query_of_user_id(
+    db: &DatabaseConnection,
+    user_id: &Uuid,
+) -> Result<Vec<GetDepartment>, CrudError> {
+    let mut query_result: Vec<QueryResult> = QueryResult::find_by_statement(Statement::from_sql_and_values(
+        DbBackend::Postgres,
+        r#"
+        select distinct tbl_department.department_id, tbl_department.name as department_name, tbl_department.description as department_description, tbl_room.room_id, tbl_room.name as room_name, floor, is_sensitive, tbl_building.building_id,tbl_building.name as building_name, door_id  from tbl_department
+        join tbl_room_department on tbl_department.department_id = tbl_room_department.department_id
+        join tbl_room on tbl_room_department.room_id = tbl_room.room_id
+        join tbl_building on tbl_building.building_id = tbl_room.building_id
+        join tbl_door on tbl_room.room_id = tbl_door.room_id
+        join tbl_request_department trd on tbl_department.department_id = trd.department_id
+        join tbl_request tr on trd.request_id = tr.request_id
+        where tr.requester_id = $1
+        ;
+        "#,
+        vec![user_id.clone().into()],
+    ))
+    .all(db)
+    .await?;
+    query_result.sort_by(|a, b| a.room_name.cmp(&b.room_name));
+    Ok(query_result
+        .iter()
+        .unique_by(|f| f.department_id)
+        .map(|query| GetDepartment::from((query, &query_result)))
+        .collect())
+}
 pub async fn get_department(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError> {
-    // let model_department = tbl_department::Entity::find().all(db).await?;
-    // let model_room_department = tbl_room_department::Entity::find().all(db).await?;
-    // let model = tbl_bu
     Ok(query(db).await?)
+}
+pub async fn get_department_of_user_id(
+    db: &DatabaseConnection,
+    user_id: &Uuid,
+) -> Result<Vec<GetDepartment>, CrudError> {
+    Ok(query_of_user_id(db, user_id).await?)
 }

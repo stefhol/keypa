@@ -6,14 +6,15 @@ import { useLoading } from "../../hooks/useLoading"
 import { Rest } from "../../util/Rest"
 
 export const ShowRequests: React.FC<{}> = (props) => {
-    const [filter, setFilter] = React.useState({ request_status: "", request_type: "" });
+    const [filter, setFilter] = React.useState({ request_status: "", request_type: "", is_sensitive: "" });
     const queryParams = React.useMemo(() => {
         const params = new window.URLSearchParams()
         if (filter.request_status) params.set("request_status", filter.request_status)
         if (filter.request_type) params.set("request_type", filter.request_type)
+        if (filter.is_sensitive) params.set("is_sensitive", filter.is_sensitive)
         return params.toString()
-    }, [filter.request_status, filter.request_type])
-    const { data, isLoading, dataUpdatedAt } = useQuery(["request", "pending", queryParams],
+    }, [filter.request_status, filter.request_type, filter.is_sensitive])
+    const { data, isLoading } = useQuery(["request", "pending", queryParams],
         ({ queryKey }) => Rest.getRequests(queryKey[2])
     )
     const navigate = useNavigate()
@@ -40,7 +41,16 @@ export const ShowRequests: React.FC<{}> = (props) => {
                         <option value={""}></option>
                         <option value={"room"}>room</option>
                         <option value={"temp"}>temp</option>
-                        <option value={"keycard"}>keycard</option></select>
+                        <option value={"keycard"}>keycard</option>
+                    </select>
+                    <select style={{ width: "initial" }}
+                        value={filter.is_sensitive}
+                        onChange={e => setFilter(prev => ({ ...prev, is_sensitive: e.target.value }))}
+                    >
+                        <option value={""}></option>
+                        <option value={"true"}>Ja</option>
+                        <option value={"false"}>Nein</option>
+                    </select>
                 </>
             }
             rowAction={

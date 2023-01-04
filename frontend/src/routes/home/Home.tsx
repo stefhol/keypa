@@ -13,7 +13,7 @@ export const Home: React.FC<HomeProps> = (props) => {
             <a href="/keycard">
                 Keycard Übersicht
             </a><br />
-            <a href="leader">
+            <a href="users">
                 Nutzer Übersicht
             </a><br />
             <h3>Tools</h3>

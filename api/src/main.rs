@@ -87,6 +87,8 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::comment::get_comments)
                     .service(api::comment::insert_comment)
                     //department
+                    .service(api::department::get_departments_of_self)
+                    .service(api::department::get_departments_of_user)
                     .service(api::department::get_departments),
             )
             .app_data(web::Data::new(db.clone()))

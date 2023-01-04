@@ -1,6 +1,4 @@
 import { createBasicColumns, Table } from "../../Components/table/Table"
-import { prepareData } from "../user/request/Request"
-
 export interface GlobalKeycardListProps { }
 export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
 

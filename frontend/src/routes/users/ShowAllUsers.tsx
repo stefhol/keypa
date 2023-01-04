@@ -15,14 +15,18 @@ export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
         <h1>Alle Nutzer</h1>
         {
             userData &&
-            <Table data={userData}
+            <Table
+                outerClassName="absolute"
+                data={userData}
                 filter={
-                    <><span>
-                        <span className="container">Ist Verwaltung <input type={"checkbox"} /></span>
-                        <span className="container">Ist Vorgesetzter <input type={"checkbox"} /></span>
+                    <>
+                        <span>Ist Verwaltung
+                        </span>
+                        <input type={"checkbox"} />
+                        <span>Ist Vorgesetzter <input type={"checkbox"} /></span>
                         <br />
-                        <span className="container">Ist Admin <input type={"checkbox"} /></span>
-                    </span></>
+                        <span>Ist Admin <input type={"checkbox"} /></span>
+                    </>
 
                 }
                 rowAction={
