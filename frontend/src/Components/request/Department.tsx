@@ -20,7 +20,9 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
                 props.onChange(e.target.value)
             }} name={`department-select-${props.nmbr}`}>
                 <option value={""}></option>
-                {props.department?.map((val, idx) => <option key={idx} value={val.department_id}>{val.name}</option>)}
+                {props.department?.map((val, idx) => <option key={idx} value={val.department_id}>
+                    {val.name} {val.is_sensitive ? "Sensitiv" : ""}
+                </option>)}
             </select>
 
             <button onClick={(e) => {

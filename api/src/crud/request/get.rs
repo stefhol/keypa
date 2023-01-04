@@ -52,18 +52,25 @@ async fn query_is_request_sensitive(
     let  query_result: Vec<QueryResult> = QueryResult::find_by_statement(Statement::from_sql_and_values(
         DbBackend::Postgres,
         r#"
-        select distinct is_sensitive, sub.request_id from tbl_room
-        join
-        (
-        select room_id, tbl_request.request_id from tbl_request
-        join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
-        join tbl_door td on tbl_door_to_request.door_id = td.door_id
-        union
-        select room_id, tbl_request.request_id from tbl_request
-        join tbl_request_department on tbl_request.request_id = tbl_request_department.request_id
-        join tbl_room_department on tbl_room_department.department_id = tbl_request_department.department_id
-        )as sub on sub.room_id = tbl_room.room_id
-        where is_sensitive = true
+        SELECT DISTINCT is_sensitive, sub.request_id
+        FROM tbl_room
+        JOIN (
+        SELECT room_id, tbl_request.request_id
+        FROM tbl_request
+        JOIN tbl_door_to_request ON tbl_request.request_id = tbl_door_to_request.request_id
+        JOIN tbl_door td ON tbl_door_to_request.door_id = td.door_id
+        UNION
+        SELECT room_id, tbl_request.request_id
+        FROM tbl_request
+        JOIN tbl_request_department ON tbl_request.request_id = tbl_request_department.request_id
+        JOIN tbl_room_department ON tbl_room_department.department_id = tbl_request_department.department_id
+        ) AS sub ON sub.room_id = tbl_room.room_id
+        WHERE is_sensitive = true
+        UNION
+        SELECT DISTINCT true, request_id
+        FROM tbl_request
+        JOIN tbl_user tu ON tbl_request.requester_id = tu.user_id
+        WHERE tu.role_id = 2 OR tu.role_id = 3;
         "#,
         vec![],
     ))

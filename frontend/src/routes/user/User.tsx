@@ -7,7 +7,6 @@ import { Building } from "../../util/intefaces/Buildings"
 import { Department } from "../../util/intefaces/Departments"
 import { User } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
-import { KeycardSelf } from "../keycard/Keycard"
 import { Request } from '../../util/intefaces/Request'
 import { Keycard } from "../../util/intefaces/Keycard"
 import UserContext from "../../context/UserContext"
@@ -129,7 +128,7 @@ const UserFc: React.FC<UserProps> = (props) => {
             <Table
                 columns={createBasicColumns(props.acceptedRequests?.[0])}
                 data={props.acceptedRequests}
-                rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
         </div>

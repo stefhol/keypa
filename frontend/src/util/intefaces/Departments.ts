@@ -5,5 +5,6 @@ export interface Department {
     name: string;
     description: string;
     buildings: Building[];
+    is_sensitive?: boolean
 }
 

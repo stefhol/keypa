@@ -121,7 +121,6 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                                 val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
                         }}
                     />
-                    <button>Anderes Gebäude hinzufügen</button>
                 </div>
                 <div className="container">
                     <h2>Angefragte Raumgruppen</h2>
@@ -151,7 +150,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                             <select value={addDepartmentOption} onChange={e => setAddDepartmentOption(e.target.value)}>
                                 <option value={""}></option>
                                 {departmentsData.map((val, idx) => <option value={val.department_id} key={idx}>
-                                    {val.name}
+                                    {val.name} {val.is_sensitive ? "Sensitiv" : ""}
                                 </option>)}
                             </select>
                             <button

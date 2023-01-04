@@ -11,13 +11,26 @@ use super::building::{GetBuilding, GetDoor, GetRoom};
 #[derive(Serialize, Deserialize, ToSchema, Debug, Clone)]
 pub struct GetDepartment {
     pub department_id: Uuid,
+    pub is_sensitive: Option<bool>,
     pub name: String,
     pub description: Option<String>,
     pub buildings: Vec<GetBuilding>,
 }
 
-impl From<(&QueryResult, &Vec<QueryResult>)> for GetDepartment {
-    fn from((item, all_items): (&QueryResult, &Vec<QueryResult>)) -> Self {
+impl
+    From<(
+        &QueryResult,
+        &Vec<QueryResult>,
+        &Vec<QuerySensitiveDepartmentsResult>,
+    )> for GetDepartment
+{
+    fn from(
+        (item, all_items, sensitive_departments): (
+            &QueryResult,
+            &Vec<QueryResult>,
+            &Vec<QuerySensitiveDepartmentsResult>,
+        ),
+    ) -> Self {
         let item = item.clone();
         let all_items: Vec<_> = all_items
             .iter()
@@ -25,6 +38,9 @@ impl From<(&QueryResult, &Vec<QueryResult>)> for GetDepartment {
             .collect();
         //Get out of raw query results a tree of departments with buildings rooms and doors
         Self {
+            is_sensitive: Some(sensitive_departments.iter().any(|f| {
+                f.department_id.to_owned() == item.department_id && f.is_sensitive == Some(true)
+            })),
             department_id: item.department_id,
             name: item.department_name.to_owned(),
             description: item.department_description.to_owned(),
@@ -104,11 +120,33 @@ async fn query(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError>
     .all(db)
     .await?;
     query_result.sort_by(|a, b| a.room_name.cmp(&b.room_name));
+    let sensitive_departments = query_sensitive_departments(db).await?;
     Ok(query_result
         .iter()
         .unique_by(|f| f.department_id)
-        .map(|query| GetDepartment::from((query, &query_result)))
+        .map(|query| GetDepartment::from((query, &query_result, &sensitive_departments)))
         .collect())
+}
+#[derive(Serialize, Deserialize, FromQueryResult, Debug)]
+struct QuerySensitiveDepartmentsResult {
+    department_id: Uuid,
+    is_sensitive: Option<bool>,
+}
+async fn query_sensitive_departments(
+    db: &DatabaseConnection,
+) -> Result<Vec<QuerySensitiveDepartmentsResult>, CrudError> {
+    let query_result: Vec<QuerySensitiveDepartmentsResult> =
+        QuerySensitiveDepartmentsResult::find_by_statement(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"
+        select distinct is_sensitive, tbl_room_department.department_id from  tbl_room_department
+        join tbl_room tr on tr.room_id = tbl_room_department.room_id where is_sensitive = true;
+        "#,
+            vec![],
+        ))
+        .all(db)
+        .await?;
+    Ok(query_result)
 }
 ///Get out of raw query results a tree of departments with buildings rooms and doors
 async fn query_of_user_id(
@@ -132,11 +170,12 @@ async fn query_of_user_id(
     ))
     .all(db)
     .await?;
+    let sensitive_departments = query_sensitive_departments(db).await?;
     query_result.sort_by(|a, b| a.room_name.cmp(&b.room_name));
     Ok(query_result
         .iter()
         .unique_by(|f| f.department_id)
-        .map(|query| GetDepartment::from((query, &query_result)))
+        .map(|query| GetDepartment::from((query, &query_result, &sensitive_departments)))
         .collect())
 }
 pub async fn get_department(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError> {

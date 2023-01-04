@@ -220,7 +220,7 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
             name: `Stockwerk: ${floor}`,
             children: data.filter(val => val.floor == floor)
                 .map((val, idx) => ({
-                    name: `Raum: ${val.name}`,
+                    name: `Raum: ${val.name} ${val.is_sensitive ? "Sensitiv" : ""}`,
                     id: val.room_id,
                     value: !!val.doors.find(val => val?.owner === true),
                     children: []
