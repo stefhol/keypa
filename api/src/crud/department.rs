@@ -129,8 +129,8 @@ pub async fn query_sensitive_departments(db: &DatabaseConnection) -> Result<Vec<
         QuerySensitiveDepartmentsResult::find_by_statement(Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"
-        select distinct is_sensitive, tbl_room_department.department_id from  tbl_room_department
-        join tbl_room tr on tr.room_id = tbl_room_department.room_id where is_sensitive = true;
+            select distinct is_sensitive, tbl_room_department.department_id from tbl_room_department
+            join tbl_room on tbl_room.room_id = tbl_room_department.room_id where is_sensitive = true;
         "#,
             vec![],
         ))
@@ -154,6 +154,8 @@ async fn query_of_user_id(
         join tbl_request_department trd on tbl_department.department_id = trd.department_id
         join tbl_request tr on trd.request_id = tr.request_id
         where tr.requester_id = $1
+        and tr.active = true
+        and tr.accept = true
         ;
         "#,
         vec![user_id.clone().into()],

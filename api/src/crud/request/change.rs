@@ -1,5 +1,8 @@
-use chrono::{DateTime, Utc};
-use entities::model::{tbl_door, tbl_door_to_request, tbl_request, tbl_request_department};
+use chrono::{DateTime, Local, Utc};
+use entities::model::{
+    tbl_door, tbl_door_to_request, tbl_request, tbl_request_archive, tbl_request_department,
+    tbl_request_log,
+};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
     Set,
@@ -9,7 +12,13 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::{
-    crud,
+    crud::{
+        self,
+        log::{
+            create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR, CHANGE_REQUEST, DEACTIVATE_REQUEST,
+            REMOVE_ALL_DEPARTMENT, REMOVE_ALL_DOORS,
+        },
+    },
     util::{error::CrudError, middleware::SecurityLevel},
 };
 
@@ -29,6 +38,7 @@ pub struct ChangeRequest {
     pub accept: Option<bool>,
     pub reject: Option<bool>,
     pub pending: Option<bool>,
+    pub active: Option<bool>,
 }
 async fn has_request_sensitive_doors(
     db: &DatabaseConnection,
@@ -73,12 +83,13 @@ pub async fn is_allowed_to_change_status(
 }
 pub async fn change_request(
     db: &DatabaseConnection,
+    worker_id: &Uuid,
     request_id: &Uuid,
     request: &ChangeRequest,
     sercurity_level: SecurityLevel,
 ) -> Result<ChangeStatus, CrudError> {
     let mut change_status = ChangeStatus::FurtherActionRequired;
-
+    let mut log_vec: Vec<tbl_request_log::ActiveModel> = vec![];
     let og_request = tbl_request::Entity::find_by_id(request_id.to_owned())
         .one(db)
         .await?;
@@ -100,17 +111,39 @@ pub async fn change_request(
                         .filter(tbl_request_department::Column::RequestId.eq(request_id.to_owned()))
                         .exec(db)
                         .await?;
+
+                    create_log_message(
+                        worker_id,
+                        &format!("{}: {}", REMOVE_ALL_DEPARTMENT, request_id.to_string()),
+                    )
+                    .insert(db)
+                    .await?;
                 }
                 // insert new departments
                 if let Some(departments) = &request.departments {
-                    tbl_request_department::Entity::insert_many(departments.iter().map(|f| {
-                        tbl_request_department::ActiveModel {
-                            department_id: Set(f.to_owned()),
-                            request_id: Set(request_id.to_owned()),
+                    if departments.len() > 0 {
+                        let departments: Vec<_> = departments
+                            .iter()
+                            .map(|department| tbl_request_department::ActiveModel {
+                                department_id: Set(department.to_owned()),
+                                request_id: Set(request_id.to_owned()),
+                            })
+                            .collect();
+                        for department in departments {
+                            let res = department.insert(db).await?;
+                            create_log_message(
+                                worker_id,
+                                &format!(
+                                    "{}: department {} to request {} ",
+                                    ASSIGN_DEPARTMENT,
+                                    res.department_id.to_string(),
+                                    res.request_id.to_string()
+                                ),
+                            )
+                            .insert(db)
+                            .await?;
                         }
-                    }))
-                    .exec(db)
-                    .await?;
+                    }
                 }
 
                 if let Some(_) = &trans_og_request.doors {
@@ -118,24 +151,42 @@ pub async fn change_request(
                         .filter(tbl_door_to_request::Column::RequestId.eq(request_id.to_owned()))
                         .exec(db)
                         .await?;
+                    create_log_message(
+                        worker_id,
+                        &format!("{}: {}", REMOVE_ALL_DOORS, request_id.to_string()),
+                    )
+                    .insert(db)
+                    .await?;
                 }
 
                 if let Some(rooms) = &request.rooms {
-                    //get all doors and compare them if they are in the room of the request
-                    let db_doors = tbl_door::Entity::find().all(db).await?;
-                    let doors: Vec<_> = db_doors
-                        .iter()
-                        .filter(|door| rooms.iter().any(|f| f == &door.room_id))
-                        .collect();
+                    if rooms.len() > 0 {
+                        //get all doors and compare them if they are in the room of the request
+                        let db_doors = tbl_door::Entity::find().all(db).await?;
+                        let doors: Vec<_> = db_doors
+                            .iter()
+                            .filter(|door| rooms.iter().any(|f| f == &door.room_id))
+                            .map(|door| tbl_door_to_request::ActiveModel {
+                                door_id: Set(door.door_id.to_owned()),
+                                request_id: Set(request_id.to_owned()),
+                            })
+                            .collect();
 
-                    tbl_door_to_request::Entity::insert_many(doors.iter().map(|f| {
-                        tbl_door_to_request::ActiveModel {
-                            door_id: Set(f.door_id.to_owned()),
-                            request_id: Set(request_id.to_owned()),
+                        for door in doors {
+                            let res = door.insert(db).await?;
+                            create_log_message(
+                                worker_id,
+                                &format!(
+                                    "{}: door {} to request {} ",
+                                    ASSIGN_DOOR,
+                                    res.door_id.to_string(),
+                                    res.request_id.to_string()
+                                ),
+                            )
+                            .insert(db)
+                            .await?;
                         }
-                    }))
-                    .exec(db)
-                    .await?;
+                    }
                 }
             }
         };
@@ -176,17 +227,108 @@ pub async fn change_request(
                         active_request.accept = Set(false);
                         active_request.reject = Set(false);
                         active_request.pending = Set(true);
+                        active_request.active = Set(false);
                     }
                     _ => {}
                 }
+                let ac = active_request.clone();
+                log_vec.push(create_log_message(
+                    worker_id,
+                    &format!(
+                        "{}: {} accept = {}, reject = {}, pending {}",
+                        CHANGE_REQUEST,
+                        request_id.to_string(),
+                        &ac.accept.unwrap(),
+                        &ac.reject.unwrap(),
+                        &ac.pending.unwrap(),
+                    ),
+                ));
             }
         }
 
         // save new active until
         active_request.active_until = Set(request.active_until.map(|f| f.naive_utc()));
+        log_vec.push(create_log_message(
+            worker_id,
+            &format!(
+                "{}: {} active_until = {}",
+                CHANGE_REQUEST,
+                request_id.to_string(),
+                &request
+                    .active_until
+                    .map(|f| f.to_string())
+                    .unwrap_or_default(),
+            ),
+        ));
         // save new changed time
-        active_request.changed_at = Set(Utc::now().naive_utc());
-        active_request.update(db).await?;
+        active_request.changed_at = Set(Local::now().naive_utc());
+
+        log_vec.push(create_log_message(
+            worker_id,
+            &format!(
+                "{}: {} changed_at = {}",
+                CHANGE_REQUEST,
+                request_id.to_string(),
+                Local::now().naive_utc()
+            ),
+        ));
+
+        let request_model = active_request.update(db).await?;
+        if let Some(active_until) = request_model.active_until {
+            if active_until < Local::now().naive_utc() {
+                let mut active_request = request_model.clone().into_active_model();
+                active_request.active = Set(false);
+                active_request.update(db).await?;
+            }
+        }
+        tbl_request_log::Entity::insert_many(log_vec)
+            .exec(db)
+            .await?;
+        if request_model.reject || !request_model.active {
+            move_to_archive(worker_id, db, request_id).await?;
+            if let Some(keycard_id) = &request_model.keycard_id {
+                crud::keycard::move_to_archive(db, worker_id, keycard_id).await?;
+            }
+        }
     }
     Ok(change_status)
+}
+
+pub(crate) async fn move_to_archive(
+    worker_id: &Uuid,
+    db: &DatabaseConnection,
+    request_id: &Uuid,
+) -> Result<(), CrudError> {
+    let request_model = tbl_request::Entity::find_by_id(request_id.to_owned())
+        .one(db)
+        .await?;
+
+    let Some(request_model) = request_model else { return Ok(()) };
+    let mut request_active = request_model.clone().into_active_model();
+    request_active.active = Set(false);
+    request_active.active_until = Set(Some(Local::now().naive_utc()));
+    let request_model = request_active.update(db).await?;
+    let res = tbl_request_archive::ActiveModel {
+        request_id: Set(request_model.request_id),
+        requester_id: Set(request_model.requester_id),
+        created_at: Set(request_model.created_at),
+        changed_at: Set(Local::now().naive_utc()),
+        active_until: Set(request_model.active_until),
+        description: Set(request_model.description),
+        additional_rooms: Set(request_model.additional_rooms),
+        active: Set(request_model.active),
+        accept: Set(request_model.accept),
+        reject: Set(request_model.reject),
+        payed: Set(request_model.payed),
+        pending: Set(request_model.pending),
+    }
+    .insert(db)
+    .await;
+    create_log_message(worker_id, &format!("{}", DEACTIVATE_REQUEST))
+        .insert(db)
+        .await?;
+    let del_res = tbl_request::Entity::delete_by_id(request_id.to_owned())
+        .exec(db)
+        .await;
+    Ok(())
 }

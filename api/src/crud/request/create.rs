@@ -1,15 +1,17 @@
 use std::collections::HashSet;
 
+use crate::crud;
+use crate::crud::log::{create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR};
+use crate::util::{error::CrudError, middleware::SecurityLevel};
 use chrono::{DateTime, Utc};
 use entities::model::{tbl_door_to_request, tbl_keycard, tbl_request, tbl_request_department};
 use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, IntoActiveModel, Set, Statement, FromQueryResult,
+    ActiveModelTrait, DatabaseConnection, DbBackend, FromQueryResult, IntoActiveModel, Set,
+    Statement,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use crate::util::{error::CrudError, middleware::SecurityLevel};
 
 #[derive(Debug, Clone, ToSchema, Serialize, Deserialize)]
 pub struct CreateRequest {
@@ -20,7 +22,7 @@ pub struct CreateRequest {
     pub other_rooms: Option<String>,
     pub rooms: Option<Vec<Uuid>>,
 }
-#[derive(Debug, Clone, Serialize, Deserialize,FromQueryResult)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromQueryResult)]
 struct QueryResult {
     pub room_id: Uuid,
     pub door_id: Uuid,
@@ -46,7 +48,8 @@ pub async fn create_request(
 ) -> Result<(), CrudError> {
     // if department or other_rooms is something than it is a tempcard
     let is_temp_card =
-        (request.departments.is_some() || request.other_rooms.is_some() || request.rooms.is_some() ) && request.create_keycard;
+        (request.departments.is_some() || request.other_rooms.is_some() || request.rooms.is_some())
+            && request.create_keycard;
     // non user can assign rooms
     let is_allowed_to_have_rooms =
         match sercurity_level.has_high_enough_security_level(SecurityLevel::Worker) {
@@ -55,13 +58,36 @@ pub async fn create_request(
         };
     // default request we skip here the proposal request. it is the default case
     let mut db_request = create_default_request(db, user_id, request, is_temp_card).await?;
+    create_log_message(
+        user_id,
+        &format!(
+            "{}: {} \n {}",
+            crud::log::CREATE_REQUEST,
+            db_request.request_id.to_string(),
+            serde_json::to_string_pretty(&db_request).unwrap()
+        ),
+    )
+    .insert(db)
+    .await?;
+
     // add keycard and update request with keycard info
     if request.create_keycard {
         let keycard = tbl_keycard::ActiveModel {
             request_id: Set(Some(db_request.request_id)),
-            user_id:Set(user_id.to_owned()),
+            user_id: Set(user_id.to_owned()),
             ..Default::default()
         }
+        .insert(db)
+        .await?;
+        create_log_message(
+            user_id,
+            &format!(
+                "{}: keycard {} in request {}",
+                crud::log::CREATE_KEYCARD,
+                keycard.keycard_id.to_string(),
+                db_request.request_id.to_string()
+            ),
+        )
         .insert(db)
         .await?;
         let mut model = db_request.into_active_model();
@@ -78,25 +104,60 @@ pub async fn create_request(
                 request_id: Set(db_request.request_id.to_owned()),
             })
             .collect();
-        tbl_request_department::Entity::insert_many(departments)
-            .exec(db)
+        for department in departments {
+            let res = department.insert(db).await?;
+            create_log_message(
+                user_id,
+                &format!(
+                    "{}: department {} to request {} ",
+                    ASSIGN_DEPARTMENT,
+                    res.department_id.to_string(),
+                    res.request_id.to_string()
+                ),
+            )
+            .insert(db)
             .await?;
+        }
     }
     if is_allowed_to_have_rooms {
         //  here we are workers
         if let Some(rooms) = &request.rooms {
             let all_doors = query(db).await?;
-            let doors : HashSet<_> = rooms.iter().map(|room|all_doors.iter().filter(|f|&f.room_id == room).map(|f|f.door_id).collect::<Vec<_>>()).flatten().collect();
-            tbl_door_to_request::Entity::insert_many(doors.iter().map(|door| {
-                tbl_door_to_request::ActiveModel {
+            let doors: HashSet<_> = rooms
+                .iter()
+                .map(|room| {
+                    all_doors
+                        .iter()
+                        .filter(|f| &f.room_id == room)
+                        .map(|f| f.door_id)
+                        .collect::<Vec<_>>()
+                })
+                .flatten()
+                .collect();
+            let doors: Vec<_> = doors
+                .iter()
+                .map(|door| tbl_door_to_request::ActiveModel {
                     door_id: Set(door.to_owned()),
                     request_id: Set(db_request.request_id.to_owned()),
-                }
-            }))
-            .exec(db)
-            .await?;
+                })
+                .collect();
+            for door in doors {
+                let res = door.insert(db).await?;
+                create_log_message(
+                    user_id,
+                    &format!(
+                        "{}: door {} to request {} ",
+                        ASSIGN_DOOR,
+                        res.door_id.to_string(),
+                        res.request_id.to_string()
+                    ),
+                )
+                .insert(db)
+                .await?;
+            }
         }
     }
+
     Ok(())
 }
 async fn create_default_request(
@@ -114,7 +175,7 @@ async fn create_default_request(
         reject: Set(false),
         pending: Set(true),
         keycard_id: Set(None),
-        additional_rooms:Set(request.other_rooms.to_owned()),
+        additional_rooms: Set(request.other_rooms.to_owned()),
         payed: match is_temp_card {
             // if it is temp card you need to pay but the payment is not finished
             true => Set(Some(false)),

@@ -9,6 +9,7 @@ import { User, Request, Comment } from "./intefaces/Request"
 const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
 const api = "/api/v1/"
 export class Rest {
+
     static getSelfDepartments = async () => {
         return await this.quickFetchJson<Department[]>("self/department", "GET")
 
@@ -38,8 +39,9 @@ export class Rest {
     static getKeycardsFromUser = async (userId: string) => {
         return await this.quickFetchJson<Keycard[]>(`user/${userId}/keycard`, "GET")
     }
-    static getKeycard = async () => {
-        return await this.quickFetchJson<Keycard>("keycard", "GET")
+    static getSingleKeycard = async (keycardId: string) => {
+        return await this.quickFetchJson<Keycard>(`keycard/${keycardId}`, "GET")
+
     }
     static getDoorsWithRequestId = async (requestId: string) => {
         return await this.quickFetchJson<Building[]>(`request/${requestId}/doors`, "GET")

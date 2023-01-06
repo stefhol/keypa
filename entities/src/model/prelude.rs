@@ -9,6 +9,7 @@ pub use super::tbl_keycard::Entity as TblKeycard;
 pub use super::tbl_keycard_archive::Entity as TblKeycardArchive;
 pub use super::tbl_keycard_history::Entity as TblKeycardHistory;
 pub use super::tbl_request::Entity as TblRequest;
+pub use super::tbl_request_archive::Entity as TblRequestArchive;
 pub use super::tbl_request_comment::Entity as TblRequestComment;
 pub use super::tbl_request_department::Entity as TblRequestDepartment;
 pub use super::tbl_request_log::Entity as TblRequestLog;

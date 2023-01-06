@@ -1,17 +1,15 @@
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import React from "react"
-import { useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 import CommentView from "../../Components/comment/Comment"
 import { prepareData, TreeView } from "../../Components/tree-view/TreeView"
+import UserContext from "../../context/UserContext"
 import { useLoading } from "../../hooks/useLoading"
 import { Request } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
+import { IndividualRoomWrapper } from "../user/User"
 export interface ChangeRequestProps { }
-const getUser = async ({ queryKey }: { queryKey: string[] }) => {
-    const userId = queryKey[1]
-    return await Rest.getSingleUser(userId)
-}
 const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
     const requestId = queryKey[1]
     return await Rest.getSingleRequest(requestId)
@@ -47,7 +45,8 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
     }, [dateElRef.current]);
     //
 
-
+    const { is_worker, is_leader } = React.useContext(UserContext);
+    const navigate = useNavigate()
     const [accept, setAccept] = React.useState(props.data.accept);
     const [reject, setReject] = React.useState(props.data.reject);
     const [pending, setPending] = React.useState(props.data.pending);
@@ -76,6 +75,12 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                 active_until: activeUntil?.toISOString() ?? null,
                 departments: departments,
                 rooms: rooms
+            }).then(res => {
+                if (res === "FurtherActionsRequired" && is_worker) {
+                    alert("Antrag wurde gespeichert muss aber von Verwaltungsvorgestzten genehmigt werden, da dieser Antrag nun sensitiv ist")
+                }
+                navigate("../")
+
             })
         }}>
             <div className="container">
@@ -102,25 +107,33 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
             </div>
             <div className="container"><label>
                 Aktiv bis
-                <input type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} />
+                <input type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker)} />
             </label></div>
-            {(props.data.additional_rooms && building) && <div className="container">
+            {(building && props.data.request_type !== "keycard") && <div className="container">
                 <h2>Angefragte Räume</h2>
                 <div className="container">
                     <h2>Angefragte Individuelle Räume</h2>
                     <p>
-                        {props.data.additional_rooms}
+                        {props.data.additional_rooms || "Keine"}
                     </p>
 
-                    <div>
-                        <b>Nachtragen</b>
-                    </div>
-                    <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData}
-                        onChange={e => {
-                            setRooms(e.map(val =>
-                                val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
-                        }}
-                    />
+                    {(is_worker || is_leader) ? <>
+                        <h2>
+                            Nachgetragene Räume
+                        </h2>
+
+                        <TreeView displayFilter filter selectionRef={{ current: {} } as any} data={treeData}
+                            onChange={e => {
+                                setRooms(e.map(val =>
+                                    val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
+                            }}
+                        />
+                    </> : <>
+                        <h2>
+                            Nachgetragene Räume
+                        </h2>
+                        <IndividualRoomWrapper buildings={building} />
+                    </>}
                 </div>
                 <div className="container">
                     <h2>Angefragte Raumgruppen</h2>
@@ -129,12 +142,12 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                         return <div className="container" key={idx}>
                             <label>
                                 <b>{currentDepartment?.name}</b>
-                                <button onClick={e => {
+                                {(is_leader || is_worker) && <button onClick={e => {
                                     e.preventDefault()
                                     setDepartments(prev => {
                                         return prev?.filter(f => f !== val)
                                     })
-                                }}>X</button>
+                                }}>X</button>}
                             </label>
                             {currentDepartment?.buildings.map(building => (
                                 <div key={building.building_id}>
@@ -145,9 +158,11 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                         </div>
                     })}
                     {
-                        departmentsData &&
+                        (departmentsData && (is_leader || is_worker)) &&
                         <>
-                            <select value={addDepartmentOption} onChange={e => setAddDepartmentOption(e.target.value)}>
+                            <select value={addDepartmentOption}
+
+                                onChange={e => setAddDepartmentOption(e.target.value)}>
                                 <option value={""}></option>
                                 {departmentsData.map((val, idx) => <option value={val.department_id} key={idx}>
                                     {val.name} {val.is_sensitive ? "Sensitiv" : ""}
@@ -177,29 +192,29 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
 
 
             </div>}
-            <div className="container">
+            {(is_leader || is_worker) && <div className="container">
                 <label>
                     Status:
                     <select name="status"
                         value={statusValue}
                         onChange={(e) => {
-                        let value = e.target.value
-                        if (value === "1") {
-                            setAccept(true)
-                            setReject(false)
-                            setPending(false)
-                        }
-                        if (value === "2") {
-                            setAccept(false)
-                            setReject(true)
-                            setPending(false)
-                        }
-                        if (value === "3") {
-                            setAccept(false)
-                            setReject(false)
-                            setPending(true)
-                        }
-                    }}>
+                            let value = e.target.value
+                            if (value === "1") {
+                                setAccept(true)
+                                setReject(false)
+                                setPending(false)
+                            }
+                            if (value === "2") {
+                                setAccept(false)
+                                setReject(true)
+                                setPending(false)
+                            }
+                            if (value === "3") {
+                                setAccept(false)
+                                setReject(false)
+                                setPending(true)
+                            }
+                        }}>
                         <option value="1">Akzeptieren</option>
                         <option value="2" >Ablehnen</option>
                         <option value="3" >Ausstehend</option>
@@ -209,7 +224,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                 <button>
                     Änderung Speichern
                 </button>
-            </div>
+            </div>}
         </form>
 
         <div className="container">
@@ -230,5 +245,5 @@ interface ChangeRequest {
     pending?: boolean,
 }
 const send = async (requestId: string, data: ChangeRequest) => {
-    await Rest.quickAdd(`request/${requestId}`, "POST", data);
+    return await (await Rest.quickAdd(`request/${requestId}`, "POST", data)).json();
 }

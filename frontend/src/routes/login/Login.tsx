@@ -28,6 +28,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                 }).then(res => {
                     setError("")
                     navigate("/home")
+                    location.reload()
                 })
                     .catch(err => {
                         console.log(err);
@@ -35,6 +36,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                         setError("Login nicht erfolgreich")
                     })
                     .finally(() => {
+
                         stopLoading()
                     })
             }}>

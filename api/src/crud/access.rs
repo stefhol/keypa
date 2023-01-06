@@ -2,12 +2,12 @@ use entities::model::{tbl_building, tbl_door, tbl_room, tbl_user};
 use itertools::Itertools;
 use sea_orm::{DatabaseConnection, DbBackend, EntityTrait, Statement};
 
+use super::door::GetDoor;
+use crate::crud;
+use crate::util::error::CrudError;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
-
-use super::door::GetDoor;
-use crate::util::error::CrudError;
 #[derive(Debug, Serialize, Deserialize, ToSchema, Clone)]
 pub struct GetCompleteBuilding {
     pub building_id: Uuid,
@@ -80,8 +80,31 @@ pub async fn get_doors_of_user_id(
             r#"select (tbl_door.*) from tbl_request
             join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
             join tbl_door on tbl_door_to_request.door_id = tbl_door.door_id
-            where tbl_request.requester_id = $1"#,
+            where tbl_request.requester_id = $1
+            and tbl_request.accept = true
+            and tbl_request.active = true
+            "#,
             vec![user_id.clone().into()],
+        ))
+        .all(db)
+        .await?;
+
+    Ok(values.iter().map(|f| f.into()).collect())
+}
+pub async fn get_doors_of_request_id(
+    request_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<Vec<GetDoor>, CrudError> {
+    let values = tbl_door::Entity::find()
+        .from_raw_sql(Statement::from_sql_and_values(
+            DbBackend::Postgres,
+            r#"select (tbl_door.*) from tbl_request
+            join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
+            join tbl_door on tbl_door_to_request.door_id = tbl_door.door_id
+            and tbl_request.request_id = $1
+            and tbl_request.active = true
+            "#,
+            vec![request_id.clone().into()],
         ))
         .all(db)
         .await?;
@@ -119,10 +142,35 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
 
     let authorized_doors = match user.role_id {
         Some(val) => match val {
-            1 => get_all_doors(db).await?,
+            // leader has all doors
+            2 => get_all_doors(db).await?,
             _ => get_doors_of_user_id(user_id, db).await?,
         },
         None => get_doors_of_user_id(user_id, db).await?,
+    };
+
+    let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
+    Ok(filtered_buildings)
+}
+pub async fn get_building_by_request_id_only_authorized_doors(
+    request_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<Vec<GetCompleteBuilding>, CrudError> {
+    let request = crud::request::get::get_single_request(&db, &request_id).await?;
+    let user = tbl_user::Entity::find_by_id(request.requester_id.to_owned())
+        .one(db)
+        .await?;
+    let Some(user) = user else { return Err(CrudError::NotFound) };
+
+    let buildings = get_building_complex(db).await?;
+
+    let authorized_doors = match user.role_id {
+        Some(val) => match val {
+            // leader has all doors
+            2 => get_all_doors(db).await?,
+            _ => get_doors_of_request_id(request_id, db).await?,
+        },
+        None => get_doors_of_request_id(request_id, db).await?,
     };
 
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);

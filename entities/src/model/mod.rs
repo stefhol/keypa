@@ -12,6 +12,7 @@ pub mod tbl_keycard;
 pub mod tbl_keycard_archive;
 pub mod tbl_keycard_history;
 pub mod tbl_request;
+pub mod tbl_request_archive;
 pub mod tbl_request_comment;
 pub mod tbl_request_department;
 pub mod tbl_request_log;

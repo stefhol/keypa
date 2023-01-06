@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import React, { } from "react";
+import { useNavigate } from "react-router-dom";
 import { DepartmentGroup } from "../../Components/request/Department";
 import { RoomSelection } from "../../Components/request/RoomSelection";
 import UserContext from "../../context/UserContext";
@@ -78,6 +79,7 @@ export const CreateRequestForm: React.FC<{
     const rooms = React.useRef({} as ILocalObjectType<string[]>);
     const [otherRooms, setOtherRooms] = React.useState("");
     const { is_worker, is_admin, is_leader } = React.useContext(UserContext);
+    const navigate = useNavigate()
     return (<>
         <LocalContext.Provider value={{ departments: { value: departments.current }, doors: { value: rooms.current } }}>
 
@@ -121,6 +123,8 @@ export const CreateRequestForm: React.FC<{
                         other_rooms: otherRooms || null,
                     } as CreateRequest).then(res => {
                         alert("Success")
+                        navigate("/user")
+
                     })
                 }}>Absenden</button>
 

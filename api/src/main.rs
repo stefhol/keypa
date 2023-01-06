@@ -72,6 +72,8 @@ async fn main() -> anyhow::Result<()> {
                     //keycard
                     .service(api::keycard::get_self_keycard)
                     .service(api::keycard::get_user_keycard)
+                    .service(api::keycard::get_single_request_keycard)
+                    .service(api::keycard::change_keycard)
                     //request
                     .service(api::request::get_self_requests)
                     .service(api::request::get_requests_from_user)

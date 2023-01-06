@@ -101,7 +101,10 @@ const UserFc: React.FC<UserProps> = (props) => {
             }}>Neuen Antrag stellen</button>
             }
         </div>}
-        <IndividualRoomWrapper buildings={props.buildings} />
+        <div className="container">
+            <h2>Individuelle Räume</h2>
+            <IndividualRoomWrapper buildings={props.buildings} />
+        </div>
         <DepartmentWrapper departments={props.department} />
         <div className="container">
             <h2>Keycards</h2>
@@ -165,13 +168,12 @@ export interface IndividualRoomWrapperProps { buildings: Building[] }
 export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (props) => {
     const hasSomething = React.useMemo(() => !!props.buildings.find(val => val.rooms.find(val => val.doors.find(val => val.owner))), [props.buildings?.length])
     return (<>
-        {hasSomething && <div className="container">
+        {hasSomething && <>
 
-            <h2>Individualle Raueme</h2>
-            Beinahltet: {props.buildings.map((val, idx) => <div key={idx}>
+            {props.buildings.map((val, idx) => <div key={idx}>
                 <b>{val.name}:</b>{` ${val.rooms.filter(val => val.doors.find(val => val.owner)).map((val) => val.name).join(", ")} `}
             </div>)}
-        </div>}
+        </>}
 
     </>)
 }

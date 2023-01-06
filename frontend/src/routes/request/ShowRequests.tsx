@@ -6,7 +6,7 @@ import { useLoading } from "../../hooks/useLoading"
 import { Rest } from "../../util/Rest"
 
 export const ShowRequests: React.FC<{}> = (props) => {
-    const [filter, setFilter] = React.useState({ request_status: "", request_type: "", is_sensitive: "" });
+    const [filter, setFilter] = React.useState({ request_status: "pending", request_type: "", is_sensitive: "" });
     const queryParams = React.useMemo(() => {
         const params = new window.URLSearchParams()
         if (filter.request_status) params.set("request_status", filter.request_status)

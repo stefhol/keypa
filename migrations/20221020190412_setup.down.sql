@@ -15,6 +15,7 @@ drop table if exists tbl_request_department;
 
 --request
 drop table if exists tbl_request cascade;
+drop table if exists tbl_request_archive;
 drop table if exists tbl_keycard_history;
 
 drop table if exists tbl_keycard;

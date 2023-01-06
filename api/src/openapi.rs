@@ -20,6 +20,8 @@ use crate::{crud, api};
         //keycard
         api::keycard::get_self_keycard,
         api::keycard::get_user_keycard,
+        api::keycard::get_single_request_keycard,
+        api::keycard::change_keycard,
         
         //requests
         api::request::get_self_requests,
@@ -49,11 +51,13 @@ use crate::{crud, api};
         crud::building::GetBuilding,
         crud::user::GetUser,
         crud::keycard::GetKeycard,
+        crud::keycard::ChangeKeyboard,
 
         crud::request::get::GetRequest,
         crud::request::get::RequestType,
         crud::request::create::CreateRequest,
         crud::request::change::ChangeRequest,
+        crud::request::change::ChangeStatus,
         api::request::RequestStatus,
         crud::access::GetCompleteBuilding,
         crud::access::GetCompleteRoom,

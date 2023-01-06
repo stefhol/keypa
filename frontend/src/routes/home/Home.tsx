@@ -1,5 +1,16 @@
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import UserContext from "../../context/UserContext";
+
 export interface HomeProps { }
 export const Home: React.FC<HomeProps> = (props) => {
+    const { is_admin, is_leader, is_worker } = React.useContext(UserContext);
+    const navigate = useNavigate()
+    React.useEffect(() => {
+        if (!(is_admin || is_leader || is_worker)) {
+            navigate("/user")
+        }
+    }, [is_admin, is_leader, is_worker]);
     return (<>
         <main>
             <h1>Home</h1>

@@ -40,7 +40,7 @@ pub async fn get_self_requests(
     auth: Authenticated,
     query: Query<RequestQueryType>,
 ) -> actix_web::Result<HttpResponse, CrudError> {
-    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
     let request:Vec<_> = match &query.0.request_status {
         Some(query) => match query {
@@ -267,7 +267,7 @@ pub async fn create_requests(
     context_path = "/api/v1",
     request_body = ChangeRequest,
     responses(
-    (status = 200),
+    (status = 200, body = ChangeStatus),
     (status = 400),
     (status = 401),
     (status = 404),
@@ -283,6 +283,7 @@ pub async fn change_requests(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let result = crud::request::change::change_request(&db, &request_id, &request, auth.to_sercurity_level()).await?;
+    let worker_id = auth.try_get_user_id()?;
+    let result = crud::request::change::change_request(&db,&worker_id, &request_id, &request, auth.to_sercurity_level()).await?;
     Ok(HttpResponse::Ok().json(result))
 }

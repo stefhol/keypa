@@ -108,6 +108,21 @@ create table if not exists tbl_request
     keycard_id   uuid,
     foreign key (keycard_id) references tbl_keycard (keycard_id)
 );
+create table if not exists tbl_request_archive
+(
+    request_id   uuid primary key                     DEFAULT uuid_generate_v4(),
+    requester_id uuid                        not null,
+    created_at   timestamp without time zone not null default timezone('utc', now()),
+    changed_at   timestamp without time zone not null default timezone('utc', now()),
+    active_until timestamp without time zone,
+    description  text,
+    additional_rooms  text,
+    active       boolean                     not null default true,
+    accept       boolean                     not null default false,
+    reject       boolean                     not null default false,
+    payed        boolean,
+    pending      boolean                     not null default true
+);
 create table if not exists tbl_door_to_request_history
 (
     door_to_request_history_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
