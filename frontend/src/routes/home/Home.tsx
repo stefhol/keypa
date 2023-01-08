@@ -28,8 +28,8 @@ export const Home: React.FC<HomeProps> = (props) => {
                 Nutzer Übersicht
             </a><br />
             <h3>Tools</h3>
-            <a href="stats">
-                Statistiken
+            <a href="use-keycard">
+                Demo Keycard Nutzen
             </a><br />
             <a href="logs">
                 Logdateien

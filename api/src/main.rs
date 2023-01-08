@@ -71,6 +71,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::door::get_doors_of_door_group)
                     //keycard
                     .service(api::keycard::get_self_keycard)
+                    .service(api::keycard::get_all_keycards)
                     .service(api::keycard::get_user_keycard)
                     .service(api::keycard::get_single_request_keycard)
                     .service(api::keycard::change_keycard)
@@ -83,11 +84,19 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::get_single_requests)
                     .service(api::request::create_requests)
                     .service(api::request::change_requests)
+                    //demo keycard
+                    .service(api::use_keycard::use_keycard)
+                    // keycard usage history
+                    .service(api::keycard_usage_history::get_keycard_usage_history)
+                    .service(api::keycard_usage_history::get_csv_keycard_usage_history)
                     // building
                     .service(api::building::get_buldings)
                     //comment
                     .service(api::comment::get_comments)
                     .service(api::comment::insert_comment)
+                    //logs
+                    .service(api::log::get_logs)
+                    .service(api::log::get_logs_as_csv)
                     //department
                     .service(api::department::get_departments_of_self)
                     .service(api::department::get_departments_of_user)

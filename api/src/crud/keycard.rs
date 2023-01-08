@@ -1,6 +1,6 @@
 use super::{
     log::{create_log_message, CHANGE_KEYCARD, DEACTIVE_KEYCARD},
-    request::get::RequestType,
+    request::get::{get_all_requests, GetRequest, RequestType},
 };
 use crate::crud;
 use crate::util::error::CrudError;
@@ -23,6 +23,7 @@ pub struct GetKeycard {
     pub request_id: Option<Uuid>,
     pub given_out: Option<DateTime<Utc>>,
     pub keycard_type: Option<RequestType>,
+    pub request: Option<GetRequest>,
 }
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ChangeKeyboard {
@@ -45,6 +46,7 @@ impl From<&tbl_keycard::Model> for GetKeycard {
             user_id: keycard.user_id,
             given_out: keycard.given_out.map(|f| DateTime::from_utc(f, Utc)),
             keycard_type: None,
+            request: None,
         }
     }
 }
@@ -232,10 +234,10 @@ pub async fn change_keycard(
             .exec(db)
             .await?;
         if keycard_model.is_deactivated {
-            move_to_archive(db, worker_id, &keycard_id).await?;
             if let Some(request_id) = &keycard_model.request_id {
                 crud::request::change::move_to_archive(worker_id, db, request_id).await?;
             }
+            move_to_archive(db, worker_id, &keycard_id).await?;
         }
     }
 
@@ -266,7 +268,11 @@ pub async fn move_to_archive(
             .await?;
         create_log_message(
             worker_id,
-            &format!("{}: {}", DEACTIVE_KEYCARD, keycard_id.to_string()),
+            &format!(
+                "{}: {} moving to archive",
+                DEACTIVE_KEYCARD,
+                keycard_id.to_string()
+            ),
         )
         .insert(db)
         .await?;
@@ -275,4 +281,26 @@ pub async fn move_to_archive(
             .await?;
     }
     Ok(())
+}
+
+pub(crate) async fn get_all_keycards(
+    db: &DatabaseConnection,
+) -> Result<Vec<GetKeycard>, CrudError> {
+    let mut keycard: Vec<GetKeycard> = tbl_keycard::Entity::find()
+        .all(db)
+        .await?
+        .iter()
+        .map(|f| f.into())
+        .collect();
+    let requests = get_all_requests(db).await?;
+    keycard
+        .iter_mut()
+        .filter(|f| f.request_id.is_some())
+        .for_each(|f| {
+            f.request = requests
+                .iter()
+                .cloned()
+                .find(|request| request.request_id == f.request_id.unwrap());
+        });
+    Ok(keycard)
 }

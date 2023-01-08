@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tanstack/match-sorter-utils": "^8.7.2",
     "@tanstack/react-query": "^4.14.5",
     "@tanstack/react-table": "^8.5.22",
     "date-fns": "^2.29.3",

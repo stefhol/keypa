@@ -26,8 +26,6 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_door_to_request_history::Entity")]
-    TblDoorToRequestHistory,
     #[sea_orm(
         belongs_to = "super::tbl_keycard::Entity",
         from = "Column::KeycardId",
@@ -46,12 +44,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblUser,
-}
-
-impl Related<super::tbl_door_to_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblDoorToRequestHistory.def()
-    }
 }
 
 impl Related<super::tbl_keycard::Entity> for Entity {

@@ -15,8 +15,8 @@ pub struct Model {
 pub enum Relation {
     #[sea_orm(has_many = "super::tbl_door_to_request_history::Entity")]
     TblDoorToRequestHistory,
-    #[sea_orm(has_many = "super::tbl_keycard_history::Entity")]
-    TblKeycardHistory,
+    #[sea_orm(has_many = "super::tbl_keycard_usage_history::Entity")]
+    TblKeycardUsageHistory,
     #[sea_orm(
         belongs_to = "super::tbl_room::Entity",
         from = "Column::RoomId",
@@ -33,9 +33,9 @@ impl Related<super::tbl_door_to_request_history::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_keycard_history::Entity> for Entity {
+impl Related<super::tbl_keycard_usage_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeycardHistory.def()
+        Relation::TblKeycardUsageHistory.def()
     }
 }
 

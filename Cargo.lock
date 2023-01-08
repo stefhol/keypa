@@ -360,6 +360,7 @@ dependencies = [
  "async-recursion",
  "async-trait",
  "chrono",
+ "csv",
  "dotenv",
  "entities",
  "env_logger",

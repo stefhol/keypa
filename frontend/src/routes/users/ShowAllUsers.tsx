@@ -4,12 +4,12 @@ import { createBasicColumns, Table } from "../../Components/table/Table"
 import { Rest } from "../../util/Rest"
 import React from 'react'
 import { useLoading } from "../../hooks/useLoading"
+import { createUserDefColumn } from "../../Components/table/ColumnDef/User"
 
 export interface ShowAllUsersProps { }
 export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
     const navigate = useNavigate()
     const { data: userData, isLoading } = useQuery(["users"], Rest.getUsers)
-    const columns = React.useMemo(() => createBasicColumns(userData?.[0] || {}), [userData])
     useLoading(isLoading)
     return (<>
         <h1>Alle Nutzer</h1>
@@ -46,6 +46,6 @@ export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
                         // }
                     ]
                 }
-                columns={columns} />
+                columns={createUserDefColumn()} />
         }</>)
 }

@@ -3,6 +3,8 @@ import { Rest } from "../../util/Rest";
 import '../../css/login.css'
 import { useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
+import UserContext from "../../context/UserContext";
+import { decodeToken } from "../../util/token";
 export interface LoginRequest {
     email: string,
     password: string
@@ -12,6 +14,8 @@ export const Login: React.FC<LoginProps> = (props) => {
     const [name, setName] = React.useState("aron_iste@hotmail.com");
     const [password, setPassword] = React.useState("1234");
     const { startLoading, stopLoading } = useLoading()
+    const { set } = React.useContext(UserContext);
+
     const [error, setError] = React.useState("");
     const navigate = useNavigate()
     return (<main className="login"
@@ -27,6 +31,8 @@ export const Login: React.FC<LoginProps> = (props) => {
                     password
                 }).then(res => {
                     setError("")
+                    const params = new window.URLSearchParams(document.cookie)
+                    if (set) set(decodeToken(params))
                     navigate("/home")
                     location.reload()
                 })

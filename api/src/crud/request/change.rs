@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local, Utc};
 use entities::model::{
-    tbl_door, tbl_door_to_request, tbl_request, tbl_request_archive, tbl_request_department,
-    tbl_request_log,
+    sea_orm_active_enums::HistoryAction::Add, tbl_door, tbl_door_to_request, tbl_request,
+    tbl_request_archive, tbl_request_comment, tbl_request_department, tbl_request_log,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
@@ -14,9 +14,10 @@ use uuid::Uuid;
 use crate::{
     crud::{
         self,
+        history::create_door_to_request_history,
         log::{
             create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR, CHANGE_REQUEST, DEACTIVATE_REQUEST,
-            REMOVE_ALL_DEPARTMENT, REMOVE_ALL_DOORS,
+            REMOVE_ALL_DEPARTMENT, REMOVE_DOORS,
         },
     },
     util::{error::CrudError, middleware::SecurityLevel},
@@ -147,16 +148,31 @@ pub async fn change_request(
                 }
 
                 if let Some(_) = &trans_og_request.doors {
+                    let to_remove_vec = tbl_door_to_request::Entity::find()
+                        .filter(tbl_door_to_request::Column::RequestId.eq(request_id.to_owned()))
+                        .all(db)
+                        .await?;
                     tbl_door_to_request::Entity::delete_many()
                         .filter(tbl_door_to_request::Column::RequestId.eq(request_id.to_owned()))
                         .exec(db)
                         .await?;
-                    create_log_message(
-                        worker_id,
-                        &format!("{}: {}", REMOVE_ALL_DOORS, request_id.to_string()),
-                    )
-                    .insert(db)
-                    .await?;
+                    for to_remove in &to_remove_vec {
+                        let history = create_door_to_request_history(
+                            db,
+                            &entities::model::sea_orm_active_enums::HistoryAction::Remove,
+                            worker_id,
+                            &to_remove.door_id,
+                            &to_remove.request_id,
+                        )
+                        .await?;
+                        let mut log = create_log_message(
+                            worker_id,
+                            &format!("{}: {}", REMOVE_DOORS, request_id.to_string()),
+                        );
+                        log.door_to_request_history_id =
+                            Set(Some(history.door_to_request_history_id.to_owned()));
+                        log.insert(db).await?;
+                    }
                 }
 
                 if let Some(rooms) = &request.rooms {
@@ -174,7 +190,15 @@ pub async fn change_request(
 
                         for door in doors {
                             let res = door.insert(db).await?;
-                            create_log_message(
+                            let history = create_door_to_request_history(
+                                db,
+                                &Add,
+                                worker_id,
+                                &res.door_id,
+                                &res.request_id,
+                            )
+                            .await?;
+                            let mut log = create_log_message(
                                 worker_id,
                                 &format!(
                                     "{}: door {} to request {} ",
@@ -182,9 +206,10 @@ pub async fn change_request(
                                     res.door_id.to_string(),
                                     res.request_id.to_string()
                                 ),
-                            )
-                            .insert(db)
-                            .await?;
+                            );
+                            log.door_to_request_history_id =
+                                Set(Some(history.door_to_request_history_id.to_owned()));
+                            log.insert(db).await?;
                         }
                     }
                 }
@@ -307,8 +332,21 @@ pub(crate) async fn move_to_archive(
     let mut request_active = request_model.clone().into_active_model();
     request_active.active = Set(false);
     request_active.active_until = Set(Some(Local::now().naive_utc()));
+    request_active.keycard_id = Set(None);
+    tbl_request_department::Entity::delete_many()
+        .filter(tbl_request_department::Column::RequestId.eq(request_id.to_owned()))
+        .exec(db)
+        .await?;
+    tbl_door_to_request::Entity::delete_many()
+        .filter(tbl_door_to_request::Column::RequestId.eq(request_id.to_owned()))
+        .exec(db)
+        .await?;
+    tbl_request_comment::Entity::delete_many()
+        .filter(tbl_request_comment::Column::RequestId.eq(request_id.to_owned()))
+        .exec(db)
+        .await?;
     let request_model = request_active.update(db).await?;
-    let res = tbl_request_archive::ActiveModel {
+    let _ = tbl_request_archive::ActiveModel {
         request_id: Set(request_model.request_id),
         requester_id: Set(request_model.requester_id),
         created_at: Set(request_model.created_at),
@@ -324,10 +362,18 @@ pub(crate) async fn move_to_archive(
     }
     .insert(db)
     .await;
-    create_log_message(worker_id, &format!("{}", DEACTIVATE_REQUEST))
-        .insert(db)
-        .await?;
-    let del_res = tbl_request::Entity::delete_by_id(request_id.to_owned())
+    create_log_message(
+        worker_id,
+        &format!(
+            "{}: {} moving to archive",
+            DEACTIVATE_REQUEST,
+            request_id.to_string()
+        ),
+    )
+    .insert(db)
+    .await?;
+
+    let _ = tbl_request::Entity::delete_by_id(request_id.to_owned())
         .exec(db)
         .await;
     Ok(())

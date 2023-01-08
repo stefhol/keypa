@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 
 use crate::crud;
+use crate::crud::history::create_door_to_request_history;
 use crate::crud::log::{create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR};
 use crate::util::{error::CrudError, middleware::SecurityLevel};
 use chrono::{DateTime, Utc};
+use entities::model::sea_orm_active_enums::HistoryAction::Add;
 use entities::model::{tbl_door_to_request, tbl_keycard, tbl_request, tbl_request_department};
 use sea_orm::{
     ActiveModelTrait, DatabaseConnection, DbBackend, FromQueryResult, IntoActiveModel, Set,
@@ -57,7 +59,8 @@ pub async fn create_request(
             _ => false,
         };
     // default request we skip here the proposal request. it is the default case
-    let mut db_request = create_default_request(db, user_id, request, is_temp_card).await?;
+    let mut db_request =
+        create_default_request(db, user_id, request, is_temp_card, &sercurity_level).await?;
     create_log_message(
         user_id,
         &format!(
@@ -143,7 +146,15 @@ pub async fn create_request(
                 .collect();
             for door in doors {
                 let res = door.insert(db).await?;
-                create_log_message(
+                let history = create_door_to_request_history(
+                    db,
+                    &Add,
+                    user_id,
+                    &res.door_id,
+                    &res.request_id,
+                )
+                .await?;
+                let mut log = create_log_message(
                     user_id,
                     &format!(
                         "{}: door {} to request {} ",
@@ -151,9 +162,10 @@ pub async fn create_request(
                         res.door_id.to_string(),
                         res.request_id.to_string()
                     ),
-                )
-                .insert(db)
-                .await?;
+                );
+                log.door_to_request_history_id =
+                    Set(Some(history.door_to_request_history_id.to_owned()));
+                log.insert(db).await?;
             }
         }
     }
@@ -165,15 +177,20 @@ async fn create_default_request(
     user_id: &Uuid,
     request: &CreateRequest,
     is_temp_card: bool,
+    security_level: &SecurityLevel,
 ) -> Result<tbl_request::Model, CrudError> {
-    Ok(tbl_request::ActiveModel {
+    let mut is_leader = false;
+    if security_level == &SecurityLevel::Leader {
+        is_leader = true;
+    }
+    let model = tbl_request::ActiveModel {
         requester_id: Set(user_id.to_owned()),
         active_until: Set(request.active_until.map(|f| f.naive_utc())),
         description: Set(request.description.to_owned()),
         active: Set(true),
-        accept: Set(false),
+        accept: Set(is_leader),
         reject: Set(false),
-        pending: Set(true),
+        pending: Set(!is_leader),
         keycard_id: Set(None),
         additional_rooms: Set(request.other_rooms.to_owned()),
         payed: match is_temp_card {
@@ -185,5 +202,6 @@ async fn create_default_request(
         ..Default::default()
     }
     .insert(db)
-    .await?)
+    .await?;
+    Ok(model)
 }

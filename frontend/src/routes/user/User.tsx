@@ -10,6 +10,8 @@ import { Rest } from "../../util/Rest"
 import { Request } from '../../util/intefaces/Request'
 import { Keycard } from "../../util/intefaces/Keycard"
 import UserContext from "../../context/UserContext"
+import { createKeycardDefColumn } from "../../Components/table/ColumnDef/Keycard"
+import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 
 export interface SelfUserProps { }
 export const SelfUser: React.FC<SelfUserProps> = (props) => {
@@ -94,12 +96,17 @@ const UserFc: React.FC<UserProps> = (props) => {
                 {props.user.tel}
             </p>
         </div>
-        {(!is_leader) && <div className="container">
+        {(!is_leader) ? <div className="container">
             {props.isSelf && <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
             }}>Neuen Antrag stellen</button>
             }
+        </div> : <div className="container">
+            <button onClick={(e) => {
+                e.preventDefault()
+                navigate("/request/add-request/keycard")
+            }}>Neuen Keycard erstellen</button>
         </div>}
         <div className="container">
             <h2>Individuelle Räume</h2>
@@ -122,14 +129,14 @@ const UserFc: React.FC<UserProps> = (props) => {
                         ]
                     }
 
-                    columns={createBasicColumns(props.keycard?.[0])} />
+                    columns={createKeycardDefColumn()} />
 
             </>
         </div>
         <div className="container">
             <h2>Genehmigte Anträge</h2>
             <Table
-                columns={createBasicColumns(props.acceptedRequests?.[0])}
+                columns={createRequestDefColumn()}
                 data={props.acceptedRequests}
                 rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
@@ -138,7 +145,7 @@ const UserFc: React.FC<UserProps> = (props) => {
         <div className="container">
             <h2>Ausstehende Anträge</h2>
             <Table
-                columns={createBasicColumns(props.pendingRequests?.[0])}
+                columns={createRequestDefColumn()}
                 data={props.pendingRequests}
                 rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }

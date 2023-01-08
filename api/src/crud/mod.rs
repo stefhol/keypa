@@ -3,6 +3,7 @@ pub mod building;
 pub mod comment;
 pub mod department;
 pub mod door;
+pub mod email;
 pub mod history;
 pub mod keycard;
 pub mod log;

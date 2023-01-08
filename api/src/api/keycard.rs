@@ -78,6 +78,27 @@ pub async fn get_single_request_keycard(
     let requests = crud::keycard::get_single_keycard(&db, &keycard_id).await?;
     Ok(HttpResponse::Ok().json(requests))
 }
+
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200, body = [GetKeycard]),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[get("/keycard")]
+pub async fn get_all_keycards(
+    db: Data<DatabaseConnection>,
+    auth: Authenticated,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+    let requests = crud::keycard::get_all_keycards(&db).await?;
+    Ok(HttpResponse::Ok().json(requests))
+}
 #[utoipa::path(
     context_path = "/api/v1",
     request_body = ChangeKeycard,

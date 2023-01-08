@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import React from "react"
 import { useNavigate } from "react-router-dom"
+import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 import { createBasicColumns, Table } from "../../Components/table/Table"
 import { useLoading } from "../../hooks/useLoading"
 import { Rest } from "../../util/Rest"
@@ -22,7 +23,7 @@ export const ShowRequests: React.FC<{}> = (props) => {
     return (<>
         {data && <Table
             outerClassName="absolute"
-            data={data} columns={createBasicColumns(data[0])}
+            data={data} columns={createRequestDefColumn()}
             filter={
                 <>
                     <select style={{ width: "initial" }}

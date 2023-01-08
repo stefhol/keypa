@@ -3,9 +3,9 @@ use anyhow;
 use chrono::Utc;
 use dotenv;
 use entities::model::{
-    tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard, tbl_keycard_history,
-    tbl_request, tbl_request_comment, tbl_request_department, tbl_room, tbl_room_department,
-    tbl_user,
+    tbl_building, tbl_department, tbl_door, tbl_door_to_request, tbl_keycard,
+    tbl_keycard_usage_history, tbl_request, tbl_request_comment, tbl_request_department, tbl_room,
+    tbl_room_department, tbl_user,
 };
 
 use fake::faker::chrono::en::DateTimeAfter;
@@ -85,6 +85,42 @@ async fn main() -> anyhow::Result<()> {
         .insert(&db)
         .await;
     }
+    let _ = tbl_user::ActiveModel {
+        email: ActiveValue::Set(String::from("admin@demo.de")),
+        name: ActiveValue::Set(String::from("Demo Admin")),
+        password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
+        role_id: ActiveValue::Set(Some(1)),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await;
+    let _ = tbl_user::ActiveModel {
+        email: ActiveValue::Set(String::from("vl@demo.de")),
+        name: ActiveValue::Set(String::from("Demo Verwatlungsvorgesetzter")),
+        password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
+        role_id: ActiveValue::Set(Some(2)),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await;
+    let _ = tbl_user::ActiveModel {
+        email: ActiveValue::Set(String::from("vw@demo.de")),
+        name: ActiveValue::Set(String::from("Demo Verwatlungsmitarbeiter")),
+        password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
+        role_id: ActiveValue::Set(Some(3)),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await;
+    let _ = tbl_user::ActiveModel {
+        email: ActiveValue::Set(String::from("mi@demo.de")),
+        name: ActiveValue::Set(String::from("Demo Mitarbeiter")),
+        password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
+        role_id: ActiveValue::Set(Some(4)),
+        ..Default::default()
+    }
+    .insert(&db)
+    .await;
 
     let users = tbl_user::Entity::find().all(&db).await?;
 
@@ -326,7 +362,7 @@ async fn main() -> anyhow::Result<()> {
                 used_at = DateTimeBefore(DateTimeUtc::from_utc(keycard_request.changed_at, Utc))
                     .fake_with_rng(&mut rng);
             }
-            tbl_keycard_history::ActiveModel {
+            tbl_keycard_usage_history::ActiveModel {
                 keycard_id: ActiveValue::Set(keycard.keycard_id.to_owned()),
                 door_id: ActiveValue::Set(door.door_id.to_owned()),
                 used_at: ActiveValue::Set(used_at.naive_utc()),

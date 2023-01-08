@@ -27,13 +27,13 @@ pub enum Relation {
     )]
     TblDoorToRequestHistory,
     #[sea_orm(
-        belongs_to = "super::tbl_keycard_history::Entity",
+        belongs_to = "super::tbl_keycard_usage_history::Entity",
         from = "Column::KeycardHistoryId",
-        to = "super::tbl_keycard_history::Column::KeycardHistoryId",
+        to = "super::tbl_keycard_usage_history::Column::KeycardHistoryId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKeycardHistory,
+    TblKeycardUsageHistory,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::ChangedBy",
@@ -50,9 +50,9 @@ impl Related<super::tbl_door_to_request_history::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_keycard_history::Entity> for Entity {
+impl Related<super::tbl_keycard_usage_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeycardHistory.def()
+        Relation::TblKeycardUsageHistory.def()
     }
 }
 

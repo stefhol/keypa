@@ -2,13 +2,19 @@ import { LoginRequest } from "../routes/login/Login"
 import { Building } from "./intefaces/Buildings"
 import { Department } from "./intefaces/Departments"
 import { Keycard } from "./intefaces/Keycard"
+import { KeycardUsageHistory } from "./intefaces/KeycardUsageHistory"
 import { Keys } from "./intefaces/Keys"
+import { Log } from "./intefaces/Log"
 import { User, Request, Comment } from "./intefaces/Request"
 
 //@ts-ignore
 const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
 const api = "/api/v1/"
 export class Rest {
+    static getLogs = async () => {
+        return await this.quickFetchJson<Log[]>("logs", "GET")
+
+    }
 
     static getSelfDepartments = async () => {
         return await this.quickFetchJson<Department[]>("self/department", "GET")
@@ -35,6 +41,12 @@ export class Rest {
 
     static getSelfKeycard = async () => {
         return await this.quickFetchJson<Keycard[]>("self/keycard", "GET")
+    }
+    static getKeycard = async () => {
+        return await this.quickFetchJson<Keycard[]>("keycard", "GET")
+    }
+    static getKeycardUsageHistory = async () => {
+        return await this.quickFetchJson<KeycardUsageHistory[]>("keycard-usage-history", "GET")
     }
     static getKeycardsFromUser = async (userId: string) => {
         return await this.quickFetchJson<Keycard[]>(`user/${userId}/keycard`, "GET")

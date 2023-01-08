@@ -12,7 +12,6 @@ import { Header } from './Components/Ui/Header';
 import ErrorPage from './ErrorPage';
 import "./index.css";
 import { Home as Home } from './routes/home/Home';
-import { KeycardsFromUser } from './routes/keycard/Keycard';
 import { KeycardBase } from './routes/keycard/KeycardBase';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
 import { ShowAllUsers } from './routes/users/ShowAllUsers';
@@ -22,7 +21,7 @@ import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowRequests } from './routes/request/ShowRequests';
 import { RequestBase } from './routes/request/RequestBase';
-import { UserChange } from './routes/user/UseChange';
+
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
@@ -31,6 +30,9 @@ import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
 import { Logs } from './routes/logs/Logs';
 import UserContext, { IUserContext } from './context/UserContext';
 import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
+import { decodeToken } from './util/token';
+import { UseKeycard } from './routes/use-keycard/UseKeycard';
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -39,6 +41,10 @@ const router = createBrowserRouter([
       {
         path: "/stats",
         element: <StatsDemo />
+      },
+      {
+        path: "/use-keycard",
+        element: <UseKeycard />
       },
       {
         path: "/",
@@ -60,17 +66,6 @@ const router = createBrowserRouter([
           {
             path: "",
             element: <SelfUser />
-          },
-          {
-            path: "account",
-            element: <UserChange />
-          }, {
-            path: ":userId/account",
-            element: <UserChange />
-          },
-          {
-            path: ":userId/keycard",
-            element: <KeycardsFromUser />
           },
           {
             path: ":userId/request",
@@ -139,6 +134,7 @@ const router = createBrowserRouter([
   }
 
 ]);
+
 const queryClient = new QueryClient()
 const Default: React.FC<DefaultProps> = (props) => {
   const callback = () => {
@@ -147,12 +143,7 @@ const Default: React.FC<DefaultProps> = (props) => {
 
     if (params.has("token")) {
       if (params.get("token")) {
-        const token = jose.decodeJwt(params.get("token") as string) as {
-          is_admin: boolean,
-          is_leader: boolean,
-          is_worker: boolean,
-          sub: string,
-        };
+        const token = decodeToken(params);
         setjwt({ ...token })
       }
     } else {

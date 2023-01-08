@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_keycard_history")]
+#[sea_orm(table_name = "tbl_keycard_usage_history")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub keycard_history_id: i64,
@@ -24,14 +24,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblDoor,
-    #[sea_orm(
-        belongs_to = "super::tbl_keycard::Entity",
-        from = "Column::KeycardId",
-        to = "super::tbl_keycard::Column::KeycardId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblKeycard,
     #[sea_orm(has_many = "super::tbl_request_log::Entity")]
     TblRequestLog,
 }
@@ -39,12 +31,6 @@ pub enum Relation {
 impl Related<super::tbl_door::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblDoor.def()
-    }
-}
-
-impl Related<super::tbl_keycard::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeycard.def()
     }
 }
 

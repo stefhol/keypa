@@ -32,7 +32,7 @@ const CommentFC: React.FC<CommentProps> = (props) => {
 
             <span><strong>{props?.comment?.user?.name}</strong></span>
             <span>{props.comment.comment}</span>
-            <span className="date">{format(new Date(props?.comment?.written_at || ""), "dd.MM.yyyy hh:mm")}</span>
+            <span className="date">{format(new Date(props?.comment?.written_at || ""), "dd.MM.yyyy HH:mm")}</span>
         </div>
     </>)
 }
