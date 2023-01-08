@@ -2,13 +2,29 @@ import { LoginRequest } from "../routes/login/Login"
 import { Building } from "./intefaces/Buildings"
 import { Department } from "./intefaces/Departments"
 import { Keycard } from "./intefaces/Keycard"
+import { KeycardUsageHistory } from "./intefaces/KeycardUsageHistory"
 import { Keys } from "./intefaces/Keys"
-import { User, Request } from "./intefaces/Request"
+import { Log } from "./intefaces/Log"
+import { User, Request, Comment } from "./intefaces/Request"
 
 //@ts-ignore
 const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
 const api = "/api/v1/"
 export class Rest {
+    static getLogs = async () => {
+        return await this.quickFetchJson<Log[]>("logs", "GET")
+
+    }
+
+    static getSelfDepartments = async () => {
+        return await this.quickFetchJson<Department[]>("self/department", "GET")
+
+    }
+    static getUserDepartments = async (userId: string) => {
+        return await this.quickFetchJson<Department[]>(`users/${userId}/department`, "GET")
+
+
+    }
     static getDepartments = async () => {
         return await this.quickFetchJson<Department[]>("department", "GET")
 
@@ -26,11 +42,18 @@ export class Rest {
     static getSelfKeycard = async () => {
         return await this.quickFetchJson<Keycard[]>("self/keycard", "GET")
     }
+    static getKeycard = async () => {
+        return await this.quickFetchJson<Keycard[]>("keycard", "GET")
+    }
+    static getKeycardUsageHistory = async () => {
+        return await this.quickFetchJson<KeycardUsageHistory[]>("keycard-usage-history", "GET")
+    }
     static getKeycardsFromUser = async (userId: string) => {
         return await this.quickFetchJson<Keycard[]>(`user/${userId}/keycard`, "GET")
     }
-    static getKeycard = async () => {
-        return await this.quickFetchJson<Keycard>("keycard", "GET")
+    static getSingleKeycard = async (keycardId: string) => {
+        return await this.quickFetchJson<Keycard>(`keycard/${keycardId}`, "GET")
+
     }
     static getDoorsWithRequestId = async (requestId: string) => {
         return await this.quickFetchJson<Building[]>(`request/${requestId}/doors`, "GET")
@@ -44,11 +67,14 @@ export class Rest {
     static getUsers = async () => {
         return await this.quickFetchJson<User[]>("users", "GET")
     }
-    static getPendingRequests = async () => {
-        return await this.quickFetchJson<Request[]>("request", "GET")
+    static getRequests = async (queryParams?: string) => {
+        return await this.quickFetchJson<Request[]>("request", "GET", undefined, queryParams)
     }
-    static getRequestsFromUser = async (userId: string) => {
-        return await this.quickFetchJson<Request[]>(`user/${userId}/request`, "GET")
+    static getRequestsFromUser = async (userId: string, queryParams?: string) => {
+        return await this.quickFetchJson<Request[]>(`user/${userId}/request`, "GET", undefined, queryParams)
+    }
+    static getSelfRequests = async (queryParams?: string) => {
+        return await this.quickFetchJson<Request[]>("self/request", "GET", undefined, queryParams)
     }
     static getSingleUser = async (userId: string) => {
         return await this.quickFetchJson<User>(`users/${userId}`, "GET")
@@ -56,15 +82,19 @@ export class Rest {
     static getSingleWoker = async (userId: string) => {
         return await this.quickFetchJson<User>(`users/${userId}`, "GET")
     }
+    static getComment = async (requestId: string) => {
+        return await this.quickFetchJson<Comment[]>(`request/${requestId}/comment`, "GET")
+    }
+    static createComment = async (requestId: string, comment: { comment: string }) => {
+        return await this.quickAdd(`request/${requestId}/comment`, "PUT", comment)
+    }
     static getBuildings = async () => {
         return await this.quickFetchJson<Building[]>("buildings", "GET")
     }
     static getDoorsByUser = async (userId: string) => {
         return await this.quickFetchJson<Building[]>(`users/${userId}/doors`, "GET")
     }
-    static getSelfRequests = async () => {
-        return await this.quickFetchJson<Request[]>("self/request", "GET")
-    }
+
     static getSingleRequest = async (requestId: string) => {
         return await this.quickFetchJson<Request>(`request/${requestId}`, "GET")
     }
@@ -72,8 +102,14 @@ export class Rest {
         return await this.quickFetchJson<Request>(`self/request?request_id=${request_id}`, "GET")
     }
 
-    static quickFetchJson = async<T>(address: string, method: string, data?: any) => {
-        let response = await fetch(`${url}${api}${address}`, {
+    static quickFetchJson = async<T>(address: string, method: string, data?: any, queryParams?: string) => {
+        if (queryParams) {
+            queryParams = `?${queryParams}`
+        }
+        else {
+            queryParams = ""
+        }
+        let response = await fetch(`${url}${api}${address}${queryParams}`, {
             method, // *GET, POST, PUT, DELETE, etc.
             headers: data === undefined ? {} : {
                 'Content-Type': 'application/json',

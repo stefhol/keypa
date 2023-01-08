@@ -14,20 +14,18 @@ pub struct Model {
     pub active_until: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
-    pub status_id: Option<Uuid>,
-    pub is_proposal: bool,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub additional_rooms: Option<String>,
     pub active: bool,
     pub accept: bool,
     pub reject: bool,
-    pub pending: bool,
     pub payed: Option<bool>,
+    pub pending: bool,
     pub keycard_id: Option<Uuid>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_door_to_request_history::Entity")]
-    TblDoorToRequestHistory,
     #[sea_orm(
         belongs_to = "super::tbl_keycard::Entity",
         from = "Column::KeycardId",
@@ -38,18 +36,6 @@ pub enum Relation {
     TblKeycard,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
-    #[sea_orm(has_many = "super::tbl_request_entrance::Entity")]
-    TblRequestEntrance,
-    #[sea_orm(has_many = "super::tbl_request_history::Entity")]
-    TblRequestHistory,
-    #[sea_orm(
-        belongs_to = "super::tbl_status::Entity",
-        from = "Column::StatusId",
-        to = "super::tbl_status::Column::StatusId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblStatus,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::RequesterId",
@@ -58,12 +44,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblUser,
-}
-
-impl Related<super::tbl_door_to_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblDoorToRequestHistory.def()
-    }
 }
 
 impl Related<super::tbl_keycard::Entity> for Entity {
@@ -75,24 +55,6 @@ impl Related<super::tbl_keycard::Entity> for Entity {
 impl Related<super::tbl_request_comment::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequestComment.def()
-    }
-}
-
-impl Related<super::tbl_request_entrance::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestEntrance.def()
-    }
-}
-
-impl Related<super::tbl_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestHistory.def()
-    }
-}
-
-impl Related<super::tbl_status::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblStatus.def()
     }
 }
 

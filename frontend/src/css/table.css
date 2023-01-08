@@ -1,12 +1,29 @@
 table {
     border: 1px solid lightgray;
+    width: inherit;
 }
 
+.absolute {
+    max-height: calc(100vh - 3rem) !important;
+}
+
+.outer-table {
+
+    overflow  : auto;
+    width     : 100%;
+    max-height: 600px;
+}
 tbody {
     border-bottom: 1px solid lightgray;
 }
 
 
+thead {
+    border-top      : 1px solid lightgray;
+    background-color: var(--background-color);
+    position        : sticky;
+    top             : 0;
+}
 
 th,
 td {

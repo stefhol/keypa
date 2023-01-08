@@ -1,29 +1,28 @@
 use crate::util::error::CrudError;
-use entities::model::{tbl_role, tbl_user};
+use entities::model::{tbl_user};
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use super::role::GetRole;
 
 #[derive(Serialize, Deserialize, Clone, Debug, ToSchema)]
 pub struct GetUser {
     pub user_id: Uuid,
     pub name: String,
-    pub role: Option<GetRole>,
+pub role_id: Option<i64>,
     pub email: String,
     pub tel: Option<String>,
     pub address: Option<String>,
     pub picture_url: Option<String>,
 }
 
-impl From<&(tbl_user::Model, Option<tbl_role::Model>)> for GetUser {
-    fn from((user, role): &(tbl_user::Model, Option<tbl_role::Model>)) -> Self {
+impl From<&tbl_user::Model> for GetUser {
+    fn from(user: &tbl_user::Model) -> Self {
         Self {
             user_id: user.user_id.clone(),
             name: user.name.to_string(),
-            role: role.to_owned().map(|f| GetRole::from(&f)),
+            role_id: user.role_id,
             email: user.email.to_owned(),
             tel: user.tel.to_owned(),
             address: user.address.to_owned(),
@@ -49,7 +48,6 @@ pub async fn get_single_user(
     db: &DatabaseConnection,
 ) -> Result<GetUser, CrudError> {
     let user = tbl_user::Entity::find_by_id(user_id.clone())
-        .find_also_related(tbl_role::Entity)
         .filter(tbl_user::Column::IsActive.eq(true))
         .one(db)
         .await?;
@@ -60,7 +58,6 @@ pub async fn get_single_user(
 }
 pub async fn get_all_user(db: &DatabaseConnection) -> Result<Vec<GetUser>, CrudError> {
     Ok(tbl_user::Entity::find()
-        .find_also_related(tbl_role::Entity)
         .filter(tbl_user::Column::IsActive.eq(true))
         .all(db)
         .await?
@@ -74,18 +71,8 @@ pub async fn is_admin_by_user_id(
     db: &DatabaseConnection,
 ) -> Result<bool, CrudError> {
     let user = get_single_user(user_id, db).await?;
-    return match user.role {
-        Some(role) => Ok(role.name == "administrative admin"),
-        None => Ok(false),
-    };
-}
-pub async fn is_worker_by_user_id(
-    user_id: &Uuid,
-    db: &DatabaseConnection,
-) -> Result<bool, CrudError> {
-    let user = get_single_user(user_id, db).await?;
-    return match user.role {
-        Some(role) => Ok(role.name == "administrative staff"),
+    return match user.role_id {
+        Some(role) => Ok(role == 1),
         None => Ok(false),
     };
 }
@@ -94,8 +81,18 @@ pub async fn is_leader_by_user_id(
     db: &DatabaseConnection,
 ) -> Result<bool, CrudError> {
     let user = get_single_user(user_id, db).await?;
-    return match user.role {
-        Some(role) => Ok(role.name == "administrative leader"),
+    return match user.role_id {
+        Some(role) => Ok(role == 2),
+        None => Ok(false),
+    };
+}
+pub async fn is_worker_by_user_id(
+    user_id: &Uuid,
+    db: &DatabaseConnection,
+) -> Result<bool, CrudError> {
+    let user = get_single_user(user_id, db).await?;
+    return match user.role_id {
+        Some(role) => Ok(role == 3),
         None => Ok(false),
     };
 }

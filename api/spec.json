@@ -52,6 +52,46 @@
         "deprecated": false
       }
     },
+    "/api/v1/department": {
+      "get": {
+        "tags": [
+          "api::department"
+        ],
+        "description": "",
+        "operationId": "get_departments",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GetDepartment"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": ""
+          },
+          "401": {
+            "description": ""
+          },
+          "404": {
+            "description": ""
+          },
+          "406": {
+            "description": ""
+          },
+          "500": {
+            "description": ""
+          }
+        },
+        "deprecated": false
+      }
+    },
     "/api/v1/login": {
       "post": {
         "tags": [
@@ -128,7 +168,25 @@
           "api::request"
         ],
         "description": "",
-        "operationId": "get_all_pending_requests",
+        "operationId": "get_all_requests",
+        "parameters": [
+          {
+            "name": "request_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RequestStatus"
+            }
+          },
+          {
+            "name": "request_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/RequestType"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -568,6 +626,15 @@
         "operationId": "get_single_requests_from_user",
         "parameters": [
           {
+            "name": "request_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
             "name": "user_id",
             "in": "path",
             "required": true,
@@ -775,17 +842,14 @@
           "description": {
             "type": "string"
           },
-          "doors": {
+          "other_rooms": {
+            "type": "string"
+          },
+          "rooms": {
             "type": "array",
             "items": {
               "type": "string",
               "format": "uuid"
-            }
-          },
-          "indivdual_rooms": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/IndividualRooms"
             }
           }
         }
@@ -794,7 +858,8 @@
         "type": "object",
         "required": [
           "building_id",
-          "name"
+          "name",
+          "rooms"
         ],
         "properties": {
           "building_id": {
@@ -803,6 +868,12 @@
           },
           "name": {
             "type": "string"
+          },
+          "rooms": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetRoom"
+            }
           }
         }
       },
@@ -835,7 +906,8 @@
             "format": "uuid"
           },
           "written_at": {
-            "$ref": "#/components/schemas/DateTimeUtc"
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -866,7 +938,6 @@
         "type": "object",
         "required": [
           "door_id",
-          "name",
           "owner",
           "room_id"
         ],
@@ -874,9 +945,6 @@
           "door_id": {
             "type": "string",
             "format": "uuid"
-          },
-          "name": {
-            "type": "string"
           },
           "owner": {
             "type": "boolean"
@@ -923,20 +991,42 @@
           }
         }
       },
+      "GetDepartment": {
+        "type": "object",
+        "required": [
+          "department_id",
+          "name",
+          "buildings"
+        ],
+        "properties": {
+          "buildings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GetBuilding"
+            }
+          },
+          "department_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
       "GetDoor": {
         "type": "object",
         "required": [
           "door_id",
-          "name",
           "room_id"
         ],
         "properties": {
           "door_id": {
             "type": "string",
             "format": "uuid"
-          },
-          "name": {
-            "type": "string"
           },
           "room": {
             "$ref": "#/components/schemas/GetRoom"
@@ -951,13 +1041,17 @@
         "type": "object",
         "required": [
           "keycard_id",
+          "user_id",
           "is_lost",
           "is_locked",
           "is_deactivated",
-          "is_given_back",
-          "request_id"
+          "is_given_back"
         ],
         "properties": {
+          "given_out": {
+            "type": "string",
+            "format": "date-time"
+          },
           "is_deactivated": {
             "type": "boolean"
           },
@@ -977,6 +1071,10 @@
           "request_id": {
             "type": "string",
             "format": "uuid"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -991,8 +1089,8 @@
           "reject",
           "pending",
           "comments",
-          "is_proposal",
-          "active"
+          "active",
+          "request_type"
         ],
         "properties": {
           "accept": {
@@ -1002,10 +1100,12 @@
             "type": "boolean"
           },
           "active_until": {
-            "$ref": "#/components/schemas/DateTimeUtc"
+            "type": "string",
+            "format": "date-time"
           },
           "changed_at": {
-            "$ref": "#/components/schemas/DateTimeUtc"
+            "type": "string",
+            "format": "date-time"
           },
           "comments": {
             "type": "array",
@@ -1014,13 +1114,11 @@
             }
           },
           "created_at": {
-            "$ref": "#/components/schemas/DateTimeUtc"
+            "type": "string",
+            "format": "date-time"
           },
           "description": {
             "type": "string"
-          },
-          "is_proposal": {
-            "type": "boolean"
           },
           "keycard_id": {
             "type": "string",
@@ -1036,33 +1134,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "request_type": {
+            "$ref": "#/components/schemas/RequestType"
+          },
           "requester": {
             "$ref": "#/components/schemas/GetUser"
           },
           "requester_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status_id": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "GetRole": {
-        "type": "object",
-        "required": [
-          "role_id",
-          "name"
-        ],
-        "properties": {
-          "description": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "role_id": {
             "type": "string",
             "format": "uuid"
           }
@@ -1120,8 +1198,9 @@
           "picture_url": {
             "type": "string"
           },
-          "role": {
-            "$ref": "#/components/schemas/GetRole"
+          "role_id": {
+            "type": "integer",
+            "format": "int64"
           },
           "tel": {
             "type": "string"
@@ -1129,22 +1208,6 @@
           "user_id": {
             "type": "string",
             "format": "uuid"
-          }
-        }
-      },
-      "IndividualRooms": {
-        "type": "object",
-        "required": [
-          "building_id",
-          "rooms"
-        ],
-        "properties": {
-          "building_id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "rooms": {
-            "type": "string"
           }
         }
       },
@@ -1162,6 +1225,23 @@
             "type": "string"
           }
         }
+      },
+      "RequestStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "reject",
+          "accept"
+        ]
+      },
+      "RequestType": {
+        "type": "string",
+        "enum": [
+          "keycard",
+          "temp",
+          "room",
+          "none"
+        ]
       }
     }
   }

@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { TreeData, TreeView } from "../../../Components/tree-view/TreeView"
+import { prepareData, TreeData, TreeView } from "../../../Components/tree-view/TreeView"
 import { Building } from "../../../util/intefaces/Buildings"
 import { Rest } from "../../../util/Rest"
-import { prepareData } from "../request/Request"
 
 export interface KeyProps {
     data: Building[]

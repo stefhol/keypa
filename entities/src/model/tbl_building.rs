@@ -8,21 +8,14 @@ use serde::{Deserialize, Serialize};
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
     pub building_id: Uuid,
+    #[sea_orm(unique)]
     pub name: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_request_entrance::Entity")]
-    TblRequestEntrance,
     #[sea_orm(has_many = "super::tbl_room::Entity")]
     TblRoom,
-}
-
-impl Related<super::tbl_request_entrance::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestEntrance.def()
-    }
 }
 
 impl Related<super::tbl_room::Entity> for Entity {

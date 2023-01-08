@@ -1,7 +1,12 @@
 pub mod auth;
 pub mod building;
+pub mod comment;
 pub mod department;
 pub mod door;
+pub mod email;
 pub mod keycard;
+pub mod keycard_usage_history;
+pub mod log;
 pub mod request;
+pub mod use_keycard;
 pub mod user;

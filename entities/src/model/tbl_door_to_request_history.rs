@@ -25,16 +25,8 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblDoor,
-    #[sea_orm(has_many = "super::tbl_log::Entity")]
-    TblLog,
-    #[sea_orm(
-        belongs_to = "super::tbl_request::Entity",
-        from = "Column::RequestId",
-        to = "super::tbl_request::Column::RequestId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblRequest,
+    #[sea_orm(has_many = "super::tbl_request_log::Entity")]
+    TblRequestLog,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::ChangedBy",
@@ -51,15 +43,9 @@ impl Related<super::tbl_door::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_log::Entity> for Entity {
+impl Related<super::tbl_request_log::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblLog.def()
-    }
-}
-
-impl Related<super::tbl_request::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequest.def()
+        Relation::TblRequestLog.def()
     }
 }
 

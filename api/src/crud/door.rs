@@ -10,7 +10,6 @@ use super::{building::GetBuilding, room::GetRoom};
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetDoorWithRoom {
     pub door_id: Uuid,
-    pub name: String,
     pub room_id: Uuid,
     pub room_name: String,
     pub floor: i32,
@@ -23,7 +22,6 @@ impl From<&(tbl_door::Model, Option<tbl_room::Model>)> for GetDoorWithRoom {
         let room = room.clone().expect("Can not be null");
         Self {
             door_id: door.door_id,
-            name: door.name.clone(),
             room_id: room.room_id,
             room_name: room.name,
             floor: room.floor,
@@ -36,7 +34,6 @@ impl From<&(tbl_door::Model, Option<tbl_room::Model>)> for GetDoorWithRoom {
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct GetDoor {
     pub door_id: Uuid,
-    pub name: String,
     pub room_id: Uuid,
     pub room: Option<GetRoom>,
 }
@@ -44,7 +41,6 @@ impl From<&tbl_door::Model> for GetDoor {
     fn from(door: &tbl_door::Model) -> Self {
         Self {
             door_id: door.door_id,
-            name: door.name.clone(),
             room_id: door.room_id,
             room: None,
         }

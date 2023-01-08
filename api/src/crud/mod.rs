@@ -1,9 +1,12 @@
 pub mod access;
 pub mod building;
+pub mod comment;
 pub mod department;
 pub mod door;
+pub mod email;
+pub mod history;
 pub mod keycard;
+pub mod log;
 pub mod request;
-pub mod role;
 pub mod room;
 pub mod user;

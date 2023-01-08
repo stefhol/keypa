@@ -15,29 +15,3 @@ pub enum HistoryAction {
     #[sea_orm(string_value = "remove")]
     Remove,
 }
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Copy, Serialize, Deserialize)]
-#[sea_orm(
-    rs_type = "String",
-    db_type = "Enum",
-    enum_name = "history_request_type"
-)]
-pub enum HistoryRequestType {
-    #[sea_orm(string_value = "door")]
-    Door,
-    #[sea_orm(string_value = "keycard")]
-    Keycard,
-    #[sea_orm(string_value = "temp")]
-    Temp,
-}
-#[derive(Debug, Clone, PartialEq, Eq, EnumIter, DeriveActiveEnum, Copy, Serialize, Deserialize)]
-#[sea_orm(rs_type = "String", db_type = "Enum", enum_name = "history_role")]
-pub enum HistoryRole {
-    #[sea_orm(string_value = "admin")]
-    Admin,
-    #[sea_orm(string_value = "leader")]
-    Leader,
-    #[sea_orm(string_value = "user")]
-    User,
-    #[sea_orm(string_value = "worker")]
-    Worker,
-}

@@ -1,39 +1,39 @@
 import './index.css';
-
+import * as jose from 'jose'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
   createBrowserRouter,
-  RouterProvider
+  RouterProvider,
+  useNavigate
 } from "react-router-dom";
 import { Header } from './Components/Ui/Header';
 import ErrorPage from './ErrorPage';
 import "./index.css";
-import { Dashboard } from './routes/dashboard/Dashboard';
-import { KeycardsFromUser } from './routes/keycard/Keycard';
+import { Home as Home } from './routes/home/Home';
 import { KeycardBase } from './routes/keycard/KeycardBase';
-import { KeycardRequest } from './routes/keycard/KeycardRequest';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
-import { LeaderBase } from './routes/leader/LeaderBase';
-import { ShowAllUsers } from './routes/leader/ShowAllUsers';
+import { ShowAllUsers } from './routes/users/ShowAllUsers';
 import { Login } from './routes/login/Login';
 import { Main } from './routes/Main';
 import { ChangeRequest } from './routes/request/ChangeRequest';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
-import { ShowPendingRequests } from './routes/request/ShowPendingRequests';
+import { ShowRequests } from './routes/request/ShowRequests';
 import { RequestBase } from './routes/request/RequestBase';
-import { RequestPicker, TempRequest } from './routes/user/request/Request';
-import { UserChange } from './routes/user/UseChange';
+
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { StatsDemo } from './routes/stats/StatsDemo';
 import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
 import { Logs } from './routes/logs/Logs';
-import { PropositionBase } from './routes/propositons/PropositionBase';
-import { CreatePropostion } from './routes/propositons/CreatePropostion';
-import { ConvertProposition } from './routes/propositons/ConvertProposition';
+import UserContext, { IUserContext } from './context/UserContext';
+import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
+import { decodeToken } from './util/token';
+import { UseKeycard } from './routes/use-keycard/UseKeycard';
+import { Email } from './routes/email/Email';
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -42,6 +42,14 @@ const router = createBrowserRouter([
       {
         path: "/stats",
         element: <StatsDemo />
+      },
+      {
+        path: "/email",
+        element: <Email />
+      },
+      {
+        path: "/use-keycard",
+        element: <UseKeycard />
       },
       {
         path: "/",
@@ -53,8 +61,8 @@ const router = createBrowserRouter([
         element: <Login />,
       },
       {
-        path: "/dashboard",
-        element: <Dashboard />,
+        path: "/home",
+        element: <Home />,
       },
       {
         path: "user",
@@ -63,17 +71,6 @@ const router = createBrowserRouter([
           {
             path: "",
             element: <SelfUser />
-          },
-          {
-            path: "account",
-            element: <UserChange />
-          }, {
-            path: ":userId/account",
-            element: <UserChange />
-          },
-          {
-            path: ":userId/keycard",
-            element: <KeycardsFromUser />
           },
           {
             path: ":userId/request",
@@ -87,27 +84,27 @@ const router = createBrowserRouter([
       },
       {
         path: "request",
+        element: <ShowRequests />
+      },
+      {
+        path: "request",
         element: <RequestBase />,
         children: [
-          {
-            path: "",
-            element: <ShowPendingRequests />
-          },
           {
             path: "add-request",
             element: <RequestPicker />
           },
           {
             path: "add-request/room",
-            element: <CreatePropostion />
+            element: <CreateRoomRequest />
           },
           {
             path: "add-request/keycard",
-            element: <KeycardRequest />
+            element: <CreateKeycardRequest />
           },
           {
             path: "add-request/temp",
-            element: <TempRequest />
+            element: <CreateTempRequest />
           },
           {
             path: "change-request/:requestId",
@@ -125,62 +122,70 @@ const router = createBrowserRouter([
             element: <GlobalKeycardList />
           },
           {
-            path: "add-request",
-            element: <KeycardRequest />
-          },
-          {
             path: "change-request/:requestId",
             element: <ManageKeycard />
           },
         ]
       },
       {
-        path: "leader",
-        element: <LeaderBase />,
-        children: [
-          {
-            path: "",
-            element: <ShowAllUsers />
-
-          },
-        ]
+        path: "users",
+        element: <ShowAllUsers />
       },
       {
         path: "logs",
         element: <Logs />
       },
-      {
-        path: "propositions",
-        element: <LeaderBase />,
-        children: [
-
-        ]
-      },
-      {
-        path: "propositons",
-        element: <RequestBase />,
-        children: [
-          {
-            path: "",
-            element: <PropositionBase />
-          },
-          {
-            path: "demo",
-            element: <ConvertProposition />
-          }
-        ]
-      },
     ]
   }
 
 ]);
+
 const queryClient = new QueryClient()
+const Default: React.FC<DefaultProps> = (props) => {
+  const callback = () => {
+    const params = new window.URLSearchParams(document.cookie)
+    console.log(params);
+
+    if (params.has("token")) {
+      if (params.get("token")) {
+        const token = decodeToken(params);
+        setjwt({ ...token })
+      }
+    } else {
+      if (!(window.location.pathname === "/" || window.location.pathname === "/login")) {
+        window.location.pathname = "/"
+
+      }
+    }
+  }
+  React.useEffect(() => {
+    callback()
+
+    return () => {
+    }
+  }, []);
+  const [jwt, setjwt] = React.useState({} as IUserContext);
+  return (<>
+    <UserContext.Provider value={{ ...jwt, set: setjwt }}>
+      {props.children}
+    </UserContext.Provider>
+  </>)
+}
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
+    <Default>
+
     <QueryClientProvider client={queryClient}>
       <LoadingProvider>
         <RouterProvider router={router} />
       </LoadingProvider>
     </QueryClientProvider>
+    </Default>
+
   </React.StrictMode>
 );
+
+interface DefaultProps {
+  children: any;
+}

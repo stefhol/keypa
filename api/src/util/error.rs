@@ -1,3 +1,5 @@
+use std::string::FromUtf8Error;
+
 use actix_web::{http::StatusCode, ResponseError};
 use thiserror::Error;
 #[derive(Debug, Error)]
@@ -16,6 +18,10 @@ pub enum CrudError {
     #[error("Error in JsonWebToken Generation")]
     JsonWebTokenError(#[from] jsonwebtoken::errors::Error),
     #[error("Token Invalid, try Login again")]
+    CSVError(#[from] csv::Error),
+    #[error("Can't create csv")]
+    UTF8Error(#[from] FromUtf8Error),
+    #[error("Can't convert to UTF8")]
     InvalidToken,
     #[error("invalid input: {0}")]
     InvalidInput(String),
@@ -45,6 +51,8 @@ impl ResponseError for CrudError {
             CrudError::InvalidInput(_) => StatusCode::BAD_REQUEST,
             CrudError::Unauthorized => StatusCode::UNAUTHORIZED,
             CrudError::InvalidToken => StatusCode::UNAUTHORIZED,
+            CrudError::CSVError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            CrudError::UTF8Error(_) => StatusCode::INTERNAL_SERVER_ERROR,
             // Self::Unauthorized => StatusCode::UNAUTHORIZED,
             // Self::NotFound => StatusCode::NOT_FOUND,
             // Self::UnprocessableUUid(_) => StatusCode::UNPROCESSABLE_ENTITY,

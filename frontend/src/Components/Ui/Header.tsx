@@ -13,16 +13,18 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     window.document.cookie !== "" &&
                     <button onClick={(e) => {
                     e.preventDefault()
-                    navigate("/dashboard")
+                            navigate("/home")
                 }}>
-                    Dashboard
+                            Home
                     </button>}
                 <span className="spacer"> </span>
                 {
                     window.document.cookie.match("token") &&
                     <button onClick={(e) => {
                             e.preventDefault()
-                        Rest.sendLogout().then(res => console.log(res))
+                            Rest.sendLogout().then(() => {
+                                navigate("/")
+                            })
                     }}>
                         Logout
                     </button>

@@ -4,25 +4,26 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_role")]
+#[sea_orm(table_name = "tbl_request_archive")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = false)]
-    pub role_id: Uuid,
-    pub name: String,
+    pub request_id: Uuid,
+    pub requester_id: Uuid,
+    pub created_at: DateTime,
+    pub changed_at: DateTime,
+    pub active_until: Option<DateTime>,
     #[sea_orm(column_type = "Text", nullable)]
     pub description: Option<String>,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub additional_rooms: Option<String>,
+    pub active: bool,
+    pub accept: bool,
+    pub reject: bool,
+    pub payed: Option<bool>,
+    pub pending: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
-pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_user::Entity")]
-    TblUser,
-}
-
-impl Related<super::tbl_user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblUser.def()
-    }
-}
+pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}

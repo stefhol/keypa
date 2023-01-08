@@ -4,7 +4,7 @@ use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Eq, Serialize, Deserialize)]
-#[sea_orm(table_name = "tbl_log")]
+#[sea_orm(table_name = "tbl_request_log")]
 pub struct Model {
     #[sea_orm(primary_key)]
     pub log_id: i64,
@@ -12,7 +12,6 @@ pub struct Model {
     pub message: Option<String>,
     pub keycard_history_id: Option<i64>,
     pub door_to_request_history_id: Option<i64>,
-    pub request_history_id: Option<i64>,
     pub changed_at: DateTime,
     pub changed_by: Uuid,
 }
@@ -28,21 +27,13 @@ pub enum Relation {
     )]
     TblDoorToRequestHistory,
     #[sea_orm(
-        belongs_to = "super::tbl_keycard_history::Entity",
+        belongs_to = "super::tbl_keycard_usage_history::Entity",
         from = "Column::KeycardHistoryId",
-        to = "super::tbl_keycard_history::Column::KeycardHistoryId",
+        to = "super::tbl_keycard_usage_history::Column::KeycardHistoryId",
         on_update = "NoAction",
         on_delete = "NoAction"
     )]
-    TblKeycardHistory,
-    #[sea_orm(
-        belongs_to = "super::tbl_request_history::Entity",
-        from = "Column::RequestHistoryId",
-        to = "super::tbl_request_history::Column::RequestHistoryId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblRequestHistory,
+    TblKeycardUsageHistory,
     #[sea_orm(
         belongs_to = "super::tbl_user::Entity",
         from = "Column::ChangedBy",
@@ -59,15 +50,9 @@ impl Related<super::tbl_door_to_request_history::Entity> for Entity {
     }
 }
 
-impl Related<super::tbl_keycard_history::Entity> for Entity {
+impl Related<super::tbl_keycard_usage_history::Entity> for Entity {
     fn to() -> RelationDef {
-        Relation::TblKeycardHistory.def()
-    }
-}
-
-impl Related<super::tbl_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestHistory.def()
+        Relation::TblKeycardUsageHistory.def()
     }
 }
 
