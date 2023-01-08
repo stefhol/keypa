@@ -7,7 +7,11 @@ use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
 use crate::{
-    crud::{self, comment::InsertComment},
+    crud::{
+        self,
+        comment::InsertComment,
+        email::{create_email, Email},
+    },
     util::{
         error::CrudError,
         middleware::{extractor::Authenticated, SecurityLevel},
@@ -58,5 +62,6 @@ pub async fn insert_comment(
     let comments =
         crud::comment::insert_comment_into_request_id(&db, &user_id, &request_id, &insert_comment)
             .await?;
+
     Ok(HttpResponse::Ok().json(comments))
 }

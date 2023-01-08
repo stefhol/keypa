@@ -1,11 +1,12 @@
 use super::{
+    email::{create_email, Email},
     log::{create_log_message, CHANGE_KEYCARD, DEACTIVE_KEYCARD},
     request::get::{get_all_requests, GetRequest, RequestType},
 };
 use crate::crud;
 use crate::util::error::CrudError;
 use chrono::{DateTime, Utc};
-use entities::model::{tbl_keycard, tbl_keycard_archive, tbl_request_log};
+use entities::model::{tbl_keycard, tbl_keycard_archive, tbl_request_log, tbl_user};
 use sea_orm::{
     ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, IntoActiveModel, Set, Statement,
 };
@@ -239,8 +240,21 @@ pub async fn change_keycard(
             }
             move_to_archive(db, worker_id, &keycard_id).await?;
         }
+        let user = tbl_user::Entity::find_by_id(keycard_model.user_id.to_owned())
+            .one(db)
+            .await?;
+        if let Some(user) = user {
+            create_email(
+                &db,
+                Email {
+                    email_to: user.email.to_string(),
+                    message: format!("A Keycard from you has been changed"),
+                    subject: format!("{}", "Changed Keycard"),
+                },
+            )
+            .await?;
+        }
     }
-
     Ok(())
 }
 pub async fn move_to_archive(
@@ -276,6 +290,20 @@ pub async fn move_to_archive(
         )
         .insert(db)
         .await?;
+        let user = tbl_user::Entity::find_by_id(keycard_model.user_id.to_owned())
+            .one(db)
+            .await?;
+        if let Some(user) = user {
+            create_email(
+                &db,
+                Email {
+                    email_to: user.email.to_string(),
+                    message: format!("A Keycard from you has been archived"),
+                    subject: format!("{}", "Archived Keycard"),
+                },
+            )
+            .await?;
+        }
         tbl_keycard::Entity::delete_by_id(keycard_id.to_owned())
             .exec(db)
             .await?;

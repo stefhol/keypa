@@ -7,9 +7,6 @@ export const Main: React.FC<MainProps> = (props) => {
 
     return (<main>
         <LogoFull width={300} /><br />
-
-        <h3>Dies ist ein Mockup</h3>
-
         <p>
             Universitäten sind heutzutage immer auf der Suche nach Wegen, um die Sicherheit zu verbessern. Ein Schluesselverwaltungssystem ist eine gute Möglichkeit, um den Überblick ueber die vielen Schluessel zu behalten, die im Umlauf sind. Mit einem Schluesselverwaltungssystem können Sie den Zugriff auf bestimmte Bereiche einschränken und so die Sicherheit erhöhen.
         </p>

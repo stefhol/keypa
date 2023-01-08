@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local, Utc};
 use entities::model::{
     sea_orm_active_enums::HistoryAction::Add, tbl_door, tbl_door_to_request, tbl_request,
-    tbl_request_archive, tbl_request_comment, tbl_request_department, tbl_request_log,
+    tbl_request_archive, tbl_request_comment, tbl_request_department, tbl_request_log, tbl_user,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
@@ -14,6 +14,7 @@ use uuid::Uuid;
 use crate::{
     crud::{
         self,
+        email::{create_email, Email},
         history::create_door_to_request_history,
         log::{
             create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR, CHANGE_REQUEST, DEACTIVATE_REQUEST,
@@ -315,6 +316,20 @@ pub async fn change_request(
                 crud::keycard::move_to_archive(db, worker_id, keycard_id).await?;
             }
         }
+        let user = tbl_user::Entity::find_by_id(og_request.requester_id.to_owned())
+            .one(db)
+            .await?;
+        if let Some(user) = user {
+            create_email(
+                &db,
+                Email {
+                    email_to: user.email.to_string(),
+                    message: format!("A Request from you have been changed"),
+                    subject: format!("{}", "Change Request"),
+                },
+            )
+            .await?;
+        }
     }
     Ok(change_status)
 }
@@ -372,7 +387,20 @@ pub(crate) async fn move_to_archive(
     )
     .insert(db)
     .await?;
-
+    let user = tbl_user::Entity::find_by_id(request_model.requester_id.to_owned())
+        .one(db)
+        .await?;
+    if let Some(user) = user {
+        create_email(
+            &db,
+            Email {
+                email_to: user.email.to_string(),
+                message: format!("A Request from you has been archived"),
+                subject: format!("{}", "Archived Request"),
+            },
+        )
+        .await?;
+    }
     let _ = tbl_request::Entity::delete_by_id(request_id.to_owned())
         .exec(db)
         .await;

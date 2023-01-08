@@ -28,11 +28,15 @@ export const Home: React.FC<HomeProps> = (props) => {
                 Nutzer Übersicht
             </a><br />
             <h3>Tools</h3>
+            <a href="logs">
+                Logdateien
+            </a><br />
+            <h3>Util</h3>
             <a href="use-keycard">
                 Demo Keycard Nutzen
             </a><br />
-            <a href="logs">
-                Logdateien
+            <a href="email">
+                Demo Email
             </a><br />
         </main>
     </>)

@@ -3,13 +3,10 @@ use actix_web::{
     web::{Data, Json},
     HttpResponse,
 };
-use chrono::{Local, Utc};
+use chrono::Local;
 use entities::model::tbl_keycard_usage_history;
-use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, Set, Statement,
-};
+use sea_orm::{ActiveModelTrait, DatabaseConnection, DbBackend, FromQueryResult, Set, Statement};
 use serde::{Deserialize, Serialize};
-use tracing::info;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

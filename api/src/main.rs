@@ -86,6 +86,7 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::change_requests)
                     //demo keycard
                     .service(api::use_keycard::use_keycard)
+                    .service(api::email::get_email)
                     // keycard usage history
                     .service(api::keycard_usage_history::get_keycard_usage_history)
                     .service(api::keycard_usage_history::get_csv_keycard_usage_history)

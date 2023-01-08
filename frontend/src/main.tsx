@@ -32,6 +32,7 @@ import UserContext, { IUserContext } from './context/UserContext';
 import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
 import { decodeToken } from './util/token';
 import { UseKeycard } from './routes/use-keycard/UseKeycard';
+import { Email } from './routes/email/Email';
 
 const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ const router = createBrowserRouter([
       {
         path: "/stats",
         element: <StatsDemo />
+      },
+      {
+        path: "/email",
+        element: <Email />
       },
       {
         path: "/use-keycard",

@@ -1,15 +1,18 @@
 use std::collections::HashSet;
 
 use crate::crud;
+use crate::crud::email::{create_email, Email};
 use crate::crud::history::create_door_to_request_history;
 use crate::crud::log::{create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR};
 use crate::util::{error::CrudError, middleware::SecurityLevel};
 use chrono::{DateTime, Utc};
 use entities::model::sea_orm_active_enums::HistoryAction::Add;
-use entities::model::{tbl_door_to_request, tbl_keycard, tbl_request, tbl_request_department};
+use entities::model::{
+    tbl_door_to_request, tbl_keycard, tbl_request, tbl_request_department, tbl_user,
+};
 use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, DbBackend, FromQueryResult, IntoActiveModel, Set,
-    Statement,
+    ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, IntoActiveModel,
+    Set, Statement,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -169,7 +172,20 @@ pub async fn create_request(
             }
         }
     }
-
+    let user = tbl_user::Entity::find_by_id(user_id.to_owned())
+        .one(db)
+        .await?;
+    if let Some(user) = user {
+        create_email(
+            &db,
+            Email {
+                email_to: user.email.to_string(),
+                message: format!("Your Request has been created"),
+                subject: format!("{}", "Create Request"),
+            },
+        )
+        .await?;
+    }
     Ok(())
 }
 async fn create_default_request(

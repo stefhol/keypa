@@ -122,7 +122,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                             Nachgetragene Räume
                         </h2>
 
-                        <TreeView displayFilter filter selectionRef={{ current: {} } as any} data={treeData}
+                        <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData}
                             onChange={e => {
                                 setRooms(e.map(val =>
                                     val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
