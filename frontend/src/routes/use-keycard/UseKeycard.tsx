@@ -2,7 +2,8 @@ import { useQuery } from "@tanstack/react-query"
 import React, { useMemo } from "react"
 import { User } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
-
+import { Keycard } from '../../util/intefaces/Keycard'
+import { format } from "date-fns"
 export const UseKeycard: React.FC<{}> = (props) => {
     const { data: dataKeycard } = useQuery(["keycard"], Rest.getKeycard)
     const { data: building } = useQuery(["building"], Rest.getBuildings)
@@ -45,7 +46,9 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 keycard_id: selectedKeycard
             }).then(res => {
                 if (res.ok) {
-                    setStatus(`Success`)
+                    res.text().then(text => {
+                        setStatus(text)
+                    }) 
                 }
             })
         }}>
@@ -63,9 +66,15 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 <select value={selectedKeycard} onChange={e => setSelectedKeycard(e.target.value)}>
                     <option value=""></option>
                     {filterdKeycardData?.map((val, idx) => <option key={idx} value={val.keycard_id}>
-                        {val.keycard_id}
+                        {`Given out ${val.given_out} | Deaktiviert ${val.is_deactivated} | Is given back ${val.is_given_back} | Locked ${val.is_locked} | Is lost ${val.is_lost} | Request Beschreibung ${val.request?.description} | Request Aktiv ${val.request?.active} Request aktiv bis ${val.request?.active_until}`}
                     </option>)}
                 </select>
+                <br />
+                <p>
+                    {selectedKeycard && display(filterdKeycardData?.find(val => val.keycard_id === selectedKeycard))
+
+                    }
+                </p>
             </label>
             <label>
                 Building:
@@ -91,7 +100,7 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 <select value={selectedDoor} onChange={e => setSelectedDoor(e.target.value)}>
                     <option value=""></option>
                     {filteredDoor?.map((val, idx) => <option key={idx} value={val.door_id}>
-                        {val.door_id}
+                        {idx}
                     </option>)}
                 </select>
             </label>
@@ -99,4 +108,39 @@ export const UseKeycard: React.FC<{}> = (props) => {
         </form>
         {status && <p>{status}</p>}
     </>)
+}
+
+const display = (val: Keycard | undefined): JSX.Element => {
+    if (val) {
+        return <>
+            <div>
+                <div>
+                    {val.given_out && `Ausgegeben am ${format(new Date(val.given_out), "dd.MM.yyyy HH:mm")}`}
+                </div>
+                <div>
+                    {`Deaktiviert ${val.is_deactivated}`}
+                </div>
+                <div>
+                    {`Is given back ${val.is_given_back}`}
+                </div>
+                <div>
+                    {`Locked ${val.is_locked}`}
+                </div>
+                <div>
+                    {`Is lost ${val.is_lost}`}
+                </div>
+                <div>
+                    {`Antrag Beschreibung ${val.request?.description}`}
+                </div>
+                <div>
+                    {`Antrag Aktiv ${val.request?.active}`}
+                </div>
+                <div>
+                    {val.request?.active_until && `Antrag aktiv bis ${format(new Date(val.request?.active_until), "dd.MM.yyyy HH:mm")}`}
+                </div>
+            </div>
+        </>
+    } else {
+        return <></>
+    }
 }
