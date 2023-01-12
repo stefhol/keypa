@@ -29,17 +29,17 @@ pub async fn use_keycard(
     data: Json<UseKeycard>,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     let db: &DatabaseConnection = &db;
-
+    let success = is_sucess(db, &data).await?;
     tbl_keycard_usage_history::ActiveModel {
         keycard_id: Set(data.keycard_id.to_owned()),
         door_id: Set(data.door_id.to_owned()),
         used_at: Set(Local::now().naive_utc()),
-        success: Set(is_sucess(db, &data).await?),
+        success: Set(success),
         ..Default::default()
     }
     .insert(db)
     .await?;
-    Ok(HttpResponse::Ok().finish())
+    Ok(HttpResponse::Ok().body(format!("{success}")))
 }
 /// find out if access is allowed
 /// to determine a user_id has to have a keycard_id and a door_id that matches our incoming data
