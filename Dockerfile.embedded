@@ -1,6 +1,6 @@
 #runs the frontend + api 
-FROM nginx:latest
-
+FROM nginx:alpine
+RUN apk add openrc
 COPY ./builds/api /usr/local/app/
 COPY ./builds/mock /usr/local/app/
 COPY ./translations /usr/local/app/translations
@@ -11,9 +11,9 @@ COPY ./nginx.conf /etc/nginx/nginx.conf
 WORKDIR /usr/local/app/
 ENV PORT=80
 
-
 RUN ["chmod", "+x", "./api"]
 RUN ["chmod", "+x", "./mock"]
-STOPSIGNAL SIGTERM
-CMD ["nginx", "-g", "daemon off;"]
+
+RUN ["rc-update", "add", "nginx"]
+
 CMD ["./api"]
