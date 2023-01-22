@@ -30,7 +30,7 @@ jobs:
           ln -s /root/.cargo $HOME/.cargo
           ln -s /root/.rustup $HOME/.rustup
     - name: Cache Cargo dependencies
-    - uses: actions/cache@v3
+      uses: actions/cache@v3
       with:
         path: |
           ~/.cargo
@@ -69,7 +69,7 @@ jobs:
       with:
         node-version: 16
     - name: Cache Nodejs
-    - uses: actions/cache@v3
+      uses: actions/cache@v3
       id: yarn-cache # use this to check for `cache-hit` (`steps.yarn-cache.outputs.cache-hit != 'true'`)
       with:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
