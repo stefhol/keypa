@@ -1,4 +1,4 @@
-name: Build Keypa API
+name: Build Keypa
 
 on:
   push:
