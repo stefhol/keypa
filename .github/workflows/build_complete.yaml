@@ -80,7 +80,7 @@ jobs:
       with:
         name: frontend_build
         path: |
-          ./dist
+          ./frontend/dist
 
   build_docker:
     needs: [build_api, build_frontend]
