@@ -1,3 +1,5 @@
+#runs only the api 
+
 FROM alpine:latest
 
 COPY ./builds/api /usr/local/app/
