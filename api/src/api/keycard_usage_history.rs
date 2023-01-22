@@ -88,6 +88,7 @@ pub(crate) async fn query_keycard_usage(
         join tbl_building tb on tr.building_id = tb.building_id
         left join tbl_keycard tk on tbl_keycard_usage_history.keycard_id = tk.keycard_id
         left join tbl_user tu on tk.user_id = tu.user_id
+        order by  tbl_keycard_usage_history.used_at DESC 
         "#,
         vec![],)
     ).all(db).await?;

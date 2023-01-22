@@ -7,10 +7,9 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::util::error::CrudError;
+use crate::util::{error::CrudError, mail::{send_mail, Email, CREATE_COMMENT}};
 
 use super::{
-    email::{create_email, Email, CREATE_COMMENT},
     user::{get_all_user, GetUser},
 };
 #[derive(Serialize, Deserialize, ToSchema, Debug)]
@@ -62,15 +61,13 @@ pub async fn insert_comment_into_request_id(
         .one(db)
         .await?;
     if let Some(user) = user {
-        create_email(
-            &db,
+        send_mail(
             Email {
                 email_to: user.email.to_string(),
                 message: format!("There is a new Comment from {}", user.name),
                 subject: format!("{}", CREATE_COMMENT),
             },
-        )
-        .await?;
+        )?;
     }
     tbl_request_comment::ActiveModel {
         comment: ActiveValue::Set(comment.comment.to_owned()),

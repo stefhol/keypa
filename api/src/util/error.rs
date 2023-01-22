@@ -1,4 +1,4 @@
-use std::string::FromUtf8Error;
+use std::{string::FromUtf8Error, num::ParseIntError};
 
 use actix_web::{http::StatusCode, ResponseError};
 use thiserror::Error;
@@ -6,6 +6,8 @@ use thiserror::Error;
 pub enum CrudError {
     #[error("Error in Database")]
     DbError(#[from] sea_orm::error::DbErr),
+    #[error("Error Parsing Int")]
+    ParseIntError(#[from] ParseIntError),
     #[error("Not found")]
     NotFound,
     #[error("Unauthorized")]
@@ -44,6 +46,7 @@ impl ResponseError for CrudError {
     fn status_code(&self) -> actix_web::http::StatusCode {
         match self {
             CrudError::DbError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            CrudError::ParseIntError(_) => StatusCode::INTERNAL_SERVER_ERROR,
             CrudError::NotFound => StatusCode::NOT_FOUND,
             CrudError::UuidError(_) => StatusCode::BAD_REQUEST,
             CrudError::DotenvError(_) => StatusCode::INTERNAL_SERVER_ERROR,

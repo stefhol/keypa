@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import React, { CSSProperties } from "react";
 import { Department } from "../../util/intefaces/Departments";
 interface DepartmentGroupProp {
@@ -21,7 +22,7 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
             }} name={`department-select-${props.nmbr}`}>
                 <option value={""}></option>
                 {props.department?.map((val, idx) => <option key={idx} value={val.department_id}>
-                    {val.name} {val.is_sensitive ? "Sensitiv" : ""}
+                    {val.name} {val.is_sensitive ? i18next.t("is_sensitive") : ""}
                 </option>)}
             </select>
 
@@ -33,7 +34,7 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
             }}>X</button>
             {selected_option &&
                 <div>
-                    Beinahltet: {selected_option.buildings.map((val, idx) => <div key={idx}>
+                    {i18next.t("includes")}: {selected_option.buildings.map((val, idx) => <div key={idx}>
                         <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
                     </div>)}</div>
             }

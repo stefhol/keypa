@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
+import i18next from "i18next"
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import CommentView from "../../Components/comment/Comment"
@@ -65,7 +66,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
     const [addDepartmentOption, setAddDepartmentOption] = React.useState("");
     const treeData = React.useMemo(() => building?.length ? prepareData(building) : [], [building?.length])
     return (<>
-        <h1>Antrag</h1>
+        <h1>{i18next.t("change_request")}</h1>
         <form onSubmit={e => {
             e.preventDefault()
             send(props.data.request_id, {
@@ -84,42 +85,42 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
             })
         }}>
             <div className="container">
-                <h2>Kontaktinformationen</h2>
+                <h2>{i18next.t("contact_info")}</h2>
                 <p>
-                    Name: {props.data.requester.name}
+                    {i18next.t("username")}: {props.data.requester.name}
                 </p>
                 <p>
-                    Email: {props.data.requester.email}
+                    {i18next.t("email")}: {props.data.requester.email}
                 </p>
                 <p>
-                    Rolle: {props.data.requester.role_id}
+                    {i18next.t("role")}: {props.data.requester.role_id}
                 </p>
                 <p>
-                    Tel: {props.data.requester.tel}
+                    {i18next.t("tel")}: {props.data.requester.tel}
                 </p>
             </div>
 
             <div className="container">
-                <h2>Beschreibung</h2>
+                <h2>{i18next.t("description")}</h2>
                 <p>
                     {props.data.description}
                 </p>
             </div>
             <div className="container"><label>
-                Aktiv bis
+                {i18next.t("active_until")}:
                 <input type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker)} />
             </label></div>
             {(building && props.data.request_type !== "keycard") && <div className="container">
-                <h2>Angefragte Räume</h2>
+                <h2>{i18next.t("requested_rooms")}</h2>
                 <div className="container">
-                    <h2>Angefragte Individuelle Räume</h2>
+                    <h2>{i18next.t("requested_individual_rooms")}</h2>
                     <p>
                         {props.data.additional_rooms || "Keine"}
                     </p>
 
                     {(is_worker || is_leader) ? <>
                         <h2>
-                            Nachgetragene Räume
+                            {i18next.t("individual_rooms")}
                         </h2>
 
                         <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData}
@@ -130,13 +131,16 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                         />
                     </> : <>
                         <h2>
-                            Nachgetragene Räume
+                                {i18next.t("individual_rooms")}
+
                         </h2>
                         <IndividualRoomWrapper buildings={building} />
                     </>}
                 </div>
                 <div className="container">
-                    <h2>Angefragte Raumgruppen</h2>
+                    <h2>
+                        {i18next.t("requested_department")}
+                    </h2>
                     {(departments && departmentsData) && departments.map((val, idx) => {
                         const currentDepartment = departmentsData.find(dep => dep.department_id === val)
                         return <div className="container" key={idx}>
@@ -184,7 +188,8 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                                     })
                                     setAddDepartmentOption("")
                                 }}
-                            >Raumgruppe hinzufügen</button>
+                            >{i18next.t("add_requested_department")}
+                            </button>
                         </>
                     }
                 </div>
@@ -215,14 +220,15 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                                 setPending(true)
                             }
                         }}>
-                        <option value="1">Akzeptieren</option>
-                        <option value="2" >Ablehnen</option>
-                        <option value="3" >Ausstehend</option>
+                        <option value="1">{i18next.t("status_accepted")}
+                        </option>
+                        <option value="2" >{i18next.t("status_reject")}</option>
+                        <option value="3" >{i18next.t("status_pending")}</option>
                     </select>
                 </label>
 
                 <button>
-                    Änderung Speichern
+                    {i18next.t("send")}
                 </button>
             </div>}
         </form>

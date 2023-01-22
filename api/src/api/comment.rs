@@ -10,7 +10,6 @@ use crate::{
     crud::{
         self,
         comment::InsertComment,
-        email::{create_email, Email},
     },
     util::{
         error::CrudError,

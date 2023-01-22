@@ -106,6 +106,8 @@ pub async fn get_all_logs(db: &DatabaseConnection) -> Result<Vec<GetLogs>, CrudE
             &user_vec,
         )
     });
+    request_log.sort_by(|a,b|a.changed_at.cmp(&b.changed_at));
+    request_log.reverse();
     Ok(request_log)
 }
 pub async fn get_all_logs_raw(

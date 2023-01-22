@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import i18next from "i18next"
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { createBasicColumns, Table } from "../../Components/table/Table"
@@ -20,7 +21,7 @@ export const ShowAllRequestFromUser: React.FC<{}> = (props) => {
             rowAction={
                 [
                     {
-                        element: <button>Ändern</button>,
+                        element: <button>{i18next.t("change")}</button>,
                         onClick(idx) {
                             navigate(`/request/change-request/${data[idx].request_id}`)
                         },

@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import React, { MutableRefObject, Ref } from 'react';
 import '../../css/tree.css';
 import { Building, Room } from '../../util/intefaces/Buildings';
@@ -67,7 +68,7 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
                         props.displayFilter
                         &&
                         <label>
-                            Filter
+                                {i18next.t("filter")}
                             <input
                                 checked={filter}
                                 onChange={() => setFilter(prev => !prev)}
@@ -206,7 +207,7 @@ const isTrueInChildren = (input: TreeData): boolean => {
 export const prepareData = (data: Building[], filter?: boolean) => {
 
     return data.map(val => ({
-        name: `Gebäude ${val.name}`,
+        name: `${i18next.t("building")} ${val.name}`,
         children: prepareStockwerke(val.rooms)
     }))
 }
@@ -217,10 +218,10 @@ const prepareStockwerke = (data: Room[]): TreeData[] => {
     let floors = new Set(data.map(val => val.floor) as number[])
     floors.forEach(floor => {
         ret.push({
-            name: `Stockwerk: ${floor}`,
+            name: `${i18next.t("floor")}: ${floor}`,
             children: data.filter(val => val.floor == floor)
                 .map((val, idx) => ({
-                    name: `Raum: ${val.name} ${val.is_sensitive ? "Sensitiv" : ""}`,
+                    name: `${i18next.t("room")}: ${val.name} ${val.is_sensitive ? i18next.t("is_sensitive") : ""}`,
                     id: val.room_id,
                     value: !!val.doors.find(val => val?.owner === true),
                     children: []

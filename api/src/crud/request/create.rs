@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use crate::crud;
-use crate::crud::email::{create_email, Email};
 use crate::crud::history::create_door_to_request_history;
 use crate::crud::log::{create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR};
+use crate::util::mail::{send_mail, Email};
 use crate::util::{error::CrudError, middleware::SecurityLevel};
 use chrono::{DateTime, Utc};
 use entities::model::sea_orm_active_enums::HistoryAction::Add;
@@ -176,15 +176,13 @@ pub async fn create_request(
         .one(db)
         .await?;
     if let Some(user) = user {
-        create_email(
-            &db,
+        send_mail(
             Email {
                 email_to: user.email.to_string(),
                 message: format!("Your Request has been created"),
                 subject: format!("{}", "Create Request"),
             },
-        )
-        .await?;
+        )?;
     }
     Ok(())
 }

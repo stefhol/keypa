@@ -20,3 +20,4 @@ pub mod convert_active;
 pub mod crypto;
 pub mod error;
 pub mod middleware;
+pub mod mail;

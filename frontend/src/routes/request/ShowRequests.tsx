@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import i18next from "i18next"
 import React from "react"
 import { useNavigate } from "react-router-dom"
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
@@ -31,33 +32,35 @@ export const ShowRequests: React.FC<{}> = (props) => {
                         onChange={e => setFilter(prev => ({ ...prev, request_status: e.target.value }))}
                     >
                         <option value={""}></option>
-                        <option value={"accept"}>accept</option>
-                        <option value={"pending"}>pending</option>
-                        <option value={"reject"}>reject</option>
+                        <option value={"accept"}>{i18next.t("status_accepted")}</option>
+                        <option value={"pending"}>{i18next.t("status_pending")}</option>
+                        <option value={"reject"}>{i18next.t("status_reject")}</option>
                     </select>
                     <select style={{ width: "initial" }}
                         value={filter.request_type}
                         onChange={e => setFilter(prev => ({ ...prev, request_type: e.target.value }))}
                     >
                         <option value={""}></option>
-                        <option value={"room"}>room</option>
-                        <option value={"temp"}>temp</option>
-                        <option value={"keycard"}>keycard</option>
+                        <option value={"room"}>{i18next.t("room")}</option>
+                        <option value={"temp"}>{i18next.t("temp")}</option>
+                        <option value={"keycard"}>{i18next.t("keycard")}</option>
                     </select>
                     <select style={{ width: "initial" }}
                         value={filter.is_sensitive}
                         onChange={e => setFilter(prev => ({ ...prev, is_sensitive: e.target.value }))}
                     >
                         <option value={""}></option>
-                        <option value={"true"}>Ja</option>
-                        <option value={"false"}>Nein</option>
+                        <option value={"true"}>{i18next.t("true")}</option>
+                        <option value={"false"}>{i18next.t("false")}</option>
                     </select>
                 </>
             }
             rowAction={
                 [
                     {
-                        element: <button>Ändern</button>,
+                        element: <button>
+                            {i18next.t("change")}
+                        </button>,
                         onClick(idx) {
                             navigate(`/request/change-request/${data[idx].request_id}`)
                         },

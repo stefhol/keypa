@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import i18next from "i18next";
 import React, { } from "react";
 import { useNavigate } from "react-router-dom";
 import { DepartmentGroup } from "../../Components/request/Department";
@@ -40,13 +41,13 @@ export const CreateKeycardRequestForm: React.FC<{ title: JSX.Element }> = (props
 
         <form>
             {props.title}
-            <label> Beschreibung:
+            <label> {i18next.t("descritption")}:
                 <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
                 />
             </label>
-            <label> Bis wann:
+            <label> {i18next.t("active_until")}:
                 <input type={"date"} onChange={e => setActiveUntil(e.target.valueAsDate)}
                 />
             </label>
@@ -63,7 +64,7 @@ export const CreateKeycardRequestForm: React.FC<{ title: JSX.Element }> = (props
                 } as CreateRequest).then(res => {
                     alert("Success")
                 })
-            }}>Absenden</button>
+            }}>{i18next.t("send")}</button>
         </form>
     </>)
 }
@@ -85,13 +86,13 @@ export const CreateRequestForm: React.FC<{
 
             <form>
                 {props.title}
-                <label> Beschreibung:
+                <label> {i18next.t("descritption")}:
                     <textarea
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                     />
                 </label>
-                <label> Bis wann:
+                <label> {i18next.t("active_until")}:
                     <input type={"date"} onChange={e => setActiveUntil(e.target.valueAsDate)}
                     />
                 </label>
@@ -99,7 +100,7 @@ export const CreateRequestForm: React.FC<{
                 {!is_worker ?
                     <div className="container">
                         <p>
-                            Sonstige Räume
+                            {i18next.t("other_rooms")}
                         </p>
                         <textarea
                             value={otherRooms}
@@ -126,7 +127,7 @@ export const CreateRequestForm: React.FC<{
                         navigate("/user")
 
                     })
-                }}>Absenden</button>
+                }}>{i18next.t("send")}:</button>
 
 
             </form>
@@ -159,7 +160,7 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
     return (
         <div>
             <div className="container">
-                <h2>Gruppen</h2>
+                <h2>{i18next.t("group")}:</h2>
                 <>
                     {elements}
                 </>
@@ -170,7 +171,7 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                         arr.push(0);
                         return arr
                     })
-                }}>Gruppe hinzufügen</button>
+                }}>{i18next.t("add_requested_department")}:</button>
             </div>
         </div>
     )
@@ -181,7 +182,7 @@ const RoomSelectionWrapper: React.FC<{}> = (props) => {
     const { doors } = React.useContext(LocalContext);
     return (<>
         <div className="container">
-            <h2>Räume</h2>
+            <h2>{i18next.t("rooms")}</h2>
 
             {data &&
                 count.map((_, idx) =>
@@ -200,7 +201,7 @@ const RoomSelectionWrapper: React.FC<{}> = (props) => {
                         return arr
                     })
                 }}>
-                Räume in einen anderem Gebäude hinzufügen</button>
+                {i18next.t("choose_rooms_different_building")}</button>
         </div>
     </>)
 }

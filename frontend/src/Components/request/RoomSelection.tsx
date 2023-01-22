@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import React from "react";
 import { Building } from "../../util/intefaces/Buildings";
 import { prepareData, treeDataToStringArr, TreeView } from "../tree-view/TreeView";
@@ -15,7 +16,7 @@ export const RoomSelection: React.FC<CreateProps> = (props) => {
     return (<>
         <div className="container">
             <label>
-                Gebäude auswählen
+                {i18next.t("select_building")}
                 <select value={selected} onChange={e => setSelected(e.target.value)}>
                     <option key={-1} value={""}></option>
                     {props.buildings.map((val, idx) =>
@@ -25,7 +26,7 @@ export const RoomSelection: React.FC<CreateProps> = (props) => {
                 </select>
             </label>
             {selectedBuilding && <label>
-                Räume auswählen
+                {i18next.t("select_rooms")}
                 <TreeView filter={false} selectionRef={selectedRooms} data={treeData}
                     onChange={tree => props.onChange(treeDataToStringArr(tree))} />
             </label>}

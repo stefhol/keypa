@@ -1,17 +1,16 @@
 import { useQuery } from "@tanstack/react-query"
-import { format } from "date-fns"
+import i18next from "i18next"
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
-import { createBasicColumns, Table } from "../../Components/table/Table"
-import { Building } from "../../util/intefaces/Buildings"
-import { Department } from "../../util/intefaces/Departments"
-import { User } from "../../util/intefaces/Request"
-import { Rest } from "../../util/Rest"
-import { Request } from '../../util/intefaces/Request'
-import { Keycard } from "../../util/intefaces/Keycard"
-import UserContext from "../../context/UserContext"
 import { createKeycardDefColumn } from "../../Components/table/ColumnDef/Keycard"
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
+import { Table } from "../../Components/table/Table"
+import UserContext from "../../context/UserContext"
+import { Building } from "../../util/intefaces/Buildings"
+import { Department } from "../../util/intefaces/Departments"
+import { Keycard } from "../../util/intefaces/Keycard"
+import { Request, User } from "../../util/intefaces/Request"
+import { Rest } from "../../util/Rest"
 
 export interface SelfUserProps { }
 export const SelfUser: React.FC<SelfUserProps> = (props) => {
@@ -85,10 +84,10 @@ const UserFc: React.FC<UserProps> = (props) => {
     const { is_admin, is_leader, is_worker } = React.useContext(UserContext);
     return (<>
         <h1>
-            Nutzerbereich von {props.user.name}
+            {i18next.t("user_area_of")} {props.user.name}
         </h1>
         <div className="container">
-            <h2>Kontaktinformationen</h2>
+            <h2>{i18next.t("contact_info")}</h2>
             <p>
                 {props.user.email}
             </p>
@@ -100,28 +99,28 @@ const UserFc: React.FC<UserProps> = (props) => {
             {props.isSelf && <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
-            }}>Neuen Antrag stellen</button>
+            }}>{i18next.t("create_new_request")}</button>
             }
         </div> : <div className="container">
             <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request/keycard")
-            }}>Neuen Keycard erstellen</button>
+                }}>{i18next.t("create_new_keycard")}</button>
         </div>}
         <div className="container">
-            <h2>Individuelle Räume</h2>
+            <h2>{i18next.t("individual_rooms")}</h2>
             <IndividualRoomWrapper buildings={props.buildings} />
         </div>
         <DepartmentWrapper departments={props.department} />
         <div className="container">
-            <h2>Keycards</h2>
+            <h2>{i18next.t("keycards")}</h2>
             <>
 
                 <Table data={props.keycard}
                     rowAction={
                         [
                             {
-                                element: <button>Ändern</button>,
+                                element: <button>{i18next.t("change")}</button>,
                                 onClick(idx) {
                                     navigate(`/keycard/change-request/${props.keycard?.[idx].keycard_id}`)
                                 },
@@ -134,8 +133,9 @@ const UserFc: React.FC<UserProps> = (props) => {
             </>
         </div>
         <div className="container">
-            <h2>Genehmigte Anträge</h2>
+            <h2>{i18next.t("approved_requests")}</h2>
             <Table
+                defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.acceptedRequests}
                 rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
@@ -143,8 +143,9 @@ const UserFc: React.FC<UserProps> = (props) => {
             />
         </div>
         <div className="container">
-            <h2>Ausstehende Anträge</h2>
+            <h2>{i18next.t("pending_requests")}</h2>
             <Table
+                defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.pendingRequests}
                 rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
@@ -162,7 +163,7 @@ export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
                 <div className="container" key={idx}>
                     <h2>{val.name}</h2>
 
-                    Beinahltet: {val.buildings.map((val, idx) => <div key={idx}>
+                    {i18next.t("includes")}: {val.buildings.map((val, idx) => <div key={idx}>
                         <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
                     </div>)}
                 </div>
