@@ -101,7 +101,7 @@ jobs:
       with:
         # Artifact name
         name: frontend_build
-        path: ./builds
+        path: ./builds/dist
 
     - name: show files
       run: ls -R
