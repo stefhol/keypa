@@ -128,9 +128,18 @@ const router = createBrowserRouter([
   }
 
 ]);
-
+const loadI18n = async () => {
+  const supportedLanguages = ["de", "en"]
+  const ressoucesBundles = await Promise.all(
+    supportedLanguages.map(val => Rest.getRessourceBundle(val))
+  )
+  for (let idx = 0; idx < ressoucesBundles.length; idx++) {
+    i18next.addResourceBundle(supportedLanguages[idx], "1", ressoucesBundles[idx])
+  }
+}
 const queryClient = new QueryClient()
 const Default: React.FC<DefaultProps> = (props) => {
+  const [ressourcesBundlesLoaded, setRessourcesBundlesLoaded] = React.useState(false);
   const callback = () => {
     const params = new window.URLSearchParams(document.cookie)
     console.log(params);
@@ -149,38 +158,34 @@ const Default: React.FC<DefaultProps> = (props) => {
   }
   React.useEffect(() => {
     callback()
-
+    loadI18n().then(() => {
+      setRessourcesBundlesLoaded(true)
+    })
     return () => {
     }
   }, []);
   const [jwt, setjwt] = React.useState({} as IUserContext);
   return (<>
     <UserContext.Provider value={{ ...jwt, set: setjwt }}>
-      {props.children}
+      {ressourcesBundlesLoaded && props.children}
     </UserContext.Provider>
   </>)
 }
 if (!localStorage.getItem("language")) {
   localStorage.setItem("language", "en")
 }
-i18next.init({ defaultNS: '1', resources: {}, lng: localStorage.getItem("language") as string });
-Rest.getRessourceBundle("en").then(res => {
-  i18next.addResourceBundle("en", "1", res)
 
-})
-Rest.getRessourceBundle("de").then(res => {
-  i18next.addResourceBundle("de", "1", res)
-})
+i18next.init({ defaultNS: '1', resources: {}, lng: localStorage.getItem("language") as string });
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <Default>
 
-    <QueryClientProvider client={queryClient}>
-      <LoadingProvider>
-        <RouterProvider router={router} />
-      </LoadingProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <LoadingProvider>
+          <RouterProvider router={router} />
+        </LoadingProvider>
+      </QueryClientProvider>
     </Default>
 
   </React.StrictMode>
