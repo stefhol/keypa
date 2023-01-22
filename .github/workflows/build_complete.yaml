@@ -92,12 +92,12 @@ jobs:
     name: build docker image
     steps:
     - name: Download Build Artifact
-      uses: actions/download-artifact@3
+      uses: actions/download-artifact@v3
       with:
         # Artifact name
         name: keypa_x86_musl
     - name: Download Frontend Artifact
-      uses: actions/download-artifact@3
+      uses: actions/download-artifact@v3
       with:
         # Artifact name
         name: frontend_build
