@@ -127,7 +127,7 @@ CONTAINER ID   IMAGE                                            COMMAND         
 2da1799bea58   ghcr.io/wirtschaftsinformatik-passau/keypa:dev   "/docker-entrypoint.…"   53 minutes ago   Up 53 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           keypa-keypa-1
 ab4104794777   postgres:11-alpine                               "docker-entrypoint.s…"   53 minutes ago   Up 53 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   keypa-keypa_db-1
 ```
-Der erste Eintrag hat unser Keypa Image mit dieser CONTAINER ID koennen wir nun in den Container
+Der erste Eintrag hat das Keypa Image mit dieser CONTAINER ID koennen wir nun in den Container
 ```
 docker exec -it 2da1799bea58 bash 
 ```

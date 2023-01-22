@@ -14,5 +14,6 @@ ENV PORT=80
 
 RUN ["chmod", "+x", "./api"]
 RUN ["chmod", "+x", "./mock"]
+STOPSIGNAL SIGTERM
 CMD ["nginx", "-g", "daemon off;"]
 CMD ["./api"]
