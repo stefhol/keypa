@@ -8,9 +8,17 @@ import { Log } from "./intefaces/Log"
 import { User, Request, Comment } from "./intefaces/Request"
 
 //@ts-ignore
-const url = (process.env.NODE_ENV === "development") ? "http://localhost:8080" : window.location.origin
+const url = (process.env.NODE_ENV === "development") ? `http://${window.location.hostname}:8080` : window.location.origin
 const api = "/api/v1/"
+const translations = "/translations/"
 export class Rest {
+    static getRessourceBundle = async (locale: string) => {
+        let response = await fetch(`${url}${translations}${locale}.json`, {
+            method: "GET"
+        })
+        let json = await response.json()
+        return json as Object
+    }
     static getLogs = async () => {
         return await this.quickFetchJson<Log[]>("logs", "GET")
 

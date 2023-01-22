@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useLoading } from "../../hooks/useLoading";
 import UserContext from "../../context/UserContext";
 import { decodeToken } from "../../util/token";
+import i18next from "i18next";
 export interface LoginRequest {
     email: string,
     password: string
@@ -20,7 +21,7 @@ export const Login: React.FC<LoginProps> = (props) => {
     const navigate = useNavigate()
     return (<main className="login"
     >
-        <p>Login</p>
+        <p>{i18next.t("login")}</p>
         <form
             className="login"
             onSubmit={e => {
@@ -29,7 +30,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                 Rest.sendLogin({
                     email: name,
                     password
-                }).then(res => {
+                }).then(_ => {
                     setError("")
                     const params = new window.URLSearchParams(document.cookie)
                     if (set) set(decodeToken(params))
@@ -39,7 +40,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     .catch(err => {
                         console.log(err);
 
-                        setError("Login nicht erfolgreich")
+                        setError(i18next.t("failed_login") as string)
                     })
                     .finally(() => {
 
@@ -47,24 +48,24 @@ export const Login: React.FC<LoginProps> = (props) => {
                     })
             }}>
             <input
-                autoComplete="current-password"
+                autoComplete="username"
                 value={name}
                 onChange={e => setName(e.target.value)}
             />
             <input
-                autoComplete="username"
+                autoComplete="current-password"
                 value={password}
                 type="password"
                 onChange={e => setPassword(e.target.value)}
             />
             <label>
-                Angemeldet bleiben:
+                {i18next.t("stay_logged_in")}:
                 <input type={
                     "checkbox"
                 } />
             </label>
             <button>
-                Login
+                {i18next.t("login")}
             </button>
             <p>{error}</p>
         </form>

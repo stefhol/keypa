@@ -7,7 +7,7 @@ use std::net::Ipv4Addr;
 use actix_cors::Cors;
 
 use actix_web::{web, App, HttpServer};
-
+use actix_files::Files;
 use openapi::ApiDoc;
 use tracing::{info, log};
 use utoipa_swagger_ui::SwaggerUi;
@@ -52,6 +52,7 @@ async fn main() -> anyhow::Result<()> {
     let db = Database::connect(format!("{}/{}", database_url, db_name)).await?;
     HttpServer::new(move || {
         App::new()
+            .service(Files::new("/translations", "./translations").show_files_listing())
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-doc/openapi.json", openapi.clone()),
             )
@@ -86,7 +87,6 @@ async fn main() -> anyhow::Result<()> {
                     .service(api::request::change_requests)
                     //demo keycard
                     .service(api::use_keycard::use_keycard)
-                    .service(api::email::get_email)
                     // keycard usage history
                     .service(api::keycard_usage_history::get_keycard_usage_history)
                     .service(api::keycard_usage_history::get_csv_keycard_usage_history)

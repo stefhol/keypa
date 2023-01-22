@@ -4,6 +4,7 @@ import React from "react"
 import { Rest } from "../../util/Rest"
 import { Comment } from '../../util/intefaces/Request'
 import '../../css/comment.css'
+import i18next from "i18next"
 export interface CommentViewProps {
     requestId: string,
     requesterId: string,
@@ -44,7 +45,7 @@ const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
     const [newComment, setNewComment] = React.useState("");
     return (<div className="comment-box">
         <h2>
-            Kommunikationsverlauf
+            {i18next.t("communication_history")}
         </h2>
         {props.data.map((val, idx) => <CommentFC
             key={idx}
@@ -53,7 +54,7 @@ const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
         />)}
 
         <div>
-            Antwort:
+            {i18next.t("response")}:
             <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -67,7 +68,8 @@ const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
             Rest.createComment(props.requestId, { comment: newComment }).then(() =>
                 props.refetch()
             );
-        }}>Sende Nachricht</button>
+            }}>{i18next.t("send_response")}
+        </button>
     </div>)
 }
 

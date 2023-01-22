@@ -65,7 +65,7 @@ use crate::{crud, api};
         crud::user::GetUser,
         crud::keycard::GetKeycard,
         crud::keycard::ChangeKeyboard,
-api::keycard_usage_history::KeycardUsageHistory,
+        api::keycard_usage_history::KeycardUsageHistory,
         crud::request::get::GetRequest,
         crud::request::get::RequestType,
         crud::request::create::CreateRequest,

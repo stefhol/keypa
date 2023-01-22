@@ -1,52 +1,41 @@
-import './index.css';
-import * as jose from 'jose'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import React from "react";
 import ReactDOM from "react-dom/client";
 import {
   createBrowserRouter,
-  RouterProvider,
-  useNavigate
+  RouterProvider
 } from "react-router-dom";
 import { Header } from './Components/Ui/Header';
 import ErrorPage from './ErrorPage';
-import "./index.css";
-import { Home as Home } from './routes/home/Home';
+import './index.css';
+import { Home } from './routes/home/Home';
 import { KeycardBase } from './routes/keycard/KeycardBase';
 import { ManageKeycard } from './routes/keycard/ManageKeycard';
-import { ShowAllUsers } from './routes/users/ShowAllUsers';
 import { Login } from './routes/login/Login';
 import { Main } from './routes/Main';
 import { ChangeRequest } from './routes/request/ChangeRequest';
+import { RequestBase } from './routes/request/RequestBase';
 import { ShowAllRequestFromUser } from './routes/request/ShowAllRequestFromUser';
 import { ShowRequests } from './routes/request/ShowRequests';
-import { RequestBase } from './routes/request/RequestBase';
+import { ShowAllUsers } from './routes/users/ShowAllUsers';
 
+import i18next from 'i18next';
+import UserContext, { IUserContext } from './context/UserContext';
+import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
+import { Logs } from './routes/logs/Logs';
+import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
+import { UseKeycard } from './routes/use-keycard/UseKeycard';
 import { SelfUser, UserByUserId } from './routes/user/User';
 import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
-import { StatsDemo } from './routes/stats/StatsDemo';
-import { GlobalKeycardList } from './routes/keycard/GlobalKeycardList';
-import { Logs } from './routes/logs/Logs';
-import UserContext, { IUserContext } from './context/UserContext';
-import { CreateKeycardRequest, CreateRoomRequest, CreateTempRequest, RequestPicker } from './routes/request/CreateRequest';
+import { Rest } from './util/Rest';
 import { decodeToken } from './util/token';
-import { UseKeycard } from './routes/use-keycard/UseKeycard';
-import { Email } from './routes/email/Email';
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Header />,
     children: [
-      {
-        path: "/stats",
-        element: <StatsDemo />
-      },
-      {
-        path: "/email",
-        element: <Email />
-      },
       {
         path: "/use-keycard",
         element: <UseKeycard />
@@ -171,6 +160,17 @@ const Default: React.FC<DefaultProps> = (props) => {
     </UserContext.Provider>
   </>)
 }
+if (!localStorage.getItem("language")) {
+  localStorage.setItem("language", "en")
+}
+i18next.init({ defaultNS: '1', resources: {}, lng: localStorage.getItem("language") as string });
+Rest.getRessourceBundle("en").then(res => {
+  i18next.addResourceBundle("en", "1", res)
+
+})
+Rest.getRessourceBundle("de").then(res => {
+  i18next.addResourceBundle("de", "1", res)
+})
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

@@ -14,14 +14,13 @@ use uuid::Uuid;
 use crate::{
     crud::{
         self,
-        email::{create_email, Email},
         history::create_door_to_request_history,
         log::{
             create_log_message, ASSIGN_DEPARTMENT, ASSIGN_DOOR, CHANGE_REQUEST, DEACTIVATE_REQUEST,
             REMOVE_ALL_DEPARTMENT, REMOVE_DOORS,
         },
     },
-    util::{error::CrudError, middleware::SecurityLevel},
+    util::{error::CrudError, middleware::SecurityLevel, mail::{send_mail, Email}},
 };
 
 use super::get::{get_single_request, RequestType};
@@ -320,15 +319,13 @@ pub async fn change_request(
             .one(db)
             .await?;
         if let Some(user) = user {
-            create_email(
-                &db,
+            send_mail(
                 Email {
                     email_to: user.email.to_string(),
                     message: format!("A Request from you have been changed"),
                     subject: format!("{}", "Change Request"),
                 },
-            )
-            .await?;
+            )?;
         }
     }
     Ok(change_status)
@@ -391,15 +388,13 @@ pub(crate) async fn move_to_archive(
         .one(db)
         .await?;
     if let Some(user) = user {
-        create_email(
-            &db,
+        send_mail(
             Email {
                 email_to: user.email.to_string(),
                 message: format!("A Request from you has been archived"),
                 subject: format!("{}", "Archived Request"),
             },
-        )
-        .await?;
+        )?;
     }
     let _ = tbl_request::Entity::delete_by_id(request_id.to_owned())
         .exec(db)

@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query"
 import { ColumnFiltersState } from "@tanstack/react-table"
+import i18next from "i18next"
 import React from "react"
-import { createKeycardUsageHistoryDefColumn } from "../../Components/table/ColumnDef/KeycardUsageHistory"
+import { createKeycardUsageHistoryDefColumn, KeycardUsageHistoryHiddenColumns } from "../../Components/table/ColumnDef/KeycardUsageHistory"
 import { createLogDefColumn } from "../../Components/table/ColumnDef/Log"
 import { createBasicColumns, Table } from "../../Components/table/Table"
 import { useLoading } from "../../hooks/useLoading"
@@ -77,13 +78,13 @@ export const Logs: React.FC<LogsProps> = (props) => {
     return (<>
         {logData && 
             <div className="container">
-                <h1>Keycard Usage History</h1>
+                <h1>{i18next.t("keycard_usage_history")}</h1>
                 <Table
                     data={keycardUsageHistory}
                     columnFilter={columnFilters_1}
                     filter={
                         <div>
-                            Gebaude:
+                            {i18next.t("building")}:
                             <select value={filter.building_id} onChange={e => setFilter(prev => (
                                 { ...prev, building_id: e.target.value }
                             ))}>
@@ -91,7 +92,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                                 </option>
                                 {[...new Set(keycardUsageHistory?.map(val => val.building_id))].map((val, idx) => <option key={idx} value={val}>{keycardUsageHistory?.find(f => f.building_id == val)?.building_name}</option>)}
                             </select>
-                            Raum Nummer:
+                            {i18next.t("room")}:
                             <select value={filter.room_id} onChange={e => setFilter(prev => (
                                 { ...prev, room_id: e.target.value }
                             ))}>
@@ -99,7 +100,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                                 </option>
                                 {[...new Set(keycardUsageHistory?.map(val => val.room_id))].map((val, idx) => <option key={idx} value={val}>{keycardUsageHistory?.find(f => f.room_id == val)?.room_name}</option>)}
                             </select>
-                            Keycard:
+                            {i18next.t("keycard")}:
                             <select value={filter.keycard_id} onChange={e => setFilter(prev => (
                                 { ...prev, keycard_id: e.target.value }
                             ))}>
@@ -107,7 +108,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                                 </option>
                                 {[...new Set(keycardUsageHistory?.map(val => val.keycard_id))].map((val, idx) => <option key={idx} value={val}>{val}</option>)}
                             </select>
-                            Nutzer:
+                            {i18next.t("username")}:
                             <select value={filter.user_id} onChange={e => setFilter(prev => (
                                 { ...prev, user_id: e.target.value }
                             ))}>
@@ -116,6 +117,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                             </select>
                         </div>
                     }
+                    defaultHidden={KeycardUsageHistoryHiddenColumns}
                     columns={createKeycardUsageHistoryDefColumn()} rowAction={[]} />
                 <button onClick={e => {
                     e.preventDefault()
@@ -129,17 +131,17 @@ export const Logs: React.FC<LogsProps> = (props) => {
                         const url = URL.createObjectURL(blob);
                         download(url, new Date().toISOString() + '_keycard_usage_history.csv');
                     })
-                }}>Log Herunterladen</button>
+                }}>{i18next.t("download_log")}</button>
             </div>
         }
         <div className="container">
-            <h1>Antrag Log</h1>
+            <h1>{i18next.t("request_log")}</h1>
             <Table
                 data={logData}
                 columnFilter={columnFilters}
                 filter={
                     <div className="container">
-                        Changed By:
+                        {i18next.t("changed_by")}:
                         <select
                             value={columnFilters.find((val) => val.id === "changed_by")?.value as any} onChange={(e) => {
                                 const index = columnFilters.findIndex(val => val.id === "changed_by")
@@ -183,7 +185,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                     const url = URL.createObjectURL(blob);
                     download(url, new Date().toISOString() + '_logs.csv');
                 })
-            }}>Log Herunterladen</button>
+            }}>{i18next.t("download_log")}</button>
         </div>
     </>)
 }

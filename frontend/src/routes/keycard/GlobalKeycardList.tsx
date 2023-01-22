@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import { ColumnFiltersState } from "@tanstack/react-table"
 import { addDays, isValid, isWithinInterval } from "date-fns"
+import i18next from "i18next"
 import React, { useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { createKeycardDefColumnExtended } from "../../Components/table/ColumnDef/Keycard"
@@ -38,21 +39,22 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
             columnFilter={columnFilters}
             filter={
                 <span className="container">
-                    Nur ablaufende Keycards anzeigen <input type={"checkbox"} checked={filterActiveUntil}
+                    {i18next.t("show_only_expiraing_keycard")}
+                    <input type={"checkbox"} checked={filterActiveUntil}
                         onChange={() => setFilterActiveUntil(prev => !prev)}
                     />
                 </span>
             }
             rowAction={[
                 {
-                    element: <button>Per Email kontakieren</button>,
+                    element: <button>{i18next.t("contact_per_email")}</button>,
                     onClick(rowIndex) {
                         if (data[rowIndex].request?.requester.email)
                             window.open(`mailto:${data[rowIndex].request?.requester.email}`);
                     },
                 },
                 {
-                    element: <button>Nutzer ansehen</button>,
+                    element: <button>{i18next.t("open_user")}</button>,
                     onClick(rowIndex) {
                         if (data[rowIndex].request?.requester_id)
                             navigate(`/user/${data[rowIndex].request?.requester_id}`)

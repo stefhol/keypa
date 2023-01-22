@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import UserContext from "../../context/UserContext";
@@ -9,34 +10,42 @@ export const Home: React.FC<HomeProps> = (props) => {
     React.useEffect(() => {
         if (!(is_admin || is_leader || is_worker)) {
             navigate("/user")
+
         }
     }, [is_admin, is_leader, is_worker]);
+
+
     return (<>
         <main>
-            <h1>Home</h1>
+            <h1>
+                {i18next.t("home")}
+            </h1>
             <a href="user">
-                Mein Bereich
+                {i18next.t("myarea")}
             </a><br />
-            <h3>Verwaltung</h3>
+            <h3>
+                {i18next.t("managment")}
+            </h3>
             <a href="request">
-                Antragsformulare
+                {i18next.t("requests")}
             </a><br />
             <a href="/keycard">
-                Keycard Übersicht
+                {i18next.t("keycard_overview")}
             </a><br />
             <a href="users">
-                Nutzer Übersicht
+                {i18next.t("user_overview")}
             </a><br />
-            <h3>Tools</h3>
+            <h3>
+                {i18next.t("tools")}
+            </h3>
             <a href="logs">
-                Logdateien
+                {i18next.t("log_files")}
             </a><br />
-            <h3>Util</h3>
+            <h3>
+                {i18next.t("util")}
+            </h3>
             <a href="use-keycard">
-                Demo Keycard Nutzen
-            </a><br />
-            <a href="email">
-                Demo Email
+                {i18next.t("demo_use_keycard")}
             </a><br />
         </main>
     </>)
