@@ -3,6 +3,7 @@ FROM nginx:latest
 
 COPY ./builds/api /usr/local/app/
 COPY ./builds/mock /usr/local/app/
+COPY ./translations /usr/local/app/translations
 RUN rm -Rf /usr/share/nginx/html
 COPY ./builds/dist /usr/share/nginx/html
 RUN rm /etc/nginx/nginx.conf
