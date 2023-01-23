@@ -1,7 +1,10 @@
 #!/bin/bash
 # Start the process
-nginx &
-sh /usr/local/app/api &
+cd /usr/local/app/
+chmod +x ./api
+nginx -g "daemon off;" &
+./api &
+
 # Wait for any process to exit
 wait -n
   
