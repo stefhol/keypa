@@ -140,11 +140,14 @@ docker exec -it 2da1799bea58 bash
 Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt.
 
 ### Aktualisierung von Keypa
-Sollte eine neue Version zur Verfuegung stehen, wird das System auf Github ueber Github Actions aktualisiert und als Docker Image bereitgestellt. Ob dies erfolgt ist kann [hier](https://github.com/Wirtschaftsinformatik-Passau/softwareprojekt-gruppe-1/actions/workflows/build_complete.yaml) eingesehen werden.
+Sollte eine neue Version zur Verfuegung stehen, wird das System auf Github ueber Github Actions aktualisiert und als Docker Image bereitgestellt. Dies geschieht automatisch falls ein neuer Commit in den Main Branch gepushed wird.
 
-Auf den Server im Ordner in dem auch diese docker-compose.yml enthalten ist.  
+ Ob dies erfolgt ist kann [hier](https://github.com/Wirtschaftsinformatik-Passau/softwareprojekt-gruppe-1/actions/workflows/build_complete.yaml) eingesehen werden.
+
+Um nun Keypa zu  aktualisieren navigieren Sie in den Ordner in dem auch diese docker-compose.yml enthalten ist.
+Und fuehren sie die unten stehenden Commands aus.
 ```
-sudo docker login ghcr.io -u GITHUB_USERNAME -p ghp_fBF5d4BHcMChV....
+sudo docker login ghcr.io -u GITHUB_USERNAME -p ghp_fBF5d4BHcMChV.... # Login
 sudo docker-compose down # Keypa herunterfahren
 sudo docker-compose pull # Keypa aktualiesieren
 sudo docker-compose up -d # Keypa hochfahren
