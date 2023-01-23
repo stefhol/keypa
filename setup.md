@@ -1,9 +1,5 @@
 # Einrichtung Keypa
-## Einstellung Github
-Vorraussetzung
-* Zugriff zum Github Repository
-* [Generieren sie einen Github Token](https://github.com/settings/tokens/new) mit read:packages Berechtigung
-* Speichern des Tokens zum Beispiel ghp_fUEmAQS8wHBeDn1P........
+
 ## Einrichtung Docker
 Hier wird auf die 
 [Offizielle Installation Anleitung verwiesen](https://docs.docker.com/engine/install/ubuntu/)
@@ -56,6 +52,12 @@ Add to Autostart
 ```
 sudo reboot
 ```
+
+## Einstellung Github
+Vorraussetzung
+* Zugriff zum Github Repository
+* [Generieren sie einen Github Token](https://github.com/settings/tokens/new) mit read:packages Berechtigung
+* Speichern des Tokens zum Beispiel ghp_fUEmAQS8wHBeDn1P........
 ## Installation Keypa
 ### Login in die Github Container Registry
 Keypa ist bereits als Dockerfile vorhanden, dieses befindet sich im Github Repository, um dies zu benutzen muss allerdings ein Login erfolgen. 
@@ -113,22 +115,37 @@ Der SMTP Server muss extern Verwaltet werden, dieser kann ueber die Bereitgestel
 ## Starten des Servers
 
 Da nun die docker-compose.yml richtig eingestellt wurde, koennen wir den Server starten.
-Die docker-compose.yml muss in das gewuenschten Installationverzeichnis. Wenn wir nun den Command `docker-compose up -d` benutzen wird die Datenbank im gleichen Ordner unter ./postgres gespeichert (siehe Volume im Compose File).
+Die docker-compose.yml muss in das gewuenschten Installationverzeichnis. Wenn wir nun den Command 
+```
+docker-compose up -d
+```
+ benutzen wird die Datenbank im gleichen Ordner unter ./postgres gespeichert (siehe Volume im Compose File).
 Der Keypa Server fuehrt die noetigen Migrationen durch und der Service ist betriebsbereit.
 
 ### Generierung Demo Daten
-Finden der Container Id
+Finden der laufenden Keypa Container Id
 ```
 docker ps
 ```
 ---Output-----
 ```
 CONTAINER ID   IMAGE                                            COMMAND                  CREATED          STATUS          PORTS                                       NAMES
-2da1799bea58   ghcr.io/wirtschaftsinformatik-passau/keypa:dev   "/docker-entrypoint.…"   53 minutes ago   Up 53 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           keypa-keypa-1
+2da1799bea58   ghcr.io/wirtschaftsinformatik-passau/keypa:main   "/docker-entrypoint.…"   53 minutes ago   Up 53 minutes   0.0.0.0:80->80/tcp, :::80->80/tcp           keypa-keypa-1
 ab4104794777   postgres:11-alpine                               "docker-entrypoint.s…"   53 minutes ago   Up 53 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp   keypa-keypa_db-1
 ```
 Der erste Eintrag hat das Keypa Image mit dieser CONTAINER ID koennen wir nun in den Container
 ```
 docker exec -it 2da1799bea58 bash 
 ```
-Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt
+Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt.
+
+### Aktualisierung von Keypa
+Sollte eine neue Version zur Verfuegung stehen, wird das System auf Github ueber Github Actions aktualisiert und als Docker Image bereitgestellt. Ob dies erfolgt ist kann [hier](https://github.com/Wirtschaftsinformatik-Passau/softwareprojekt-gruppe-1/actions/workflows/build_complete.yaml) eingesehen werden.
+
+Auf den Server im Ordner in dem auch diese docker-compose.yml enthalten ist.  
+```
+sudo docker login ghcr.io -u GITHUB_USERNAME -p ghp_fBF5d4BHcMChV....
+sudo docker-compose down # Keypa herunterfahren
+sudo docker-compose pull # Keypa aktualiesieren
+sudo docker-compose up -d # Keypa hochfahren
+```
