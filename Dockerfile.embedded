@@ -1,16 +1,20 @@
 #runs the frontend + api 
-FROM nginx:latest
-
+FROM nginx:alpine
+RUN apk add openrc
 COPY ./builds/api /usr/local/app/
 COPY ./builds/mock /usr/local/app/
+COPY ./translations /usr/local/app/translations
 RUN rm -Rf /usr/share/nginx/html
 COPY ./builds/dist /usr/share/nginx/html
 RUN rm /etc/nginx/nginx.conf
 COPY ./nginx.conf /etc/nginx/nginx.conf
 WORKDIR /usr/local/app/
-ENV PORT=80
+COPY ./start.sh .
 
+EXPOSE 80
 
 RUN ["chmod", "+x", "./api"]
 RUN ["chmod", "+x", "./mock"]
-CMD ["./api"]
+RUN ["chmod", "+x", "./start.sh"]
+
+CMD ["sh","./start.sh"]
