@@ -9,11 +9,11 @@ COPY ./builds/dist /usr/share/nginx/html
 RUN rm /etc/nginx/nginx.conf
 COPY ./nginx.conf /etc/nginx/nginx.conf
 WORKDIR /usr/local/app/
+COPY ./start.sh .
 ENV PORT=80
 
 RUN ["chmod", "+x", "./api"]
 RUN ["chmod", "+x", "./mock"]
+RUN ["chmod", "+x", "./start.sh"]
 
-RUN ["rc-update", "add", "nginx"]
-
-CMD ["./api"]
+CMD ["sh","./start.sh"]
