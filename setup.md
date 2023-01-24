@@ -152,3 +152,11 @@ sudo docker-compose down # Keypa herunterfahren
 sudo docker-compose pull # Keypa aktualiesieren
 sudo docker-compose up -d # Keypa hochfahren
 ```
+
+### Ueberpruefung der Erstellungszeit des Containers Images
+
+Da fuer die Pruefung kein Code nach der Endzeit des Projekts beruecksichtigt werden soll, kann ueber
+```
+docker history ghcr.io/wirtschaftsinformatik-passau/keypa:main
+```
+Die Zeit der Erstellung durch den Build Prozess ueberprueft werden
