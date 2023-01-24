@@ -95,7 +95,7 @@ pub struct RequestQueryType {
     request_type: Option<RequestType>,
     is_sensitive:Option<bool>
 }
-#[derive(Debug, Serialize, Deserialize,ToSchema)]
+#[derive(Debug, Serialize, Deserialize,ToSchema, PartialEq, PartialOrd)]
 #[serde(rename_all = "lowercase")]
 pub enum RequestStatus {
     Pending,
@@ -219,8 +219,14 @@ pub async fn get_all_requests(
         }
     }).collect::<Vec<_>>()))
 }
+#[derive(Debug, Serialize, Deserialize, IntoParams)]
+pub struct IsRejectQuery{
+    status:Option<RequestStatus>
+}
+    
 #[utoipa::path(
     context_path = "/api/v1",
+    params(IsRejectQuery),
     responses(
     (status = 200, body = GetRequestWithComments),
     (status = 400),
@@ -234,10 +240,25 @@ pub async fn get_all_requests(
 pub async fn get_single_requests(
     db: Data<DatabaseConnection>,
     request_id: Path<Uuid>,
+    is_reject_query:Query<IsRejectQuery>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    let request = crud::request::get::get_single_request(&db, &request_id).await?;
+    
+    let request = match is_reject_query.0.status {
+        Some(status) => {
+            if status == RequestStatus::Reject {
+                crud::request::get::get_single_rejected_request(&db, &request_id).await?
+
+            }else{
+                crud::request::get::get_single_request(&db, &request_id).await?
+            }
+        }
+        _ => {
+            crud::request::get::get_single_request(&db, &request_id).await?
+        }
+    };
+
     Ok(HttpResponse::Ok().json(request))
 }
 #[utoipa::path(

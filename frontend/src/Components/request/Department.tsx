@@ -13,7 +13,7 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
     const [style, setStyle] = React.useState({} as CSSProperties);
     return (<>
 
-        <div className="container" key={props.nmbr} style={style}>
+        <div className="my-container" key={props.nmbr} style={style}>
 
 
             <select value={selected} onChange={e => {

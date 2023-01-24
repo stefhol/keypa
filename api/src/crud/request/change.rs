@@ -366,11 +366,11 @@ pub(crate) async fn move_to_archive(
         active_until: Set(request_model.active_until),
         description: Set(request_model.description),
         additional_rooms: Set(request_model.additional_rooms),
-        active: Set(request_model.active),
-        accept: Set(request_model.accept),
-        reject: Set(request_model.reject),
+        active: Set(false),
+        accept: Set(false),
+        reject: Set(true),
         payed: Set(request_model.payed),
-        pending: Set(request_model.pending),
+        pending: Set(false),
     }
     .insert(db)
     .await;

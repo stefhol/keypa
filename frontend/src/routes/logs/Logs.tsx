@@ -77,7 +77,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
 
     return (<>
         {logData && 
-            <div className="container">
+            <div className="my-container">
                 <h1>{i18next.t("keycard_usage_history")}</h1>
                 <Table
                     data={keycardUsageHistory}
@@ -134,13 +134,13 @@ export const Logs: React.FC<LogsProps> = (props) => {
                 }}>{i18next.t("download_log")}</button>
             </div>
         }
-        <div className="container">
+        <div className="my-container">
             <h1>{i18next.t("request_log")}</h1>
             <Table
                 data={logData}
                 columnFilter={columnFilters}
                 filter={
-                    <div className="container">
+                    <div className="my-container">
                         {i18next.t("changed_by")}:
                         <select
                             value={columnFilters.find((val) => val.id === "changed_by")?.value as any} onChange={(e) => {

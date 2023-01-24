@@ -41,7 +41,7 @@ export const CreateKeycardRequestForm: React.FC<{ title: JSX.Element }> = (props
 
         <form>
             {props.title}
-            <label> {i18next.t("descritption")}:
+            <label> {i18next.t("description")}:
                 <textarea
                     value={description}
                     onChange={e => setDescription(e.target.value)}
@@ -75,10 +75,17 @@ export const CreateRequestForm: React.FC<{
 }> = (props) => {
 
     const [activeUntil, setActiveUntil] = React.useState(null as Date | null);
+
     const departments = React.useRef({} as ILocalObjectType<string>);
     const [description, setDescription] = React.useState("");
     const rooms = React.useRef({} as ILocalObjectType<string[]>);
     const [otherRooms, setOtherRooms] = React.useState("");
+    const [isLimitedInTime, setIsLimitedInTime] = React.useState(false);
+    React.useEffect(() => {
+        if (!isLimitedInTime) {
+            setActiveUntil(null)
+        }
+    }, [isLimitedInTime]);
     const { is_worker, is_admin, is_leader } = React.useContext(UserContext);
     const navigate = useNavigate()
     return (<>
@@ -86,19 +93,24 @@ export const CreateRequestForm: React.FC<{
 
             <form>
                 {props.title}
-                <label> {i18next.t("descritption")}:
+                <label> {i18next.t("description")}:
                     <textarea
                         value={description}
                         onChange={e => setDescription(e.target.value)}
                     />
                 </label>
-                <label> {i18next.t("active_until")}:
+                <label>{i18next.t("limited_in_time")}
+                    <input type="checkbox"
+                        checked={isLimitedInTime} onClick={() => {
+                            setIsLimitedInTime(prev => !prev)
+                        }} /></label>
+                {isLimitedInTime && <label> {i18next.t("active_until")}:
                     <input type={"date"} onChange={e => setActiveUntil(e.target.valueAsDate)}
                     />
-                </label>
+                </label>}
                 <DepartmentGroupWrapper />
                 {!is_worker ?
-                    <div className="container">
+                    <div className="my-container">
                         <p>
                             {i18next.t("other_rooms")}
                         </p>
@@ -116,7 +128,7 @@ export const CreateRequestForm: React.FC<{
                     e.preventDefault()
                     send({
 
-                        active_until: activeUntil?.toISOString(),
+                        active_until: isLimitedInTime ? activeUntil?.toISOString() : null,
                         create_keycard: props.createKeycard,
                         departments: convertToArray(departments.current),
                         description: description || undefined,
@@ -159,7 +171,7 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
     ), [count.length])
     return (
         <div>
-            <div className="container">
+            <div className="my-container">
                 <h2>{i18next.t("group")}:</h2>
                 <>
                     {elements}
@@ -181,7 +193,7 @@ const RoomSelectionWrapper: React.FC<{}> = (props) => {
     const [count, setCount] = React.useState([] as number[]);
     const { doors } = React.useContext(LocalContext);
     return (<>
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("rooms")}</h2>
 
             {data &&

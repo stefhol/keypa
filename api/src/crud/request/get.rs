@@ -1,7 +1,7 @@
 use crate::crud::{self};
 use crate::util::error::CrudError;
 use chrono::{DateTime, Utc};
-use entities::model::{tbl_door_to_request, tbl_request, tbl_request_department};
+use entities::model::{tbl_door_to_request, tbl_request, tbl_request_department, tbl_request_archive};
 use sea_orm::{
     ColumnTrait, DatabaseConnection, DbBackend, EntityTrait, FromQueryResult, QueryFilter,
     Statement,
@@ -94,10 +94,7 @@ impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>, &Vec<Uuid>)> for GetR
                 true => RequestType::Temp,
                 false => RequestType::Keycard,
             },
-            None => match request_has_doors {
-                true => RequestType::Room,
-                false => RequestType::None,
-            },
+            None => RequestType::Room,
         };
         Self {
             request_id: request.request_id.clone(),
@@ -123,6 +120,41 @@ impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>, &Vec<Uuid>)> for GetR
                     .iter()
                     .any(|f| f.to_owned() == request.request_id),
             ),
+        }
+    }
+}
+impl From<(&tbl_request_archive::Model, &Vec<GetUser>)> for GetRequest {
+    fn from(
+        (request, user): (
+            &tbl_request_archive::Model,
+            &Vec<GetUser>,
+        ),
+    ) -> Self {
+        let user = user
+            .iter()
+            .find(|f| f.user_id == request.requester_id)
+            .cloned();
+        let request_type = RequestType::None;
+        Self {
+            request_id: request.request_id.clone(),
+            requester_id: request.requester_id.clone(),
+            requester: user,
+            created_at: DateTime::from_local(request.created_at.clone(), Utc),
+            changed_at: DateTime::from_local(request.changed_at.clone(), Utc),
+            description: request.description.clone(),
+            accept: request.accept.clone(),
+            reject: request.reject.clone(),
+            pending: request.pending.clone(),
+            active_until: request
+                .active_until
+                .map(|active_until| DateTime::from_local(active_until.clone(), Utc)),
+            active: request.active,
+            keycard_id: None,
+            request_type,
+            departments: None,
+            doors: None,
+            additional_rooms: request.additional_rooms.to_owned(),
+            is_sensitive: Some(false),
         }
     }
 }
@@ -203,17 +235,14 @@ pub async fn get_all_pending_requests(
 pub async fn get_all_reject_requests(
     db: &DatabaseConnection,
 ) -> Result<Vec<GetRequest>, CrudError> {
-    let model = tbl_request::Entity::find()
-        .filter(tbl_request::Column::Reject.eq(true))
+    let model = tbl_request_archive::Entity::find()
         .all(db)
         .await?;
     let user_vec = crud::user::get_all_user(db).await?;
-    let request_with_doors = get_requests_id_with_departments_or_rooms(db).await?;
-    let requests_sens = query_is_request_sensitive(db).await?;
 
-    Ok(model
+     Ok(model
         .iter()
-        .map(|f| GetRequest::from((f, &user_vec, &request_with_doors, &requests_sens)))
+        .map(|f| GetRequest::from((f, &user_vec)))
         .collect())
 }
 pub async fn get_all_accepted_requests(
@@ -259,6 +288,24 @@ pub async fn get_single_request(
                 Some(request_department.iter().map(|f| f.department_id).collect());
             request.doors = Some(request_door.iter().map(|f| f.door_id).collect());
 
+            Ok(request)
+        }
+        None => Err(CrudError::NotFound),
+    }
+}
+pub async fn get_single_rejected_request(
+    db: &DatabaseConnection,
+    request_id: &Uuid,
+) -> Result<GetRequest, CrudError> {
+    let model = tbl_request_archive::Entity::find_by_id(request_id.clone())
+        .one(db)
+        .await?;
+    match &model {
+        Some(request) => {
+            let user_vec = crud::user::get_all_user(db).await?;
+
+            let request =
+                GetRequest::from((request, &user_vec));
             Ok(request)
         }
         None => Err(CrudError::NotFound),

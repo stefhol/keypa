@@ -102,5 +102,11 @@
     "card_info_payment": "Info: For returning the card mail the Keycard to the Managment Building of the University",
     "keycard_usage_history": "Keycard Usage History",
     "request_log": "Request Log",
-    "download_log": "Download Log"
+    "download_log": "Download Log",
+    "keycard_print": "Print Keycard",
+    "limited_in_time": "Limited in time",
+    "page": "Page",
+    "go_to_page": "Go to Page",
+    "of": "of",
+    "show": "Show"
 }

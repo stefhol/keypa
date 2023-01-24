@@ -38,7 +38,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
             outerClassName="absolute"
             columnFilter={columnFilters}
             filter={
-                <span className="container">
+                <span className="my-container">
                     {i18next.t("show_only_expiraing_keycard")}
                     <input type={"checkbox"} checked={filterActiveUntil}
                         onChange={() => setFilterActiveUntil(prev => !prev)}

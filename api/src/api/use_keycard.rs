@@ -45,16 +45,34 @@ pub async fn use_keycard(
 /// to determine a user_id has to have a keycard_id and a door_id that matches our incoming data
 async fn is_sucess(db: &DatabaseConnection, data: &UseKeycard) -> Result<bool, CrudError> {
     let query = query_active(db).await?;
-
-    let keycard_query = query.iter().find(|f| f.keycard_id == Some(data.keycard_id));
-    if let Some(keycard_query) = keycard_query {
-        return Ok(query
-            .iter()
-            .filter(|f| f.user_id == keycard_query.user_id)
-            .find(|f| f.door_id == Some(data.door_id))
-            .is_some());
+    let temp:Vec<_> = query.iter().filter(|f|f.door_id.is_some() && f.keycard_id.is_some()).collect();
+    let base: Vec<_> = query.iter().filter(|f|f.door_id.is_some() != f.keycard_id.is_some()).collect();
+    // Out of list user has to have one keycard and one door access
+    fn check_base(data: &UseKeycard, query: Vec<&QueryActiveView> )-> bool {
+        let keycard = query.iter().find(|f|
+            f.keycard_id == Some(data.keycard_id) 
+        );
+        if let Some(keycard) = keycard{
+              
+             query.iter()
+                .filter(|f|f.user_id == keycard.user_id)
+             .any(|f|
+                {f.door_id == Some(data.door_id)} 
+            )
+        }
+        else{
+            false
+        }
+        
     }
-    Ok(false)
+    // Has to be one entry that have both 
+    fn check_temp(data: &UseKeycard, query: Vec<&QueryActiveView> )-> bool {
+        query.iter().any(|f|
+            f.keycard_id == Some(data.keycard_id) &&
+            f.door_id== Some(data.door_id)
+        )
+    }
+    Ok(check_temp(data, temp) || check_base(data, base))
 }
 #[derive(Debug, Serialize, Deserialize, Clone, ToSchema)]
 pub struct UseKeycard {

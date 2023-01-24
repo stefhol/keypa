@@ -86,7 +86,7 @@ const UserFc: React.FC<UserProps> = (props) => {
         <h1>
             {i18next.t("user_area_of")} {props.user.name}
         </h1>
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("contact_info")}</h2>
             <p>
                 {props.user.email}
@@ -95,24 +95,24 @@ const UserFc: React.FC<UserProps> = (props) => {
                 {props.user.tel}
             </p>
         </div>
-        {(!is_leader) ? <div className="container">
+        {(!is_leader) ? <div className="my-container">
             {props.isSelf && <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
             }}>{i18next.t("create_new_request")}</button>
             }
-        </div> : <div className="container">
+        </div> : <div className="my-container">
             <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request/keycard")
                 }}>{i18next.t("create_new_keycard")}</button>
         </div>}
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("individual_rooms")}</h2>
             <IndividualRoomWrapper buildings={props.buildings} />
         </div>
         <DepartmentWrapper departments={props.department} />
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("keycards")}</h2>
             <>
 
@@ -132,7 +132,7 @@ const UserFc: React.FC<UserProps> = (props) => {
 
             </>
         </div>
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("approved_requests")}</h2>
             <Table
                 defaultHidden={["name"]}
@@ -142,7 +142,7 @@ const UserFc: React.FC<UserProps> = (props) => {
             // rowAction={ }
             />
         </div>
-        <div className="container">
+        <div className="my-container">
             <h2>{i18next.t("pending_requests")}</h2>
             <Table
                 defaultHidden={["name"]}
@@ -158,9 +158,9 @@ export interface DepartmentWrapperProps { departments: Department[] }
 export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
 
     return (<>
-        <div className="container">
+        <div className="my-container">
             {props.departments.map((val, idx) =>
-                <div className="container" key={idx}>
+                <div className="my-container" key={idx}>
                     <h2>{val.name}</h2>
 
                     {i18next.t("includes")}: {val.buildings.map((val, idx) => <div key={idx}>

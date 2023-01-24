@@ -102,5 +102,11 @@
     "card_info_payment": "Info: Bei Rueckgabe der Karte: bitte senden sie die Karte per Post oder werfen sie diese in den Briefkasten am Gebaude der Verwaltung",
     "keycard_usage_history": "Keycard Nutzung Log",
     "download_log": "Log Herunterladen",
-    "request_log": "Antrag Log"
+    "request_log": "Antrag Log",
+    "keycard_print": "Karte drucken",
+    "limited_in_time": "Zeitlich befristet",
+    "page": "Seite",
+    "go_to_page": "Gehe zu Seite",
+    "of": "von",
+    "show": "Zeige"
 }

@@ -22,6 +22,7 @@ import {
     RankingInfo,
     rankItem,
 } from '@tanstack/match-sorter-utils'
+import i18next from 'i18next'
 
 
 declare module '@tanstack/table-core' {
@@ -45,7 +46,7 @@ const defaultColumn: Partial<ColumnDef<{}>> = {
             case "number":
                 return <>{initialValue}</>
             case "boolean":
-                return <>{initialValue ? "x" : ""}</>
+                return <>{initialValue ? i18next.t("true") : i18next.t("false")}</>
             default:
                 if (!initialValue) {
                     return <></>
@@ -154,7 +155,7 @@ export const Table: React.FC<ITableProps> = (props) => {
                             Suche: <DebouncedInput
                                 value={globalFilter ?? ''}
                                 onChange={value => setGlobalFilter(String(value))}
-                                placeholder="Search all columns..."
+                                placeholder={i18next.t("search") || ""}
                             />
                         </span>
                         {props.filter}
@@ -240,14 +241,13 @@ export const Table: React.FC<ITableProps> = (props) => {
                     {'>>'}
                 </button>
                 <span className="flex items-center gap-1">
-                    <div>Page</div>
                     <strong>
-                        {table.getState().pagination.pageIndex + 1} of{' '}
+                        {table.getState().pagination.pageIndex + 1} {i18next.t("of")}{' '}
                         {table.getPageCount()}
                     </strong>
                 </span>
                 <span className="flex items-center gap-1">
-                    | Go to page:
+                    | {i18next.t("go_to_page")}:
                     <input
                         type="number"
                         defaultValue={table.getState().pagination.pageIndex + 1}
@@ -266,7 +266,7 @@ export const Table: React.FC<ITableProps> = (props) => {
                 >
                     {[10, 20, 30, 40, 50].map(pageSize => (
                         <option key={pageSize} value={pageSize}>
-                            Show {pageSize}
+                            {i18next.t("show")} {pageSize}
                         </option>
                     ))}
                 </select>

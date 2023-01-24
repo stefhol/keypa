@@ -1,13 +1,15 @@
 import { useQuery } from "@tanstack/react-query"
 import i18next from "i18next"
 import React from "react"
-import { useNavigate } from "react-router-dom"
+import { redirect, useLocation, useNavigate, useSearchParams } from "react-router-dom"
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 import { createBasicColumns, Table } from "../../Components/table/Table"
 import { useLoading } from "../../hooks/useLoading"
 import { Rest } from "../../util/Rest"
 
 export const ShowRequests: React.FC<{}> = (props) => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [filter, setFilter] = React.useState({ request_status: "pending", request_type: "", is_sensitive: "" });
     const queryParams = React.useMemo(() => {
         const params = new window.URLSearchParams()
@@ -16,6 +18,12 @@ export const ShowRequests: React.FC<{}> = (props) => {
         if (filter.is_sensitive) params.set("is_sensitive", filter.is_sensitive)
         return params.toString()
     }, [filter.request_status, filter.request_type, filter.is_sensitive])
+    React.useEffect(() => {
+        setSearchParams()
+        const params = new window.URLSearchParams()
+        params.set('status', filter.request_status)
+        setSearchParams(params)
+    }, [filter.request_status]);
     const { data, isLoading } = useQuery(["request", "pending", queryParams],
         ({ queryKey }) => Rest.getRequests(queryKey[2])
     )
@@ -50,8 +58,8 @@ export const ShowRequests: React.FC<{}> = (props) => {
                         onChange={e => setFilter(prev => ({ ...prev, is_sensitive: e.target.value }))}
                     >
                         <option value={""}></option>
-                        <option value={"true"}>{i18next.t("true")}</option>
-                        <option value={"false"}>{i18next.t("false")}</option>
+                        <option value={"true"}>{`${i18next.t("is_sensitive")} ${i18next.t("true")}`}</option>
+                        <option value={"false"}>{`${i18next.t("is_sensitive")} ${i18next.t("false")}`}</option>
                     </select>
                 </>
             }
@@ -62,7 +70,7 @@ export const ShowRequests: React.FC<{}> = (props) => {
                             {i18next.t("change")}
                         </button>,
                         onClick(idx) {
-                            navigate(`/request/change-request/${data[idx].request_id}`)
+                            navigate(`/request/change-request/${data[idx].request_id}?status=${filter.request_status}`)
                         },
                     }
                 ]

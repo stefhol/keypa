@@ -8,6 +8,7 @@ export const createKeycardUsageHistoryDefColumn = (): ColumnDef<KeycardUsageHist
             header: 'User Id',
             id: 'user_id',
             footer: info => info.column.id,
+
         },
         {
             accessorFn: (row) => row.username,
@@ -69,6 +70,9 @@ export const createKeycardUsageHistoryDefColumn = (): ColumnDef<KeycardUsageHist
             accessorFn: (row) => row.room_name,
             header: i18next.t("room_name") as string,
             id: 'room_name',
+            cell(props) {
+                return props.cell.getValue()
+            },
             footer: info => info.column.columnDef.header,
         },
 
@@ -96,5 +100,5 @@ export const createKeycardUsageHistoryDefColumn = (): ColumnDef<KeycardUsageHist
     ]
 
 }
-export const KeycardUsageHistoryHiddenColumns = ["user_id", "room_id", "building_id"]
+export const KeycardUsageHistoryHiddenColumns = ["user_id", "room_id", "building_id", "door_id"]
 

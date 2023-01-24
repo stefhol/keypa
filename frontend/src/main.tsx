@@ -104,7 +104,6 @@ const router = createBrowserRouter([
       },
       {
         path: "keycard",
-        element: <KeycardBase />,
         children: [
           {
             path: "",
@@ -112,7 +111,13 @@ const router = createBrowserRouter([
           },
           {
             path: "change-request/:requestId",
-            element: <ManageKeycard />
+            element: < KeycardBase />,
+            children: [
+              {
+                path: "",
+                element: <ManageKeycard />
+              }
+            ]
           },
         ]
       },

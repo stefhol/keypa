@@ -41,6 +41,12 @@ export const createKeycardDefColumnExtended = (): ColumnDef<Keycard, unknown>[] 
     return [
 
         {
+            accessorFn: (row) => row.request?.requester.name,
+            header: i18next.t("username") as string,
+            id: 'requester',
+            footer: info => info.column.columnDef.header,
+        },
+        {
             accessorFn: (row) => row.given_out,
             header: i18next.t("activated") as string,
             id: 'given_out',
