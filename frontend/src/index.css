@@ -25,7 +25,7 @@ a {
   color          : #646cff;
   text-decoration: inherit;
 }
-details>* {
+details>* { 
   margin-left: 1rem;
 }
 main {
@@ -34,7 +34,7 @@ main {
 }
 
 
-  .container {
+  .my-container {
     /* border-style: solid; */
     padding     : 1rem;
     margin      : 0.1rem;

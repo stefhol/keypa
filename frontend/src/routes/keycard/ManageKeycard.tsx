@@ -28,63 +28,74 @@ export const ManageKeycardForm: React.FC<ManageKeycardFormProps> = (props) => {
         <p>{i18next.t("is_given_back")}: {transBool(props.keycard.is_given_back)}</p>
         <p>{i18next.t("is_locked")}: {transBool(props.keycard.is_locked)}</p>
         <p>{i18next.t("is_lost")}: {transBool(props.keycard.is_lost)}</p>
-        {!props.keycard.is_deactivated && <>
-            {(is_leader || is_worker) && <>
-                {(props.keycard.is_locked === false) ? <button onClick={(e) => {
-                    e.preventDefault()
-                    send(props.keycard.keycard_id, { is_locked: true }).then(() => props.refetch())
+        {
+            !props.keycard.is_deactivated && <>
+                {
+                    props.keycard?.given_out ? <>
+                        {(props.keycard.is_lost === false) && <button onClick={(e) => {
+                            e.preventDefault()
+                            send(props.keycard.keycard_id, { is_lost: true }).then(() => props.refetch())
 
-                }}>
-                    {i18next.t("lock")}
-                </button>
-                    :
-                    <button onClick={(e) => {
-                        e.preventDefault()
-                        send(props.keycard.keycard_id, { is_locked: false }).then(() => props.refetch())
+                        }}>
+                            {i18next.t("mark_lost")}
 
-                    }}>
-                        {i18next.t("unlock")}
-                    </button>
+                        </button>}
+                        {(is_leader || is_worker) && <>
+                            {(props.keycard.is_locked === false) ? <button onClick={(e) => {
+                                e.preventDefault()
+                                send(props.keycard.keycard_id, { is_locked: true }).then(() => props.refetch())
+
+                            }}>
+                                {i18next.t("lock")}
+                            </button>
+                                :
+                                <button onClick={(e) => {
+                                    e.preventDefault()
+                                    send(props.keycard.keycard_id, { is_locked: false }).then(() => props.refetch())
+
+                                }}>
+                                    {i18next.t("unlock")}
+                                </button>
+                            }
+                            {!props.keycard.is_deactivated && <button onClick={e => {
+                                e.preventDefault()
+                                send(props.keycard.keycard_id, { is_deactivated: true }).then(() => props.refetch())
+
+                            }} >
+                                {i18next.t("deactivate_for_ever")}
+                            </button>}
+
+                            {(props.keycard?.given_out && props.keycard.is_given_back === false) && <button onClick={e => {
+                                e.preventDefault()
+                                send(props.keycard.keycard_id, { is_given_back: true }).then(() => props.refetch())
+
+                            }} >
+                                {i18next.t("confirm_give_back")}
+                            </button>}
+                        </>
+                        }
+
+                    </>
+                        : <>
+                            <button onClick={(e) => {
+                                e.preventDefault();
+                                setIsRueckgabeButtonClicked(true)
+                                send(props.keycard.keycard_id, { is_given_out: true }).then(() => props.refetch())
+                            }}>
+                                {i18next.t("keycard_print")}
+
+                            </button>
+                        </>
                 }
-                {!props.keycard.is_deactivated && <button onClick={e => {
-                    e.preventDefault()
-                    send(props.keycard.keycard_id, { is_deactivated: true }).then(() => props.refetch())
-
-                }} >
-                    {i18next.t("deactivate_for_ever")}
-                </button>}
-                {props.keycard.is_given_back === false && <button onClick={e => {
-                    e.preventDefault()
-                    send(props.keycard.keycard_id, { is_given_back: true }).then(() => props.refetch())
-
-                }} >
-                    {i18next.t("confirm_give_back")}
-                </button>}
-            </>
-            }
 
 
-            {(props.keycard.is_lost === false) && <button onClick={(e) => {
-                e.preventDefault()
-                send(props.keycard.keycard_id, { is_lost: true }).then(() => props.refetch())
 
-            }}>
-                {i18next.t("mark_lost")}
 
-            </button>}
 
-            {!props.keycard?.given_out && <button onClick={(e) => {
-                e.preventDefault();
-                setIsRueckgabeButtonClicked(true)
-                send(props.keycard.keycard_id, { is_given_out: true }).then(() => props.refetch())
-            }}>
-                {i18next.t("mark_lost")}
-
-            </button>}
-            {<p>
-                {i18next.t("card_info_payment")}
-            </p>}
-        </>}
+                {<p>
+                    {i18next.t("card_info_payment")}
+                </p>}
+            </>}
     </>)
 }
 interface ChangeKeycard {

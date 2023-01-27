@@ -104,7 +104,6 @@ const router = createBrowserRouter([
       },
       {
         path: "keycard",
-        element: <KeycardBase />,
         children: [
           {
             path: "",
@@ -112,7 +111,13 @@ const router = createBrowserRouter([
           },
           {
             path: "change-request/:requestId",
-            element: <ManageKeycard />
+            element: < KeycardBase />,
+            children: [
+              {
+                path: "",
+                element: <ManageKeycard />
+              }
+            ]
           },
         ]
       },
@@ -144,10 +149,10 @@ const Default: React.FC<DefaultProps> = (props) => {
     const params = new window.URLSearchParams(document.cookie)
     console.log(params);
 
-    if (params.has("token")) {
+    if (params.has("token") && (localStorage.getItem("save_token") === 'true' || sessionStorage.getItem("save_token") === "true")) {
       if (params.get("token")) {
         const token = decodeToken(params);
-        setjwt({ ...token })
+        setjwt({ ...token, loggedIn: true })
       }
     } else {
       if (!(window.location.pathname === "/" || window.location.pathname === "/login")) {
@@ -164,7 +169,7 @@ const Default: React.FC<DefaultProps> = (props) => {
     return () => {
     }
   }, []);
-  const [jwt, setjwt] = React.useState({} as IUserContext);
+  const [jwt, setjwt] = React.useState({ loggedIn: false } as IUserContext);
   return (<>
     <UserContext.Provider value={{ ...jwt, set: setjwt }}>
       {ressourcesBundlesLoaded && props.children}

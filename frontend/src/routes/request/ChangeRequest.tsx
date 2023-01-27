@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query"
 import { format } from "date-fns"
 import i18next from "i18next"
 import React from "react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import CommentView from "../../Components/comment/Comment"
 import { prepareData, TreeView } from "../../Components/tree-view/TreeView"
 import UserContext from "../../context/UserContext"
@@ -13,13 +13,17 @@ import { IndividualRoomWrapper } from "../user/User"
 export interface ChangeRequestProps { }
 const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
     const requestId = queryKey[1]
-    return await Rest.getSingleRequest(requestId)
+    const status = queryKey[2]
+    return await Rest.getSingleRequest(requestId, status)
 }
 
 export const ChangeRequest: React.FC<ChangeRequestProps> = (props) => {
     const { requestId } = useParams()
+    const [searchParams] = useSearchParams();
 
-    const { data: request, isLoading } = useQuery(["request", requestId || ""], getRequest)
+
+
+    const { data: request, isLoading } = useQuery(["request", requestId || "", searchParams.toString() || ""], getRequest)
     useLoading(isLoading)
 
     return (<>
@@ -45,7 +49,10 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
         if (dateElRef?.current) dateElRef.current.defaultValue = activeUntil ? format(activeUntil, "yyyy-MM-dd") : ""
     }, [dateElRef.current]);
     //
+    const [searchParams] = useSearchParams();
 
+    const status = searchParams.get('status');
+    const disabled = React.useMemo(() => status === 'reject', [status])
     const { is_worker, is_leader } = React.useContext(UserContext);
     const navigate = useNavigate()
     const [accept, setAccept] = React.useState(props.data.accept);
@@ -67,24 +74,25 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
     const treeData = React.useMemo(() => building?.length ? prepareData(building) : [], [building?.length])
     return (<>
         <h1>{i18next.t("change_request")}</h1>
-        <form onSubmit={e => {
-            e.preventDefault()
-            send(props.data.request_id, {
-                accept: accept || undefined,
-                reject: reject || undefined,
-                pending: pending || undefined,
-                active_until: activeUntil?.toISOString() ?? null,
-                departments: departments,
-                rooms: rooms
-            }).then(res => {
-                if (res === "FurtherActionsRequired" && is_worker) {
-                    alert("Antrag wurde gespeichert muss aber von Verwaltungsvorgestzten genehmigt werden, da dieser Antrag nun sensitiv ist")
-                }
-                navigate("../")
+        <form
+            onSubmit={e => {
+                e.preventDefault()
+                send(props.data.request_id, {
+                    accept: accept || undefined,
+                    reject: reject || undefined,
+                    pending: pending || undefined,
+                    active_until: activeUntil?.toISOString() ?? null,
+                    departments: departments,
+                    rooms: rooms
+                }).then(res => {
+                    if (res === "FurtherActionsRequired" && is_worker) {
+                        alert("Antrag wurde gespeichert muss aber von Verwaltungsvorgestzten genehmigt werden, da dieser Antrag nun sensitiv ist")
+                    }
+                    navigate("../")
 
-            })
-        }}>
-            <div className="container">
+                })
+            }}>
+            <div className="my-container">
                 <h2>{i18next.t("contact_info")}</h2>
                 <p>
                     {i18next.t("username")}: {props.data.requester.name}
@@ -100,19 +108,20 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                 </p>
             </div>
 
-            <div className="container">
+            <div className="my-container">
                 <h2>{i18next.t("description")}</h2>
                 <p>
                     {props.data.description}
                 </p>
             </div>
-            <div className="container"><label>
+            <div className="my-container"><label>
                 {i18next.t("active_until")}:
-                <input type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker)} />
+                <input
+                    type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker || !disabled)} />
             </label></div>
-            {(building && props.data.request_type !== "keycard") && <div className="container">
+            {!disabled && <> {(building && props.data.request_type !== "keycard") && <div className="my-container">
                 <h2>{i18next.t("requested_rooms")}</h2>
-                <div className="container">
+                <div className="my-container">
                     <h2>{i18next.t("requested_individual_rooms")}</h2>
                     <p>
                         {props.data.additional_rooms || "Keine"}
@@ -137,13 +146,13 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                         <IndividualRoomWrapper buildings={building} />
                     </>}
                 </div>
-                <div className="container">
+                <div className="my-container">
                     <h2>
                         {i18next.t("requested_department")}
                     </h2>
                     {(departments && departmentsData) && departments.map((val, idx) => {
                         const currentDepartment = departmentsData.find(dep => dep.department_id === val)
-                        return <div className="container" key={idx}>
+                        return <div className="my-container" key={idx}>
                             <label>
                                 <b>{currentDepartment?.name}</b>
                                 {(is_leader || is_worker) && <button onClick={e => {
@@ -197,49 +206,49 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
 
 
             </div>}
-            {(is_leader || is_worker) && <div className="container">
-                <label>
-                    Status:
-                    <select name="status"
-                        value={statusValue}
-                        onChange={(e) => {
-                            let value = e.target.value
-                            if (value === "1") {
-                                setAccept(true)
-                                setReject(false)
-                                setPending(false)
-                            }
-                            if (value === "2") {
-                                setAccept(false)
-                                setReject(true)
-                                setPending(false)
-                            }
-                            if (value === "3") {
-                                setAccept(false)
-                                setReject(false)
-                                setPending(true)
-                            }
-                        }}>
-                        <option value="1">{i18next.t("status_accepted")}
-                        </option>
-                        <option value="2" >{i18next.t("status_reject")}</option>
-                        <option value="3" >{i18next.t("status_pending")}</option>
-                    </select>
-                </label>
+                {(is_leader || is_worker) && <div className="my-container">
+                    <label>
+                        Status:
+                        <select name="status"
+                            value={statusValue}
+                            onChange={(e) => {
+                                let value = e.target.value
+                                if (value === "1") {
+                                    setAccept(true)
+                                    setReject(false)
+                                    setPending(false)
+                                }
+                                if (value === "2") {
+                                    setAccept(false)
+                                    setReject(true)
+                                    setPending(false)
+                                }
+                                if (value === "3") {
+                                    setAccept(false)
+                                    setReject(false)
+                                    setPending(true)
+                                }
+                            }}>
+                            <option value="1">{i18next.t("status_accepted")}
+                            </option>
+                            <option value="2" >{i18next.t("status_reject")}</option>
+                            <option value="3" >{i18next.t("status_pending")}</option>
+                        </select>
+                    </label>
 
-                <button>
-                    {i18next.t("send")}
-                </button>
-            </div>}
+                    <button>
+                        {i18next.t("send")}
+                    </button>
+                </div>}</>}
         </form>
 
-        <div className="container">
+        {!disabled && <div className="my-container">
             <CommentView
                 requesterId={props.data.requester_id}
                 requestId={props.data.request_id}
 
             />
-        </div>
+        </div>}
     </>)
 }
 interface ChangeRequest {

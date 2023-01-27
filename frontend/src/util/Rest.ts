@@ -103,8 +103,8 @@ export class Rest {
         return await this.quickFetchJson<Building[]>(`users/${userId}/doors`, "GET")
     }
 
-    static getSingleRequest = async (requestId: string) => {
-        return await this.quickFetchJson<Request>(`request/${requestId}`, "GET")
+    static getSingleRequest = async (requestId: string, queryParams?: string) => {
+        return await this.quickFetchJson<Request>(`request/${requestId}`, "GET", undefined, queryParams)
     }
     static getSelfRequestsWithRequestId = async (request_id: string) => {
         return await this.quickFetchJson<Request>(`self/request?request_id=${request_id}`, "GET")

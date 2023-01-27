@@ -14,7 +14,7 @@ export const RoomSelection: React.FC<CreateProps> = (props) => {
     const selectedRooms = React.useRef({ getCurrentSelection: undefined as any });
     const treeData = React.useMemo(() => selectedBuilding ? prepareData([selectedBuilding]) : [], [selected])
     return (<>
-        <div className="container">
+        <div className="my-container">
             <label>
                 {i18next.t("select_building")}
                 <select value={selected} onChange={e => setSelected(e.target.value)}>

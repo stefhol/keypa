@@ -1,13 +1,15 @@
 use chrono::{DateTime, Local, Utc};
 use entities::model::{
-    sea_orm_active_enums::HistoryAction::Add, tbl_door, tbl_door_to_request, tbl_request,
-    tbl_request_archive, tbl_request_comment, tbl_request_department, tbl_request_log, tbl_user,
+    sea_orm_active_enums::HistoryAction::Add, tbl_door, tbl_door_to_request, tbl_keycard,
+    tbl_request, tbl_request_archive, tbl_request_comment, tbl_request_department, tbl_request_log,
+    tbl_user,
 };
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, IntoActiveModel, QueryFilter,
     Set,
 };
 use serde::{Deserialize, Serialize};
+use tracing::error;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -20,7 +22,11 @@ use crate::{
             REMOVE_ALL_DEPARTMENT, REMOVE_DOORS,
         },
     },
-    util::{error::CrudError, middleware::SecurityLevel, mail::{send_mail, Email}},
+    util::{
+        error::CrudError,
+        mail::{send_mail, Email},
+        middleware::SecurityLevel,
+    },
 };
 
 use super::get::{get_single_request, RequestType};
@@ -319,13 +325,11 @@ pub async fn change_request(
             .one(db)
             .await?;
         if let Some(user) = user {
-            send_mail(
-                Email {
-                    email_to: user.email.to_string(),
-                    message: format!("A Request from you have been changed"),
-                    subject: format!("{}", "Change Request"),
-                },
-            )?;
+            send_mail(Email {
+                email_to: user.email.to_string(),
+                message: format!("A Request from you has been changed"),
+                subject: format!("{}", "Change Request"),
+            })?;
         }
     }
     Ok(change_status)
@@ -340,10 +344,13 @@ pub(crate) async fn move_to_archive(
         .one(db)
         .await?;
 
+    
+
     let Some(request_model) = request_model else { return Ok(()) };
     let mut request_active = request_model.clone().into_active_model();
     request_active.active = Set(false);
     request_active.active_until = Set(Some(Local::now().naive_utc()));
+
     request_active.keycard_id = Set(None);
     tbl_request_department::Entity::delete_many()
         .filter(tbl_request_department::Column::RequestId.eq(request_id.to_owned()))
@@ -358,6 +365,18 @@ pub(crate) async fn move_to_archive(
         .exec(db)
         .await?;
     let request_model = request_active.update(db).await?;
+
+    // archive active keycards
+    // this has to be after the update of the request
+    let keycards = tbl_keycard::Entity::find()
+        .filter(tbl_keycard::Column::RequestId.eq(request_id.to_owned()))
+        .all(db)
+        .await?;
+
+    for keycard in keycards {
+        crud::keycard::move_to_archive(db, worker_id, &keycard.keycard_id).await?;
+    }
+
     let _ = tbl_request_archive::ActiveModel {
         request_id: Set(request_model.request_id),
         requester_id: Set(request_model.requester_id),
@@ -366,11 +385,11 @@ pub(crate) async fn move_to_archive(
         active_until: Set(request_model.active_until),
         description: Set(request_model.description),
         additional_rooms: Set(request_model.additional_rooms),
-        active: Set(request_model.active),
-        accept: Set(request_model.accept),
-        reject: Set(request_model.reject),
+        active: Set(false),
+        accept: Set(false),
+        reject: Set(true),
         payed: Set(request_model.payed),
-        pending: Set(request_model.pending),
+        pending: Set(false),
     }
     .insert(db)
     .await;
@@ -387,17 +406,17 @@ pub(crate) async fn move_to_archive(
     let user = tbl_user::Entity::find_by_id(request_model.requester_id.to_owned())
         .one(db)
         .await?;
-    if let Some(user) = user {
-        send_mail(
-            Email {
-                email_to: user.email.to_string(),
-                message: format!("A Request from you has been archived"),
-                subject: format!("{}", "Archived Request"),
-            },
-        )?;
-    }
-    let _ = tbl_request::Entity::delete_by_id(request_id.to_owned())
+    let res = tbl_request::Entity::delete_by_id(request_id.to_owned())
         .exec(db)
         .await;
+    error!("{res:?}");
+    if let Some(user) = user {
+        send_mail(Email {
+            email_to: user.email.to_string(),
+            message: format!("A Request from you has been archived"),
+            subject: format!("{}", "Archived Request"),
+        })?;
+    }
+
     Ok(())
 }

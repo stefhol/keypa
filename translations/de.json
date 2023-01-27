@@ -24,7 +24,7 @@
     "access_request": "Zugangsantrag",
     "keycard_request": "Keycard Antrag",
     "temp_keycard_request": "Pfand Keycard Antrag",
-    "temp_keycard_request_info": "<h1>Pfand Keycard Antrag</h1><h2>Hinweis: Pfand muss vor Abholung bezahtlt werden</h2><p>Zahlungsinformationen erscheinen im angenommenen Antrag</p>",
+    "temp_keycard_request_info": "Hinweis: Pfand muss vor Abholung bezahtlt werden.   Zahlungsinformationen erscheinen im angenommenen Antrag",
     "demo_use_keycard": "Demo: Keycard Nutzen",
     "search": "Suche",
     "search_all_columns": "Suche...",
@@ -102,5 +102,12 @@
     "card_info_payment": "Info: Bei Rueckgabe der Karte: bitte senden sie die Karte per Post oder werfen sie diese in den Briefkasten am Gebaude der Verwaltung",
     "keycard_usage_history": "Keycard Nutzung Log",
     "download_log": "Log Herunterladen",
-    "request_log": "Antrag Log"
+    "request_log": "Antrag Log",
+    "keycard_print": "Karte drucken",
+    "limited_in_time": "Zeitlich befristet",
+    "page": "Seite",
+    "go_to_page": "Gehe zu Seite",
+    "of": "von",
+    "show": "Zeige",
+    "open": "Öffnen"
 }

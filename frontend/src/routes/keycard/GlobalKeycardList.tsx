@@ -23,7 +23,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
         }
         const date = new Date(val.request?.active_until)
         if (isValid(date) && val.request?.active_until) {
-            return addDays(new Date(), 7) <= date
+            return date <= addDays(new Date(), 7) 
         } else {
             return false;
         }
@@ -38,7 +38,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
             outerClassName="absolute"
             columnFilter={columnFilters}
             filter={
-                <span className="container">
+                <span className="my-container">
                     {i18next.t("show_only_expiraing_keycard")}
                     <input type={"checkbox"} checked={filterActiveUntil}
                         onChange={() => setFilterActiveUntil(prev => !prev)}
@@ -61,7 +61,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
                     },
                 },
             ]}
-                data={data}
+            data={filterdData}
                 columns={createKeycardDefColumnExtended()}
             />}
 
