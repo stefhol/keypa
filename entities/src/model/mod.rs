@@ -18,5 +18,4 @@ pub mod tbl_request_department;
 pub mod tbl_request_log;
 pub mod tbl_room;
 pub mod tbl_room_department;
-pub mod tbl_temp_email;
 pub mod tbl_user;

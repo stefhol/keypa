@@ -34,14 +34,6 @@ pub enum Relation {
         on_delete = "NoAction"
     )]
     TblKeycardUsageHistory,
-    #[sea_orm(
-        belongs_to = "super::tbl_user::Entity",
-        from = "Column::ChangedBy",
-        to = "super::tbl_user::Column::UserId",
-        on_update = "NoAction",
-        on_delete = "NoAction"
-    )]
-    TblUser,
 }
 
 impl Related<super::tbl_door_to_request_history::Entity> for Entity {
@@ -53,12 +45,6 @@ impl Related<super::tbl_door_to_request_history::Entity> for Entity {
 impl Related<super::tbl_keycard_usage_history::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeycardUsageHistory.def()
-    }
-}
-
-impl Related<super::tbl_user::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblUser.def()
     }
 }
 

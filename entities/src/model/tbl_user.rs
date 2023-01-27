@@ -21,35 +21,17 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "super::tbl_door_to_request_history::Entity")]
-    TblDoorToRequestHistory,
     #[sea_orm(has_many = "super::tbl_keycard::Entity")]
     TblKeycard,
-    #[sea_orm(has_many = "super::tbl_keycard_archive::Entity")]
-    TblKeycardArchive,
     #[sea_orm(has_many = "super::tbl_request::Entity")]
     TblRequest,
     #[sea_orm(has_many = "super::tbl_request_comment::Entity")]
     TblRequestComment,
-    #[sea_orm(has_many = "super::tbl_request_log::Entity")]
-    TblRequestLog,
-}
-
-impl Related<super::tbl_door_to_request_history::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblDoorToRequestHistory.def()
-    }
 }
 
 impl Related<super::tbl_keycard::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblKeycard.def()
-    }
-}
-
-impl Related<super::tbl_keycard_archive::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblKeycardArchive.def()
     }
 }
 
@@ -62,12 +44,6 @@ impl Related<super::tbl_request::Entity> for Entity {
 impl Related<super::tbl_request_comment::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::TblRequestComment.def()
-    }
-}
-
-impl Related<super::tbl_request_log::Entity> for Entity {
-    fn to() -> RelationDef {
-        Relation::TblRequestLog.def()
     }
 }
 

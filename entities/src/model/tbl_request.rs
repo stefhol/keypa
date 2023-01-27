@@ -64,6 +64,15 @@ impl Related<super::tbl_user::Entity> for Entity {
     }
 }
 
+impl Related<super::tbl_door::Entity> for Entity {
+    fn to() -> RelationDef {
+        super::tbl_door_to_request::Relation::TblDoor.def()
+    }
+    fn via() -> Option<RelationDef> {
+        Some(super::tbl_door_to_request::Relation::TblRequest.def().rev())
+    }
+}
+
 impl Related<super::tbl_department::Entity> for Entity {
     fn to() -> RelationDef {
         super::tbl_request_department::Relation::TblDepartment.def()
@@ -74,15 +83,6 @@ impl Related<super::tbl_department::Entity> for Entity {
                 .def()
                 .rev(),
         )
-    }
-}
-
-impl Related<super::tbl_door::Entity> for Entity {
-    fn to() -> RelationDef {
-        super::tbl_door_to_request::Relation::TblDoor.def()
-    }
-    fn via() -> Option<RelationDef> {
-        Some(super::tbl_door_to_request::Relation::TblRequest.def().rev())
     }
 }
 
