@@ -23,7 +23,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
         }
         const date = new Date(val.request?.active_until)
         if (isValid(date) && val.request?.active_until) {
-            return addDays(new Date(), 7) <= date
+            return date <= addDays(new Date(), 7) 
         } else {
             return false;
         }
@@ -61,7 +61,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
                     },
                 },
             ]}
-                data={data}
+            data={filterdData}
                 columns={createKeycardDefColumnExtended()}
             />}
 

@@ -16,7 +16,9 @@ export const Login: React.FC<LoginProps> = (props) => {
     const [password, setPassword] = React.useState("1234");
     const { startLoading, stopLoading } = useLoading()
     const { set } = React.useContext(UserContext);
-
+    React.useEffect(() => {
+        localStorage.removeItem("save_token")
+    }, []);
     const [error, setError] = React.useState("");
     const navigate = useNavigate()
     return (<main className="login"
@@ -32,6 +34,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     password
                 }).then(_ => {
                     setError("")
+                    sessionStorage.setItem("save_token", "true")
                     const params = new window.URLSearchParams(document.cookie)
                     if (set) set(decodeToken(params))
                     navigate("/home")
@@ -43,7 +46,6 @@ export const Login: React.FC<LoginProps> = (props) => {
                         setError(i18next.t("failed_login") as string)
                     })
                     .finally(() => {
-
                         stopLoading()
                     })
             }}>
@@ -62,7 +64,16 @@ export const Login: React.FC<LoginProps> = (props) => {
                 {i18next.t("stay_logged_in")}:
                 <input type={
                     "checkbox"
-                } />
+                }
+                    onClick={e => {
+                        const target = e.target as HTMLInputElement
+                        if (target.checked) {
+                            localStorage.setItem("save_token", "true")
+                        } else {
+                            localStorage.removeItem("save_token")
+                        }
+                    }}
+                />
             </label>
             <button>
                 {i18next.t("login")}

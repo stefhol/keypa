@@ -1,19 +1,21 @@
 import i18next from "i18next"
 import React from "react"
 import { Outlet, useNavigate } from "react-router-dom"
+import UserContext from "../../context/UserContext"
 import { Rest } from "../../util/Rest"
 import { LogoSmall } from "../images/LogoSmall"
 
 export interface HeaderProps { }
 export const Header: React.FC<HeaderProps> = (props) => {
     const navigate = useNavigate()
+    const { loggedIn, set } = React.useContext(UserContext);
     const [selectedLanguage, setSelectedLanguage] = React.useState(i18next.language);
     return (
         <>
             <header>
                 <LogoSmall width={40} onClick={() => { navigate("/") }} />
                 {
-                    window.document.cookie !== "" &&
+                    loggedIn &&
                     <button onClick={(e) => {
                     e.preventDefault()
                             navigate("/home")
@@ -32,11 +34,12 @@ export const Header: React.FC<HeaderProps> = (props) => {
                     <option value="de">German</option>
                 </select>
                 {
-                    window.document.cookie.match("token") &&
+                    loggedIn &&
                     <button onClick={(e) => {
                             e.preventDefault()
                             Rest.sendLogout().then(() => {
                                 navigate("/")
+                                if (set) set({ loggedIn: false })
                             })
                     }}>
                             {i18next.t("logout")}
@@ -44,7 +47,7 @@ export const Header: React.FC<HeaderProps> = (props) => {
                 }
 
                 {
-                    (!window.document.cookie.match("token") && !window.location.pathname.match("login")) &&
+                    (!loggedIn && !window.location.pathname.match("login")) &&
                     <button onClick={(e) => {
                         navigate("/login")
                     }}>

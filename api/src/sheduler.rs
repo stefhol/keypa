@@ -11,7 +11,7 @@ use crate::util::mail::{send_mail, Email};
 pub fn start(db: DatabaseConnection) {
     let email_shedule = match dotenv::var("EMAIL_SHEDULE") {
         Ok(val) => val,
-        Err(_) => String::from("/15 * * * * *"),
+        Err(_) => String::from("0 * * * * *"),
     };
     thread::spawn(move || {
         let db1 = db.clone();
@@ -29,7 +29,7 @@ pub fn start(db: DatabaseConnection) {
         }));
         let db2 = db.clone();
         // run every hour
-        shed.add(Job::new("0 * * * *".parse().unwrap(), move || {
+        shed.add(Job::new("0 0 * * * *".parse().unwrap(), move || {
             let db = db2.clone();
             let rt = runtime::Builder::new_current_thread()
                 .enable_all()

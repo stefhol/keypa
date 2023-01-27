@@ -24,7 +24,7 @@
     "access_request": "Zugangsantrag",
     "keycard_request": "Keycard Antrag",
     "temp_keycard_request": "Pfand Keycard Antrag",
-    "temp_keycard_request_info": "<h1>Pfand Keycard Antrag</h1><h2>Hinweis: Pfand muss vor Abholung bezahtlt werden</h2><p>Zahlungsinformationen erscheinen im angenommenen Antrag</p>",
+    "temp_keycard_request_info": "Hinweis: Pfand muss vor Abholung bezahtlt werden.   Zahlungsinformationen erscheinen im angenommenen Antrag",
     "demo_use_keycard": "Demo: Keycard Nutzen",
     "search": "Suche",
     "search_all_columns": "Suche...",
@@ -108,5 +108,6 @@
     "page": "Seite",
     "go_to_page": "Gehe zu Seite",
     "of": "von",
-    "show": "Zeige"
+    "show": "Zeige",
+    "open": "Öffnen"
 }

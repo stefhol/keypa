@@ -138,7 +138,7 @@ const UserFc: React.FC<UserProps> = (props) => {
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.acceptedRequests}
-                rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
         </div>
@@ -148,7 +148,7 @@ const UserFc: React.FC<UserProps> = (props) => {
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.pendingRequests}
-                rowAction={[{ element: <button>Ansehen</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
         </div>

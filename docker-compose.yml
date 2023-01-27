@@ -1,0 +1,24 @@
+version: "3.8"
+services:
+  keypa_db: 
+    image: postgres:11-alpine #Benutzte Datenbank
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: kjfL2kjlF # Datenbank Passswort
+      POSTGRES_USER: postgres # Datenbank Nutzer
+      POSTGRES_DB: keypa # Datenbank Tabelle
+    volumes:
+      - ./postgres:/var/lib/postgresql/data
+  keypa:
+    restart: always
+    image: ghcr.io/wirtschaftsinformatik-passau/keypa:main # Download von Github
+    environment:
+      DATABASE_URL: "postgres://postgres:kjfL2kjlF@keypa_db:5432/keypa" # Connection String zu Datenbank
+      JWT_SECRET: "reallyLongPassword" # Passwort des JWT Tokens. Wichtig abaendern
+      SMTP_ADDRESS: "0.0.0.0" # Email SMTP Addresse
+      SMTP_PORT: "1025" #  Email SMTP Port
+      SMTP_USERNAME: "mailhog_grup1"  # Email SMTP Nutzername
+      SMTP_PASSWORD: "pw" # Email SMTP Passwort
+      EMAIL_SHEDULE: "0 * * * * *"
+    ports:
+      - "80:80" # Wichtig um das System von aussen erreichbar zu machen
