@@ -15,5 +15,4 @@ pub use super::tbl_request_department::Entity as TblRequestDepartment;
 pub use super::tbl_request_log::Entity as TblRequestLog;
 pub use super::tbl_room::Entity as TblRoom;
 pub use super::tbl_room_department::Entity as TblRoomDepartment;
-pub use super::tbl_temp_email::Entity as TblTempEmail;
 pub use super::tbl_user::Entity as TblUser;

@@ -129,7 +129,7 @@ create table if not exists tbl_door_to_request_history
     door_id                    uuid           not null,
     request_id                 uuid           not null,
     action                     history_action not null,
-    changed_by                 uuid           not null,
+    changed_by                 uuid           not null
 );
 alter table tbl_keycard
     ADD constraint fk_request_keycard foreign key (request_id) references tbl_request (request_id);
@@ -141,7 +141,7 @@ create table if not exists tbl_keycard_usage_history
     keycard_id         uuid                        not null,
     door_id            uuid                        not null,
     used_at            timestamp without time zone not null default timezone('utc', now()),
-    success            boolean                     not null,
+    success            boolean                     not null
 );
 
 create table if not exists tbl_door_to_request
@@ -172,16 +172,9 @@ create table if not exists tbl_request_log
     door_to_request_history_id bigint,
     foreign key (door_to_request_history_id) references tbl_door_to_request_history (door_to_request_history_id),
     changed_at                 timestamp without time zone not null default timezone('utc', now()),
-    changed_by                 uuid                        not null,
+    changed_by                 uuid                        not null
 );
-create table if not exists tbl_temp_email
-(
-    email_id BIGINT GENERATED ALWAYS AS IDENTITY primary key,
-    email_to text  not null ,
-    email_from text not null ,
-    subject text not null ,
-    message text not null
-);
+
 
 create view view_active_keycards as
 select sub.active_until, sub.door_id, sub.keycard_id, requester_id as user_id
