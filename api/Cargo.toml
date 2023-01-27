@@ -39,3 +39,5 @@ futures-util = "0.3"
 async-recursion = "1.0"
 csv = "1"
 lettre="0.10"
+job_scheduler = "1.2.1"
+tokio = { version = "1.18.4", features = ["full"] }

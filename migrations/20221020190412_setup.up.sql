@@ -72,7 +72,6 @@ create table if not exists tbl_keycard_archive
 (
     keycard_id     uuid primary key DEFAULT uuid_generate_v4(),
     user_id        uuid    not null,
-    foreign key (user_id) references tbl_user (user_id),
     is_lost        boolean not null default false,
     is_locked      boolean not null default false,
     is_deactivated boolean not null default false,
@@ -131,8 +130,6 @@ create table if not exists tbl_door_to_request_history
     request_id                 uuid           not null,
     action                     history_action not null,
     changed_by                 uuid           not null,
-    foreign key (door_id) references tbl_door (door_id),
-    foreign key (changed_by) references tbl_user (user_id)
 );
 alter table tbl_keycard
     ADD constraint fk_request_keycard foreign key (request_id) references tbl_request (request_id);
@@ -145,7 +142,6 @@ create table if not exists tbl_keycard_usage_history
     door_id            uuid                        not null,
     used_at            timestamp without time zone not null default timezone('utc', now()),
     success            boolean                     not null,
-    foreign key (door_id) references tbl_door (door_id)
 );
 
 create table if not exists tbl_door_to_request
@@ -177,7 +173,6 @@ create table if not exists tbl_request_log
     foreign key (door_to_request_history_id) references tbl_door_to_request_history (door_to_request_history_id),
     changed_at                 timestamp without time zone not null default timezone('utc', now()),
     changed_by                 uuid                        not null,
-    foreign key (changed_by) references tbl_user (user_id)
 );
 create table if not exists tbl_temp_email
 (

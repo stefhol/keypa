@@ -2,6 +2,7 @@ pub mod api;
 pub mod crud;
 pub mod openapi;
 pub mod util;
+pub mod sheduler;
 use std::net::Ipv4Addr;
 
 use actix_cors::Cors;
@@ -21,7 +22,7 @@ use utoipa::{
     OpenApi,
 };
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> anyhow::Result<()> {
     // let wwwroot = dotenv::var("WWWROOT")?;
     // env::set_current_dir(&wwwroot)?;
@@ -36,7 +37,7 @@ async fn main() -> anyhow::Result<()> {
         Ipv4Addr::UNSPECIFIED,
         8080
     ))]);
-    openapi.info = Info::new("KeyPa", "0.0.1");
+    openapi.info = Info::new("KeyPa", "1.0.0");
 
     let database_url = dotenv::var("DATABASE_URL")?;
     let (database_url, db_name) = migration_helper::split_connection_string(&database_url);
@@ -50,6 +51,8 @@ async fn main() -> anyhow::Result<()> {
     }
 
     let db = Database::connect(format!("{}/{}", database_url, db_name)).await?;
+    sheduler::start(db.clone());
+
     HttpServer::new(move || {
         App::new()
             .service(Files::new("/translations", "./translations").show_files_listing())

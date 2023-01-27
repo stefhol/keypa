@@ -78,10 +78,22 @@ impl GetLogs {
             .find(|f| Some(f.keycard_history_id.to_owned()) == self.keycard_history_id.to_owned())
             .map(|f| f.to_owned());
 
-        self.changed_by = user_vec
+        if self.changed_by_id.is_nil() {
+            self.changed_by = Some(GetUser{
+                user_id: self.changed_by_id.to_owned(),
+                name: "System".to_owned(),
+                role_id: None,
+                email: "".to_owned(),
+                tel: None,
+                address: None,
+                picture_url: None,
+            });
+        }else{
+            self.changed_by = user_vec
             .iter()
             .find(|f| Some(f.user_id.to_owned()) == Some(self.changed_by_id.to_owned()))
             .map(|f| f.to_owned());
+        }
     }
 }
 pub async fn get_all_logs(db: &DatabaseConnection) -> Result<Vec<GetLogs>, CrudError> {
