@@ -154,4 +154,3 @@ sudo docker-compose down # Keypa herunterfahren
 sudo docker-compose pull # Keypa aktualiesieren
 sudo docker-compose up -d # Keypa hochfahren
 ```
-
