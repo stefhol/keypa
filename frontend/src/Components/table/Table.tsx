@@ -90,7 +90,7 @@ interface ITableProps {
     columns: ColumnDef<any, unknown>[]
     rowAction: IAction[]
     filter?: JSX.Element,
-    columnFilter?: ColumnFiltersState
+    columnFilter?: { value: ColumnFiltersState, set: React.Dispatch<React.SetStateAction<ColumnFiltersState>> }
     defaultHidden?: string[]
 }
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
@@ -118,6 +118,7 @@ export const Table: React.FC<ITableProps> = (props) => {
     const columns = React.useMemo(() => props.columns, [props.columns])
     const [columnVisibility, setColumnVisibility] = React.useState(makeHidden(props.defaultHidden))
     const [globalFilter, setGlobalFilter] = React.useState('')
+    const [columnFilter, setColumnFilter] = React.useState([] as ColumnFiltersState);
     const table = useReactTable({
         data,
         columns: columns as any,
@@ -128,13 +129,13 @@ export const Table: React.FC<ITableProps> = (props) => {
             fuzzy: fuzzyFilter,
         },
         state: {
-            columnFilters: props.columnFilter,
+            columnFilters: props.columnFilter?.value ?? columnFilter,
             globalFilter,
             columnVisibility,
         },
 
         onColumnVisibilityChange: setColumnVisibility,
-        // onColumnFiltersChange: setColumnFilters,
+        onColumnFiltersChange: props.columnFilter?.set ?? setColumnFilter,
         onGlobalFilterChange: setGlobalFilter,
         globalFilterFn: fuzzyFilter,
         getFilteredRowModel: getFilteredRowModel(),

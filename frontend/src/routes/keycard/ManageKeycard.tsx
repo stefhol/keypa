@@ -77,14 +77,16 @@ export const ManageKeycardForm: React.FC<ManageKeycardFormProps> = (props) => {
 
                     </>
                         : <>
-                            <button onClick={(e) => {
-                                e.preventDefault();
-                                setIsRueckgabeButtonClicked(true)
-                                send(props.keycard.keycard_id, { is_given_out: true }).then(() => props.refetch())
-                            }}>
-                                {i18next.t("keycard_print")}
+                            {(is_worker || is_leader) && <>
+                                <button onClick={(e) => {
+                                    e.preventDefault();
+                                    setIsRueckgabeButtonClicked(true)
+                                    send(props.keycard.keycard_id, { is_given_out: true }).then(() => props.refetch())
+                                }}>
+                                    {i18next.t("keycard_print")}
 
-                            </button>
+                                </button>
+                            </>}
                         </>
                 }
 

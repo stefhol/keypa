@@ -7,10 +7,7 @@ use entities::model::{
 };
 
 
-use fake::faker::internet::raw::FreeEmail;
-use fake::faker::name::raw::*;
-use fake::locales::*;
-use fake::{self, Fake};
+
 
 use rand::Rng;
 use sea_orm::{ActiveModelTrait, ActiveValue, Database, EntityTrait};
@@ -31,21 +28,7 @@ async fn main() -> anyhow::Result<()> {
 
     let password = orion::pwhash::Password::from_slice(b"1234").unwrap();
     let hash = orion::pwhash::hash_password(&password, 3, 1 << 16).unwrap();
-    //user generation
-    for idx in 1..400 {
-        let name: String = Name(EN).fake_with_rng(&mut rng);
-        let email: String = FreeEmail(EN).fake_with_rng(&mut rng);
-
-        let _ = tbl_user::ActiveModel {
-            email: ActiveValue::Set(email),
-            name: ActiveValue::Set(name),
-            password: ActiveValue::Set(hash.unprotected_as_encoded().to_string()),
-            role_id: ActiveValue::Set(Some(idx)),
-            ..Default::default()
-        }
-        .insert(&db)
-        .await;
-    }
+    
     let _ = tbl_user::ActiveModel {
         email: ActiveValue::Set(String::from("admin@demo.de")),
         name: ActiveValue::Set(String::from("Demo Admin")),

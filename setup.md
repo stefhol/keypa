@@ -137,7 +137,7 @@ ab4104794777   postgres:11-alpine                               "docker-entrypoi
 ```
 Der erste Eintrag hat das Keypa Container Image mit dieser CONTAINER ID koennen wir nun in den Container
 ```
-sudo docker exec -it 2da1799bea58 bash 
+sudo docker exec -it 2da1799bea58 sh 
 ```
 Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt.
 

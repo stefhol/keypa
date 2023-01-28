@@ -6,6 +6,7 @@ import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request
 import { createBasicColumns, Table } from "../../Components/table/Table"
 import { useLoading } from "../../hooks/useLoading"
 import { Rest } from "../../util/Rest"
+import { convertToStatusString } from "../../util/status"
 
 export const ShowRequests: React.FC<{}> = (props) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -70,7 +71,7 @@ export const ShowRequests: React.FC<{}> = (props) => {
                             {i18next.t("change")}
                         </button>,
                         onClick(idx) {
-                            navigate(`/request/change-request/${data[idx].request_id}?status=${filter.request_status}`)
+                            navigate(`/request/change-request/${data[idx].request_id}?status=${convertToStatusString(data[idx])}`)
                         },
                     }
                 ]
