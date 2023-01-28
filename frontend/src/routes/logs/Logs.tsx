@@ -81,7 +81,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
                 <h1>{i18next.t("keycard_usage_history")}</h1>
                 <Table
                     data={keycardUsageHistory}
-                    columnFilter={columnFilters_1}
+                    columnFilter={{ value: columnFilters_1, set: setColumnFilters_1 }}
                     filter={
                         <div>
                             {i18next.t("building")}:
@@ -138,7 +138,7 @@ export const Logs: React.FC<LogsProps> = (props) => {
             <h1>{i18next.t("request_log")}</h1>
             <Table
                 data={logData}
-                columnFilter={columnFilters}
+                columnFilter={{ value: columnFilters, set: setColumnFilters }}
                 filter={
                     <div className="my-container">
                         {i18next.t("changed_by")}:

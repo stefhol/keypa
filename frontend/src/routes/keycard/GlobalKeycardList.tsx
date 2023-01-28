@@ -36,7 +36,7 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
         {data && 
             <Table
             outerClassName="absolute"
-            columnFilter={columnFilters}
+            columnFilter={{ value: columnFilters, set: setColumnFilters }}
             filter={
                 <span className="my-container">
                     {i18next.t("show_only_expiraing_keycard")}
