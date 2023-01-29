@@ -9,8 +9,8 @@ import { Rest } from "../../util/Rest";
 interface ILocalObjectType<T> {
     [key: number]: T
 }
-function convertToArray<T>(obj: ILocalObjectType<T>) {
-    let arr = []
+function convertToArray<T>(obj: ILocalObjectType<T>): T[] {
+    let arr: T[] = []
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             const element = obj[key];
@@ -18,7 +18,7 @@ function convertToArray<T>(obj: ILocalObjectType<T>) {
                 arr.push(element)
         }
     }
-    return arr
+    return new Array(...new Set(arr))
 }
 interface ILocalContext {
     departments: {

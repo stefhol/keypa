@@ -113,7 +113,7 @@ const UserFc: React.FC<UserProps> = (props) => {
             <summary>
                 <h3>{i18next.t("access")}</h3>
             </summary>
-            <div className="grid">
+            <div className="wrap">
                 <article>
                     <header>
                         {i18next.t("individual_rooms")}
@@ -239,7 +239,7 @@ export const TempKeycardSingle: React.FC<TempKeycardSingleProps> = (props) => {
                     {props.keycard.active_until && <>{i18next.t("active_until")}: {keycard.request?.active_until}</>}
                     </summary>
 
-                    <div className="grid">
+                    <div className="wrap">
                         <article>
                             <header>
                                 {i18next.t("individual_rooms")}

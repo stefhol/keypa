@@ -1,5 +1,6 @@
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  
   /* font-size  : 16px;
   line-height: 24px;
   font-weight: 400;
@@ -21,10 +22,12 @@ form {
   display: flex;
   flex-direction: column;
 }
-
+article {
+  margin: 0.5rem 0.5rem;
+}
 a {
   font-weight: 500;
-    color: #646cff;
+  color: #646cff;
   text-decoration: inherit;
 }
 
@@ -41,7 +44,7 @@ main {
 .my-container {
   /* border-style: solid; */
   padding: 1rem;
-    margin: 0.1rem;
+  margin: 0.1rem;
 }
 
 a:hover {
@@ -54,7 +57,7 @@ a:hover {
 
 #root {
   width: 100%;
-    height: 100%;
+  height: 100%;
     display: flex;
   flex-direction: column;
   align-items: center;
@@ -63,6 +66,9 @@ a:hover {
 .wrap {
   display: flex;
   flex-wrap: wrap;
+}
+.wrap>article {
+  margin-right: 1rem;
 }
 
 button {
@@ -83,7 +89,7 @@ header .spacer {
 body {
   place-items: center;
   min-width: 320px;
-    min-height: 100vh;
+  min-height: 100vh;
     margin: 0;
 }
 
@@ -101,7 +107,7 @@ input {
 */
 input[type="checkbox"] {
   height: 1rem !important;
-    width: 1rem !important;
+  width: 1rem !important;
     padding: 0 !important;
   }
   
@@ -110,11 +116,13 @@ input[type="checkbox"] {
     align-items: baseline;
 
 }
+
 label {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
 }
+
 details[open] summary~* {
   animation: sweep .5s ease-in-out;
 }
@@ -134,7 +142,7 @@ details[open] summary~* {
 @media (prefers-color-scheme: light) {
   :root {
     --background-color: #ffff;
-      --color: #213547;
+    --color: #213547;
   }
 
   a:hover {
@@ -142,9 +150,10 @@ details[open] summary~* {
   }
 
 }
+
 button {
   max-width: 15rem;
-    margin: 1rem;
+  margin: 1rem;
   
   }
   
@@ -176,6 +185,7 @@ button {
   body {
     padding-top: calc(1rem + var(--spacing) * 2);
   }
+
 body>nav {
   background-color: var(--card-background-color);
   box-shadow: var(--card-box-shadow);

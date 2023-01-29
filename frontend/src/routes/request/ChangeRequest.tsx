@@ -275,6 +275,12 @@ interface ChangeRequest {
     pending?: boolean,
 }
 const send = async (requestId: string, data: ChangeRequest) => {
+    if (data.departments) {
+        data.departments = new Array(...new Set(data.departments))
+    }
+    if (data.rooms) {
+        data.rooms = new Array(...new Set(data.rooms))
+    }
     return await (await Rest.quickAdd(`request/${requestId}`, "POST", data)).json();
 }
 
