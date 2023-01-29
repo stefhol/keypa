@@ -76,3 +76,51 @@ pub async fn get_departments_of_user(
     let keys = crud::department::get_department_of_user_id(&db, &user_id).await?;
     Ok(HttpResponse::Ok().json(keys))
 }
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200, body = [GetDepartment]),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[get("/self/department/{keycard_id}")]
+pub async fn get_departments_of_self_and_keycard(
+    db: Data<DatabaseConnection>,
+    auth: Authenticated,
+    keycard_id: Path<Uuid>,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::User)?;
+    let user_id = auth.try_get_user_id()?;
+    let keys =
+        crud::department::get_department_of_user_id_and_keycard_id(&db, &user_id, &keycard_id)
+            .await?;
+    Ok(HttpResponse::Ok().json(keys))
+}
+#[utoipa::path(
+    context_path = "/api/v1",
+    responses(
+    (status = 200, body = [GetDepartment]),
+    (status = 400),
+    (status = 401),
+    (status = 404),
+    (status = 406),
+    (status = 500),
+)
+)]
+#[get("/users/{user_id}/department/{keycard_id}")]
+pub async fn get_departments_of_user_and_keycard(
+    db: Data<DatabaseConnection>,
+    auth: Authenticated,
+    user_id: Path<Uuid>,
+    keycard_id: Path<Uuid>,
+) -> actix_web::Result<HttpResponse, CrudError> {
+    auth.has_high_enough_security_level(SecurityLevel::Worker)?;
+    let keys =
+        crud::department::get_department_of_user_id_and_keycard_id(&db, &user_id, &keycard_id)
+            .await?;
+    Ok(HttpResponse::Ok().json(keys))
+}

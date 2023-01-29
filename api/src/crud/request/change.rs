@@ -253,12 +253,13 @@ pub async fn change_request(
                         active_request.accept = Set(false);
                         active_request.reject = Set(true);
                         active_request.pending = Set(false);
+                        active_request.active = Set(false);
                     }
                     2 => {
                         active_request.accept = Set(false);
                         active_request.reject = Set(false);
                         active_request.pending = Set(true);
-                        active_request.active = Set(false);
+                        
                     }
                     _ => {}
                 }
@@ -266,7 +267,7 @@ pub async fn change_request(
                 log_vec.push(create_log_message(
                     worker_id,
                     &format!(
-                        "{}: {} accept = {}, reject = {}, pending {}",
+                        "{}: {} accept = {}, reject = {}, pending = {}",
                         CHANGE_REQUEST,
                         request_id.to_string(),
                         &ac.accept.unwrap(),

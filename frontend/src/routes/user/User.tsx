@@ -6,7 +6,7 @@ import { createKeycardDefColumn } from "../../Components/table/ColumnDef/Keycard
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 import { Table } from "../../Components/table/Table"
 import UserContext from "../../context/UserContext"
-import { Building } from "../../util/intefaces/Buildings"
+import { Building, BuildingWithOwner } from "../../util/intefaces/Buildings"
 import { Department } from "../../util/intefaces/Departments"
 import { Keycard } from "../../util/intefaces/Keycard"
 import { Request, User } from "../../util/intefaces/Request"
@@ -70,7 +70,7 @@ const getUserById = async ({ queryKey }: { queryKey: string[] }) => {
     return await Rest.getUserByUserId(userId)
 }
 export interface UserProps {
-    buildings: Building[]
+    buildings: BuildingWithOwner[]
     user: User
     isSelf: boolean
     department: Department[]
@@ -95,23 +95,30 @@ const UserFc: React.FC<UserProps> = (props) => {
                 {props.user.tel}
             </p>
         </div>
-        {(!is_leader) ? <div className="my-container">
+
+
+        {(!is_leader) ? <>
             {props.isSelf && <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
             }}>{i18next.t("create_new_request")}</button>
             }
-        </div> : <div className="my-container">
+        </> : <>
             <button onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request/keycard")
                 }}>{i18next.t("create_new_keycard")}</button>
-        </div>}
+        </>}
         <div className="my-container">
+
             <h2>{i18next.t("individual_rooms")}</h2>
             <IndividualRoomWrapper buildings={props.buildings} />
+            <DepartmentWrapper departments={props.department} />
+
         </div>
-        <DepartmentWrapper departments={props.department} />
+        <TempKeycardAuthorizationView keycards={props.keycard} userId={props.isSelf ? undefined : props.user.user_id} />
+
+
         <div className="my-container">
             <h2>{i18next.t("keycards")}</h2>
             <>
@@ -158,7 +165,7 @@ export interface DepartmentWrapperProps { departments: Department[] }
 export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
 
     return (<>
-        <div className="my-container">
+
             {props.departments.map((val, idx) =>
                 <div className="my-container" key={idx}>
                     <h2>{val.name}</h2>
@@ -167,12 +174,11 @@ export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
                         <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
                     </div>)}
                 </div>
-            )}
-        </div>
+        )}
 
     </>)
 }
-export interface IndividualRoomWrapperProps { buildings: Building[] }
+export interface IndividualRoomWrapperProps { buildings: BuildingWithOwner[] }
 export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (props) => {
     const hasSomething = React.useMemo(() => !!props.buildings.find(val => val.rooms.find(val => val.doors.find(val => val.owner))), [props.buildings?.length])
     return (<>
@@ -184,4 +190,54 @@ export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (prop
         </>}
 
     </>)
+}
+export interface TempKeycardAuthorizationViewProps {
+    keycards: Keycard[]
+    userId?: string
+}
+export const TempKeycardAuthorizationView: React.FC<TempKeycardAuthorizationViewProps> = (props) => {
+
+    return (<>
+
+        <h3>{i18next.t("temp_keycard")}</h3>
+        {props.keycards.filter(val => val.keycard_type === 'temp').map(val => <TempKeycardSingle key={val.keycard_id} keycard={val} userId={props.userId} />)}
+
+
+    </>)
+}
+export interface TempKeycardSingleProps {
+    keycard: Keycard,
+    userId?: string
+}
+export const TempKeycardSingle: React.FC<TempKeycardSingleProps> = (props) => {
+    const { data: keycard } = useQuery(["keycard", props.keycard.keycard_id], ({ queryKey }) => Rest.getSingleKeycard(queryKey[1] || ""))
+    const { data: departments } = useQuery(["user", props.userId ?? "self", "department", props.keycard.keycard_id], ({ queryKey }) => {
+        if (queryKey[1] === 'self') {
+            return Rest.getSelfDepartmentsWithKeycard(queryKey[3])
+        }
+        return Rest.getUserDepartmentsWithKeycards(queryKey[1], queryKey[3])
+    })
+
+    const { data: buildings } = useQuery(["user", props.userId ?? "self", "doors", props.keycard.keycard_id], ({ queryKey }) => {
+        if (queryKey[1] === 'self') {
+            return Rest.getSelfDoorsKeycard(queryKey[3])
+        }
+        return Rest.getDoorsByUserAndKeycard(queryKey[1], queryKey[3])
+    })
+
+    return (<article>
+        {
+            (buildings && keycard && departments) &&
+            <>
+                <header>
+                    {props.keycard.active_until && <>{i18next.t("active_until")}: {keycard.request?.active_until}</>}
+                </header>
+                <IndividualRoomWrapper
+                    buildings={buildings}
+                />
+                <DepartmentWrapper departments={departments} />
+            </>
+        }
+
+    </article>)
 }

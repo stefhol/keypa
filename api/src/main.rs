@@ -72,6 +72,8 @@ async fn main() -> anyhow::Result<()> {
                     //door
                     .service(api::door::get_self_door)
                     .service(api::door::get_user_authorized_doors)
+                    .service(api::door::get_self_door_keycard)
+                    .service(api::door::get_user_authorized_doors_keycard)
                     .service(api::door::get_doors_of_door_group)
                     //keycard
                     .service(api::keycard::get_self_keycard)
@@ -104,6 +106,8 @@ async fn main() -> anyhow::Result<()> {
                     //department
                     .service(api::department::get_departments_of_self)
                     .service(api::department::get_departments_of_user)
+                    .service(api::department::get_departments_of_self_and_keycard)
+                    .service(api::department::get_departments_of_user_and_keycard)
                     .service(api::department::get_departments),
             )
             .app_data(web::Data::new(db.clone()))

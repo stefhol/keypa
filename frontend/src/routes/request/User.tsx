@@ -6,7 +6,7 @@ import { createKeycardDefColumn } from "../../Components/table/ColumnDef/Keycard
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 import { Table } from "../../Components/table/Table"
 import UserContext from "../../context/UserContext"
-import { Building } from "../../util/intefaces/Buildings"
+import { Building, BuildingWithOwner } from "../../util/intefaces/Buildings"
 import { Department } from "../../util/intefaces/Departments"
 import { Keycard } from "../../util/intefaces/Keycard"
 import { Request, User } from "../../util/intefaces/Request"
@@ -70,7 +70,7 @@ const getUserById = async ({ queryKey }: { queryKey: string[] }) => {
     return await Rest.getUserByUserId(userId)
 }
 export interface UserProps {
-    buildings: Building[]
+    buildings: BuildingWithOwner[]
     user: User
     isSelf: boolean
     department: Department[]
@@ -172,7 +172,7 @@ export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
 
     </>)
 }
-export interface IndividualRoomWrapperProps { buildings: Building[] }
+export interface IndividualRoomWrapperProps { buildings: BuildingWithOwner[] }
 export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (props) => {
     const hasSomething = React.useMemo(() => !!props.buildings.find(val => val.rooms.find(val => val.doors.find(val => val.owner))), [props.buildings?.length])
     return (<>

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import React, { } from "react";
 import { useNavigate } from "react-router-dom";
@@ -75,7 +75,7 @@ export const CreateRequestForm: React.FC<{
 }> = (props) => {
 
     const [activeUntil, setActiveUntil] = React.useState(null as Date | null);
-
+    const queryClient = useQueryClient()
     const departments = React.useRef({} as ILocalObjectType<string>);
     const [description, setDescription] = React.useState("");
     const rooms = React.useRef({} as ILocalObjectType<string[]>);
@@ -138,6 +138,8 @@ export const CreateRequestForm: React.FC<{
                         alert("Success")
                         navigate("/user")
 
+                    }).finally(() => {
+                        queryClient.invalidateQueries()
                     })
                 }}>{i18next.t("send")}:</button>
 

@@ -66,7 +66,7 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 <select value={selectedKeycard} onChange={e => setSelectedKeycard(e.target.value)}>
                     <option value=""></option>
                     {filterdKeycardData?.map((val, idx) => <option key={idx} value={val.keycard_id}>
-                        {`Given out ${val.given_out} | Deaktiviert ${val.is_deactivated} | Is given back ${val.is_given_back} | Locked ${val.is_locked} | Is lost ${val.is_lost} | Request Beschreibung ${val.request?.description} | Request Aktiv ${val.request?.active} Request aktiv bis ${val.request?.active_until}`}
+                        {display(val)}
                     </option>)}
                 </select>
                 <br />
@@ -114,6 +114,9 @@ const display = (val: Keycard | undefined): JSX.Element => {
     if (val) {
         return <>
             <div>
+                <div>
+                    {val?.request?.request_type && `Typ ${val?.request?.request_type}`}
+                </div>
                 <div>
                     {val.given_out && `Ausgegeben am ${format(new Date(val.given_out), "dd.MM.yyyy HH:mm")}`}
                 </div>

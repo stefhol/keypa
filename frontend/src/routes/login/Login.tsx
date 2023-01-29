@@ -41,7 +41,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     location.reload()
                 })
                     .catch(err => {
-                        console.log(err);
+                        console.error(err);
 
                         setError(i18next.t("failed_login") as string)
                     })

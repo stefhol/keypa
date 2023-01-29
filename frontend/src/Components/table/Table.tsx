@@ -149,129 +149,130 @@ export const Table: React.FC<ITableProps> = (props) => {
 
     return (
         <div className={`outer-table ${props.outerClassName || ""}`}>
-            <table>
-                <thead>
-                    <tr key={-1}><td colSpan={100}>
-                        <span>
-                            Suche: <DebouncedInput
-                                value={globalFilter ?? ''}
-                                onChange={value => setGlobalFilter(String(value))}
-                                placeholder={i18next.t("search") || ""}
-                            />
-                        </span>
-                        {props.filter}
-                    </td></tr>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <tr key={headerGroup.id}>
-                            <th key="edit"></th>
-                            {headerGroup.headers.map(header => (
+            <figure>
+                <table>
+                    <thead>
+                        <tr key={-1}><td colSpan={100}>
+                            <span>
+                                Suche: <DebouncedInput
+                                    value={globalFilter ?? ''}
+                                    onChange={value => setGlobalFilter(String(value))}
+                                    placeholder={i18next.t("search") || ""}
+                                />
+                            </span>
+                            {props.filter}
+                        </td></tr>
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <tr key={headerGroup.id}>
+                                <th key="edit"></th>
+                                {headerGroup.headers.map(header => (
 
-                                <th key={header.id}>
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </thead>
-                <tbody>
-                    {table.getRowModel().rows.map(row => (
-                        <tr key={row.index}
-                        >
-                            <td>
-                                {props.rowAction.map((val, idx) => <ButtonTable {...val} rowIndex={row.index} key={`edit${idx}`} />)}
-                            </td>
-                            {row.getVisibleCells().map(cell => (
-                                <td key={cell.id}>
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    <th key={header.id}>
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </thead>
+                    <tbody>
+                        {table.getRowModel().rows.map(row => (
+                            <tr key={row.index}
+                            >
+                                <td>
+                                    {props.rowAction.map((val, idx) => <ButtonTable {...val} rowIndex={row.index} key={`edit${idx}`} />)}
                                 </td>
-                            ))}
-                        </tr>
-                    ))}
-                </tbody>
-                <tfoot>
-                    {table.getFooterGroups().map(footerGroup => (
-                        <tr key={footerGroup.id}>
-                            <th key="edit"></th>
-                            {footerGroup.headers.map(header => (
-                                <th key={header.id}>
-                                    {header.isPlaceholder
-                                        ? null
-                                        : flexRender(
-                                            header.column.columnDef.footer,
-                                            header.getContext()
-                                        )}
-                                </th>
-                            ))}
-                        </tr>
-                    ))}
-                </tfoot>
-            </table>
-            <div className="h-2" />
-            <div className="flex items-center gap-2">
-                <button
-                    className="border rounded p-1"
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    {'<<'}
-                </button>
-                <button
-                    className="border rounded p-1"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                >
-                    {'<'}
-                </button>
-                <button
-                    className="border rounded p-1"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                >
-                    {'>'}
-                </button>
-                <button
-                    className="border rounded p-1"
-                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                    disabled={!table.getCanNextPage()}
-                >
-                    {'>>'}
-                </button>
-                <span className="flex items-center gap-1">
-                    <strong>
-                        {table.getState().pagination.pageIndex + 1} {i18next.t("of")}{' '}
-                        {table.getPageCount()}
-                    </strong>
-                </span>
-                <span className="flex items-center gap-1">
-                    | {i18next.t("go_to_page")}:
-                    <input
-                        type="number"
-                        defaultValue={table.getState().pagination.pageIndex + 1}
+                                {row.getVisibleCells().map(cell => (
+                                    <td key={cell.id}>
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                    </tbody>
+                    <tfoot>
+                        {table.getFooterGroups().map(footerGroup => (
+                            <tr key={footerGroup.id}>
+                                <th key="edit"></th>
+                                {footerGroup.headers.map(header => (
+                                    <th key={header.id}>
+                                        {header.isPlaceholder
+                                            ? null
+                                            : flexRender(
+                                                header.column.columnDef.footer,
+                                                header.getContext()
+                                            )}
+                                    </th>
+                                ))}
+                            </tr>
+                        ))}
+                    </tfoot>
+                </table>
+                <div className="grid">
+                    <button
+                        className="border rounded p-1"
+                        onClick={() => table.setPageIndex(0)}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        {'<<'}
+                    </button>
+                    <button
+                        className="border rounded p-1"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        {'<'}
+                    </button>
+                    <button
+                        className="border rounded p-1"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        {'>'}
+                    </button>
+                    <button
+                        className="border rounded p-1"
+                        onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        {'>>'}
+                    </button>
+                    <span className="flex items-center gap-1">
+                        <strong>
+                            {table.getState().pagination.pageIndex + 1} {i18next.t("of")}{' '}
+                            {table.getPageCount()}
+                        </strong>
+                    </span>
+                    <span className="flex items-center gap-1">
+                        | {i18next.t("go_to_page")}:
+                        <input
+                            type="number"
+                            defaultValue={table.getState().pagination.pageIndex + 1}
+                            onChange={e => {
+                                const page = e.target.value ? Number(e.target.value) - 1 : 0
+                                table.setPageIndex(page)
+                            }}
+                            className="border p-1 rounded w-16"
+                        />
+                    </span>
+                    <select
+                        value={table.getState().pagination.pageSize}
                         onChange={e => {
-                            const page = e.target.value ? Number(e.target.value) - 1 : 0
-                            table.setPageIndex(page)
+                            table.setPageSize(Number(e.target.value))
                         }}
-                        className="border p-1 rounded w-16"
-                    />
-                </span>
-                <select
-                    value={table.getState().pagination.pageSize}
-                    onChange={e => {
-                        table.setPageSize(Number(e.target.value))
-                    }}
-                >
-                    {[10, 20, 30, 40, 50].map(pageSize => (
-                        <option key={pageSize} value={pageSize}>
-                            {i18next.t("show")} {pageSize}
-                        </option>
-                    ))}
-                </select>
-            </div>
+                    >
+                        {[10, 20, 30, 40, 50].map(pageSize => (
+                            <option key={pageSize} value={pageSize}>
+                                {i18next.t("show")} {pageSize}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </figure>
         </div>
     )
 }

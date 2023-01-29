@@ -14,6 +14,8 @@ export interface Keycard {
     is_given_back: boolean;
     request_id: string;
     request?: Request;
+    keycard_type?: string;
     given_out?: string;
+    active_until?: string;
 }
 

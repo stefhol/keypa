@@ -23,6 +23,7 @@ export const ManageKeycardForm: React.FC<ManageKeycardFormProps> = (props) => {
     const { is_admin, is_leader, is_worker } = React.useContext(UserContext);
     return (<>
         <h2>{i18next.t("keycard_status")}</h2>
+        <p>{i18next.t("active_until")}  {props.keycard.active_until ? format(new Date(props.keycard.active_until), "dd.MM.yyyy") : ""}</p>
         <p>{i18next.t("given_out")}: {props.keycard.given_out ? format(new Date(props.keycard.given_out), "dd.MM.yyyy") : ""}</p>
         <p>{i18next.t("for_ever_deactivated")}: {transBool(props.keycard.is_deactivated)}</p>
         <p>{i18next.t("is_given_back")}: {transBool(props.keycard.is_given_back)}</p>

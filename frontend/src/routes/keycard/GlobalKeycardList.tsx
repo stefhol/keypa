@@ -30,7 +30,6 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
 
 
     }), [filterActiveUntil, data?.length])
-    console.log(filterdData)
     const navigate = useNavigate()
     return (<>
         {data && 

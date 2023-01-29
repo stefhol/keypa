@@ -1,7 +1,7 @@
 import i18next from 'i18next';
 import React, { MutableRefObject, Ref } from 'react';
 import '../../css/tree.css';
-import { Building, Room } from '../../util/intefaces/Buildings';
+import { Building, BuildingWithOwner, Room, RoomWithOwner } from '../../util/intefaces/Buildings';
 
 export type SelectionRef =
     MutableRefObject<{
@@ -42,6 +42,7 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
     const [filter, setFilter] = React.useState(!!props.filter);
     const [reset, setReset] = React.useState(0);
     const selection = React.useRef([] as TreeData[]);
+
     const onChange = () => {
         if (props.onChange) props.onChange(selection.current)
     }
@@ -204,32 +205,59 @@ const isTrueInChildren = (input: TreeData): boolean => {
     }
     return false
 }
-export const prepareData = (data: Building[], filter?: boolean) => {
+export const createTreeDatafromBuiding = (data: Building[], doors: string[]) => {
+    const prepareStockwerke = (data: Room[], doors: string[]): TreeData[] => {
+        let ret = [] as TreeData[]
 
+
+        let floors = new Set(data.map(val => val.floor) as number[])
+        floors.forEach(floor => {
+            ret.push({
+                name: `${i18next.t("floor")}: ${floor}`,
+                children: data.filter(val => val.floor == floor)
+                    .map((val, idx) => ({
+                        name: `${i18next.t("room")}: ${val.name} ${val.is_sensitive ? i18next.t("is_sensitive") : ""}`,
+                        id: val.room_id,
+                        value: !!val.doors.find(val => doors.find(door => val.door_id == door)),
+                        children: []
+                    }))
+            })
+        })
+        return ret
+    }
+    return data.map(val => ({
+        name: `${i18next.t("building")} ${val.name}`,
+        children: prepareStockwerke(val.rooms, doors)
+    }))
+
+}
+export const createTreeDatafromBuidingWithOwner = (data: BuildingWithOwner[]) => {
+    const prepareStockwerke = (data: RoomWithOwner[],): TreeData[] => {
+        let ret = [] as TreeData[]
+
+
+        let floors = new Set(data.map(val => val.floor) as number[])
+        floors.forEach(floor => {
+            ret.push({
+                name: `${i18next.t("floor")}: ${floor}`,
+                children: data.filter(val => val.floor == floor)
+                    .map((val, idx) => ({
+                        name: `${i18next.t("room")}: ${val.name} ${val.is_sensitive ? i18next.t("is_sensitive") : ""}`,
+                        id: val.room_id,
+                        value: !!val.doors.find(val => val.owner),
+                        children: []
+                    }))
+            })
+        })
+        return ret
+    }
     return data.map(val => ({
         name: `${i18next.t("building")} ${val.name}`,
         children: prepareStockwerke(val.rooms)
     }))
 }
-const prepareStockwerke = (data: Room[]): TreeData[] => {
-    let ret = [] as TreeData[]
 
 
-    let floors = new Set(data.map(val => val.floor) as number[])
-    floors.forEach(floor => {
-        ret.push({
-            name: `${i18next.t("floor")}: ${floor}`,
-            children: data.filter(val => val.floor == floor)
-                .map((val, idx) => ({
-                    name: `${i18next.t("room")}: ${val.name} ${val.is_sensitive ? i18next.t("is_sensitive") : ""}`,
-                    id: val.room_id,
-                    value: !!val.doors.find(val => val?.owner === true),
-                    children: []
-                }))
-        })
-    })
-    return ret
-}
 
 export const treeDataToStringArr = (tree: TreeData[]): string[] => {
     let rooms = []
