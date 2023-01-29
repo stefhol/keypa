@@ -1,19 +1,21 @@
 table {
     border: 1px solid lightgray;
-    width: inherit;
 }
-
+table input,
+table select {
+    width: max-content;
+    margin: 1em;
+    padding: 1em 2em 1em 1em !important;
+    font-size: small;
+}
 .absolute {
-    max-height: calc(100vh - 3rem) !important;
+    /* max-height: calc(100vh - 3rem) !important; */
 }
 
 .outer-table {
 
-    overflow  : auto;
-    width     : 100%;
-    max-height: 600px;
 }
-tbody {
+/* tbody {
     border-bottom: 1px solid lightgray;
 }
 
@@ -38,4 +40,52 @@ tfoot {
 
 tfoot th {
     font-weight: normal;
+}
+*/ .table-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: x-small !important;
+}
+
+.table-nav * {
+    margin: 0;
+    padding: 0;
+}
+
+.table-filter input,
+.table-filter select {
+    width: max-content;
+    font-size: smaller;
+}
+
+.table-nav select .table-nav input {
+    font-size: smaller;
+}
+
+.table-nav button {
+    padding: 0.5em !important;
+    max-width: 4em;
+}
+
+.table-filter>* {
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+/* .table-filter>*>* {
+
+    width: max-content;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+} */
+
+.table-nav select,
+.table-nav input {
+    height: 2em;
+    width: 10em;
+    margin: 0 !important;
 }

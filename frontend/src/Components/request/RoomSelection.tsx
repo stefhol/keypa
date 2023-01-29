@@ -26,7 +26,7 @@ export const RoomSelection: React.FC<CreateProps> = (props) => {
                 </select>
             </label>
             {selectedBuilding && <label>
-                {i18next.t("select_rooms")}
+                {/* {i18next.t("select_rooms")} */}
                 <TreeView filter={false} selectionRef={selectedRooms} data={treeData}
                     onChange={tree => props.onChange(treeDataToStringArr(tree))} />
             </label>}

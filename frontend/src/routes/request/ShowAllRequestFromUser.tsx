@@ -21,7 +21,7 @@ export const ShowAllRequestFromUser: React.FC<{}> = (props) => {
             rowAction={
                 [
                     {
-                        element: <button>{i18next.t("change")}</button>,
+                        element: <button className="outline contrast">{i18next.t("change")}</button>,
                         onClick(idx) {
                             navigate(`/request/change-request/${data[idx].request_id}`)
                         },

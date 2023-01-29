@@ -51,7 +51,7 @@ export const CreateKeycardRequestForm: React.FC<{ title: JSX.Element }> = (props
                 <input type={"date"} onChange={e => setActiveUntil(e.target.valueAsDate)}
                 />
             </label>
-            <button onClick={e => {
+            <button className="outline contrast" onClick={e => {
                 e.preventDefault()
                 send({
 
@@ -124,7 +124,7 @@ export const CreateRequestForm: React.FC<{
 
 
 
-                <button onClick={e => {
+                <button className="outline contrast" onClick={e => {
                     e.preventDefault()
                     send({
 
@@ -178,7 +178,7 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                 <>
                     {elements}
                 </>
-                <button onClick={e => {
+                <button className="outline contrast" onClick={e => {
                     e.preventDefault()
                     setCount(prev => {
                         let arr = [...prev]
@@ -195,16 +195,18 @@ const RoomSelectionWrapper: React.FC<{}> = (props) => {
     const [count, setCount] = React.useState([] as number[]);
     const { doors } = React.useContext(LocalContext);
     return (<>
-        <div className="my-container">
+        <div className="">
             <h2>{i18next.t("rooms")}</h2>
 
-            {data &&
-                count.map((_, idx) =>
-                    <RoomSelection key={idx} buildings={data} nmbr={idx} onChange={(e) => {
-                        doors.value[idx] = e
-                    }} />
-                )
-            }
+            <div className="wrap">
+                {data &&
+                    count.map((_, idx) =>
+                        <RoomSelection key={idx} buildings={data} nmbr={idx} onChange={(e) => {
+                            doors.value[idx] = e
+                        }} />
+                    )
+                }
+            </div>
 
             <button
                 onClick={e => {

@@ -87,31 +87,31 @@ const UserFc: React.FC<UserProps> = (props) => {
             {props.user.name}
         </h1>
         <article className="my-container">
-            <h3>{i18next.t("contact_info")}</h3>
+            <h2>{i18next.t("contact_info")}</h2>
             <p>
                 {props.user.email}
             </p>
             <p>
                 {props.user.tel}
             </p>
-        {(!is_leader) ? <>
+            {(!is_leader) ? <>
                 {props.isSelf && <button className="outline contrast" onClick={(e) => {
-                e.preventDefault()
-                navigate("/request/add-request")
-            }}>{i18next.t("create_new_request")}</button>
-            }
-        </> : <>
-                    <button className="outline contrast" onClick={(e) => {
-                e.preventDefault()
-                navigate("/request/add-request/keycard")
+                    e.preventDefault()
+                    navigate("/request/add-request")
+                }}>{i18next.t("create_new_request")}</button>
+                }
+            </> : <>
+                <button className="outline contrast" onClick={(e) => {
+                    e.preventDefault()
+                    navigate("/request/add-request/keycard")
                 }}>{i18next.t("create_new_keycard")}</button>
-        </>}
+            </>}
         </article>
 
 
         <details open>
             <summary>
-                <h3>{i18next.t("access")}</h3>
+                <h2>{i18next.t("access")}</h2>
             </summary>
             <div className="grid">
                 <article>
@@ -126,14 +126,14 @@ const UserFc: React.FC<UserProps> = (props) => {
         <TempKeycardAuthorizationView keycards={props.keycard} userId={props.isSelf ? undefined : props.user.user_id} />
 
         <details open>
-            <summary><h3>{i18next.t("keycards")}</h3></summary>
+            <summary><h2>{i18next.t("keycards")}</h2></summary>
             <>
 
                 <Table data={props.keycard}
                     rowAction={
                         [
                             {
-                                element: <button className="outline contrast">{i18next.t("change")}</button>,
+                                element: <button>{i18next.t("change")}</button>,
                                 onClick(idx) {
                                     navigate(`/keycard/change-request/${props.keycard?.[idx].keycard_id}`)
                                 },
@@ -146,24 +146,24 @@ const UserFc: React.FC<UserProps> = (props) => {
             </>
         </details>
         <details open>
-            <summary><h3>{i18next.t("approved_requests")}</h3></summary>
+            <summary><h2>{i18next.t("approved_requests")}</h2></summary>
             <Table
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.acceptedRequests}
-                rowAction={[{ element: <button className="outline contrast">{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
         </details>
         <details open>
             <summary>
-                <h3>{i18next.t("pending_requests")}</h3>
+                <h2>{i18next.t("pending_requests")}</h2>
             </summary>
             <Table
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.pendingRequests}
-                rowAction={[{ element: <button className="outline contrast">{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
         </details>
@@ -237,21 +237,21 @@ export const TempKeycardSingle: React.FC<TempKeycardSingleProps> = (props) => {
                 <summary>
                     <h3>{i18next.t("temp_keycard")} #{props.idx + 1}</h3>
                     {props.keycard.active_until && <>{i18next.t("active_until")}: {keycard.request?.active_until}</>}
-                    </summary>
+                </summary>
 
-                    <div className="grid">
-                        <article>
-                            <header>
-                                {i18next.t("individual_rooms")}
-                            </header>
-                            <IndividualRoomWrapper
-                                buildings={buildings}
-                            />
-                        </article>
-                        <DepartmentWrapper departments={departments} />
-                    </div>
+                <div className="grid">
+                    <article>
+                        <header>
+                            {i18next.t("individual_rooms")}
+                        </header>
+                        <IndividualRoomWrapper
+                            buildings={buildings}
+                        />
+                    </article>
+                    <DepartmentWrapper departments={departments} />
+                </div>
 
-                </details>
+            </details>
         }
 
     </>)

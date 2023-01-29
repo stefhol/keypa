@@ -44,9 +44,9 @@ interface CommentBoxProps extends CommentViewProps {
 const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
     const [newComment, setNewComment] = React.useState("");
     return (<div className="comment-box">
-        <h2>
+        <header>
             {i18next.t("communication_history")}
-        </h2>
+        </header>
         {props.data.map((val, idx) => <CommentFC
             key={idx}
             comment={val}
@@ -54,8 +54,7 @@ const CommentBoxFC: React.FC<CommentBoxProps> = (props) => {
         />)}
 
         <div>
-            {i18next.t("response")}:
-            <textarea
+            <textarea style={{ width: 300, height: 100, maxWidth: 300, minWidth: 300, maxHeight: 400 }}
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
             />

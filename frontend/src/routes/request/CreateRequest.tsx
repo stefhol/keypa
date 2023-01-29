@@ -34,24 +34,26 @@ export const RequestPicker: React.FC<RequestPickerProps> = (props) => {
         <h2>
             {i18next.t("type_of_request")}
         </h2>
-        <button onClick={e => {
-            e.preventDefault()
-            navigate("/request/add-request/room")
-        }}>
-            {i18next.t("access_request")}
-        </button>
-        <button onClick={e => {
-            e.preventDefault()
-            navigate("/request/add-request/keycard")
-        }} >
-            {i18next.t("keycard_request")}
+        <div className="grid">
+            <button className="outline contrast" onClick={e => {
+                e.preventDefault()
+                navigate("/request/add-request/room")
+            }}>
+                {i18next.t("access_request")}
+            </button>
+            <button className="outline contrast" onClick={e => {
+                e.preventDefault()
+                navigate("/request/add-request/keycard")
+            }} >
+                {i18next.t("keycard_request")}
 
-        </button>
-        <button onClick={e => {
-            e.preventDefault()
-            navigate("/request/add-request/temp")
-        }} >
-            {i18next.t("temp_keycard_request")}
-        </button>
+            </button>
+            <button className="outline contrast" onClick={e => {
+                e.preventDefault()
+                navigate("/request/add-request/temp")
+            }} >
+                {i18next.t("temp_keycard_request")}
+            </button>
+        </div>
     </>)
 }

@@ -67,7 +67,7 @@ export const ShowRequests: React.FC<{}> = (props) => {
             rowAction={
                 [
                     {
-                        element: <button>
+                        element: <button className="outline contrast">
                             {i18next.t("change")}
                         </button>,
                         onClick(idx) {

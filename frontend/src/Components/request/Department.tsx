@@ -16,22 +16,28 @@ export const DepartmentGroup: React.FC<DepartmentGroupProp> = (props) => {
         <div className="my-container" key={props.nmbr} style={style}>
 
 
-            <select value={selected} onChange={e => {
-                setSelected(e.target.value)
-                props.onChange(e.target.value)
-            }} name={`department-select-${props.nmbr}`}>
-                <option value={""}></option>
-                {props.department?.map((val, idx) => <option key={idx} value={val.department_id}>
-                    {val.name} {val.is_sensitive ? i18next.t("is_sensitive") : ""}
-                </option>)}
-            </select>
+            <div className="grid" style={{
+                "alignItems": "baseline"
+            }}>
+                <select value={selected} onChange={e => {
+                    setSelected(e.target.value)
+                    props.onChange(e.target.value)
+                }} name={`department-select-${props.nmbr}`}>
+                    <option value={""}></option>
+                    {props.department?.map((val, idx) => <option key={idx} value={val.department_id}>
+                        {val.name} {val.is_sensitive ? i18next.t("is_sensitive") : ""}
+                    </option>)}
+                </select>
 
-            <button onClick={(e) => {
-                e.preventDefault()
-                props.onChange(undefined as unknown as string)
-                setSelected("")
-                setStyle({ display: "none" })
-            }}>X</button>
+                <button className="outline contrast red" onClick={(e) => {
+                    e.preventDefault()
+                    props.onChange(undefined as unknown as string)
+                    setSelected("")
+                    setStyle({ display: "none" })
+                }}
+                    style={{ width: "3rem" }}
+                >X</button>
+            </div>
             {selected_option &&
                 <div>
                     {i18next.t("includes")}: {selected_option.buildings.map((val, idx) => <div key={idx}>

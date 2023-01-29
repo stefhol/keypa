@@ -68,13 +68,13 @@ export const TreeView: React.FC<TreeViewProps> = (props) => {
                     {
                         props.displayFilter
                         &&
-                        <label>
+                        <>
                                 {i18next.t("filter")}
                             <input
                                 checked={filter}
                                 onChange={() => setFilter(prev => !prev)}
                                 type={"checkbox"} />
-                        </label>
+                        </>
                     }
                     <TreeComponentWrapper
                         readonly={props.readonly}
@@ -133,7 +133,7 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
         setChecked(!!props.value.value)
     }, []);
     return (<li className={`tree node ${props.className || ""} ${(!hasATrueValueInTree && filter) ? "hidden" : ""}`}>
-        <label>
+        <>
             {(props.value.children && props.value.children?.length > 0) && <button className='tree' onClick={(e) => {
                 e.preventDefault()
                 setShowChildren(prev => !prev)
@@ -151,7 +151,7 @@ export const TreeComponent: React.FC<ICompProps> = (props) => {
                 }}
             />
             {props.value.name}
-        </label>
+        </>
         {
             ((props.value.children && props.value.children?.length > 0)) &&
             <TreeComponentWrapper

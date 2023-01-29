@@ -96,13 +96,13 @@ const UserFc: React.FC<UserProps> = (props) => {
             </p>
         </div>
         {(!is_leader) ? <div className="my-my-container">
-            {props.isSelf && <button onClick={(e) => {
+            {props.isSelf && <button className="outline contrast" onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
             }}>{i18next.t("create_new_request")}</button>
             }
         </div> : <div className="my-my-container">
-            <button onClick={(e) => {
+                <button className="outline contrast" onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request/keycard")
             }}>{i18next.t("create_new_keycard")}</button>

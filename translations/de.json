@@ -23,6 +23,7 @@
     "filter": "Filter",
     "util": "Util",
     "temp": "Pfand",
+    "access": "Zugänge",
     "type_of_request": "Typ des Antrags",
     "access_request": "Zugangsantrag",
     "keycard_request": "Keycard Antrag",

@@ -1,9 +1,19 @@
 .tree button {
     font-size: small;
-    padding  : 2px;
+    padding: 2px;
+        display: initial;
+        margin: 0 1rem;
+        max-width: fit-content;
+    }
+    
+    .tree * {
+        list-style-type: none;
 }
 
 .tree input {
-    width : initial;
+    width: initial;
     height: initial;
+    appearance: none;
+        width: 1rem;
+        height: 1rem;
 }
