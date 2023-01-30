@@ -64,8 +64,8 @@ pub async fn insert_comment_into_request_id(
         send_mail(
             Email {
                 email_to: user.email.to_string(),
-                message: format!("There is a new Comment from {}", user.name),
-                subject: format!("{}", CREATE_COMMENT),
+                message: format!("Nutzer {} hat in Antrag {} einen Kommentar verfasst", user.name, request_id),
+                subject: format!("Neuer Kommentar in Antrag"),
             },
         )?;
     }

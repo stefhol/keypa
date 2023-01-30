@@ -10,6 +10,7 @@ import { useLoading } from "../../hooks/useLoading"
 import { Building, BuildingWithOwner } from "../../util/intefaces/Buildings"
 import { Request } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
+import { transBool } from "../../util/trans"
 import { IndividualRoomWrapper } from "../user/User"
 export interface ChangeRequestProps { }
 const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
@@ -115,7 +116,16 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     {i18next.t("tel")}: {props.data.requester.tel}
                 </p>
             </div>
-
+            <div>
+                {typeof props?.data?.payed === "boolean" && <>
+                    <div>
+                        {i18next.t("payed")}: {transBool(props?.data?.payed)}
+                    </div>
+                    {!props?.data?.payed && <div>
+                        {i18next.t("payment_info")} {props?.data?.payed}
+                    </div>}
+                </>}
+            </div>
             <div className="my-container">
                 <h2>{i18next.t("description")}</h2>
                 <p>

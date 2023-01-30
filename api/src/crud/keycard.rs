@@ -135,6 +135,7 @@ async fn get_single_keycard_keycard_id_query(
             let request = crud::request::get::get_single_request(db, request_id).await?;
             keycard = keycard.map(|keycard| {
                 let mut keycard = keycard.clone();
+                keycard.request = Some(request.clone());
                 keycard.keycard_type = Some(request.request_type);
                 keycard
             })
@@ -279,8 +280,8 @@ pub async fn change_keycard(
             send_mail(
                 Email {
                     email_to: user.email.to_string(),
-                    message: format!("A Keycard from you has been changed"),
-                    subject: format!("{}", "Changed Keycard"),
+                    message: format!("Keycard wurde geändert"),
+                    subject: format!("{}", "Geänderte Keycard"),
                 },
             )?;
         }
@@ -327,8 +328,8 @@ pub async fn move_to_archive(
             send_mail(
                 Email {
                     email_to: user.email.to_string(),
-                    message: format!("A Keycard from you has been archived"),
-                    subject: format!("{}", "Archived Keycard"),
+                    message: format!("Keycard wurde archiviert"),
+                    subject: format!("{}", "Archivierte Keycard"),
                 },
             )?;
         }

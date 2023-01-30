@@ -91,12 +91,30 @@ export const CreateRequestForm: React.FC<{
     return (<>
         <LocalContext.Provider value={{ departments: { value: departments.current }, doors: { value: rooms.current } }}>
 
-            <form>
+            <form onSubmit={e => {
+                e.preventDefault()
+                send({
+
+                    active_until: isLimitedInTime ? activeUntil?.toISOString() : null,
+                    create_keycard: props.createKeycard,
+                    departments: convertToArray(departments.current),
+                    description: description || undefined,
+                    rooms: convertToArray(rooms.current).flat() ?? undefined,
+                    other_rooms: otherRooms || null,
+                } as CreateRequest).then(res => {
+                    alert("Success")
+                    navigate("/user")
+
+                }).finally(() => {
+                    queryClient.invalidateQueries()
+                })
+            }}>
                 {props.title}
                 <label> {i18next.t("description")}:
                     <textarea
                         value={description}
                         onChange={e => setDescription(e.target.value)}
+                        required
                     />
                 </label>
                 <label>{i18next.t("limited_in_time")}
@@ -124,24 +142,7 @@ export const CreateRequestForm: React.FC<{
 
 
 
-                <button className="outline contrast" onClick={e => {
-                    e.preventDefault()
-                    send({
-
-                        active_until: isLimitedInTime ? activeUntil?.toISOString() : null,
-                        create_keycard: props.createKeycard,
-                        departments: convertToArray(departments.current),
-                        description: description || undefined,
-                        rooms: convertToArray(rooms.current).flat() ?? undefined,
-                        other_rooms: otherRooms || null,
-                    } as CreateRequest).then(res => {
-                        alert("Success")
-                        navigate("/user")
-
-                    }).finally(() => {
-                        queryClient.invalidateQueries()
-                    })
-                }}>{i18next.t("send")}:</button>
+                <button className="outline contrast">{i18next.t("send")}:</button>
 
 
             </form>

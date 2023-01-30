@@ -29,6 +29,14 @@ export const ManageKeycardForm: React.FC<ManageKeycardFormProps> = (props) => {
         <p>{i18next.t("is_given_back")}: {transBool(props.keycard.is_given_back)}</p>
         <p>{i18next.t("is_locked")}: {transBool(props.keycard.is_locked)}</p>
         <p>{i18next.t("is_lost")}: {transBool(props.keycard.is_lost)}</p>
+        {typeof props?.keycard?.request?.payed === "boolean" && <>
+            <div>
+                {i18next.t("payed")}: {transBool(props?.keycard?.request?.payed)}
+            </div>
+            {!props?.keycard?.request?.payed && <div>
+                {i18next.t("payment_info")} {props.keycard.keycard_id}
+            </div>}
+        </>}
         <div className="grid">
             {
                 !props.keycard.is_deactivated && <>
