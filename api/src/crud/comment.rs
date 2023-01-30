@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::util::{error::CrudError, mail::{send_mail, Email, CREATE_COMMENT}};
+use crate::util::{error::CrudError, mail::{send_mail, Email}};
 
 use super::{
     user::{get_all_user, GetUser},

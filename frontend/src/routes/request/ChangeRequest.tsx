@@ -122,7 +122,7 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                         {i18next.t("payed")}: {transBool(props?.data?.payed)}
                     </div>
                     {!props?.data?.payed && <div>
-                        {i18next.t("payment_info")} {props?.data?.payed}
+                        {i18next.t("payment_info")} {props?.data?.keycard_id}
                     </div>}
                 </>}
             </div>
