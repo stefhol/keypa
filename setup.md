@@ -5,7 +5,7 @@ Hier wird auf die
 [Offizielle Installation Anleitung verwiesen](https://docs.docker.com/engine/install/ubuntu/)
 
 Folgendes bezieht sich auf Ubuntu
-1. Set up the repository
+1. Einrichtung Repository
 ```
 sudo apt-get update
 
@@ -15,29 +15,29 @@ sudo apt-get install \
     gnupg \
     lsb-release
 ```
-2. Add Docker’s official GPG key:
+2. Hinzufuegen des Docker’s Offiziellen GPG Schluessel:
 ```
 sudo mkdir -p /etc/apt/keyrings
 
  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 ```
-3. Use the following command to set up the repository:
+3. Repository Einrichten:
 ```
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
-###  Install Docker Engine
+###  Docker Engine Installieren
 ```
 sudo apt-get update
 ```
-### Install Docker Engine, containerd, and Docker Compose.
+### Docker Engine, containerd, and Docker Compose Installieren
 ```
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ```
 
-### Post Installation Steps
-To run Docker without root privileges, see Run the Docker daemon as a non-root user (Rootless mode).
+### Zusaetliches 
+Docker ohne Root ausfuehren
 ```
 sudo groupadd docker
 sudo usermod -aG docker $USER
@@ -48,7 +48,7 @@ Add to Autostart
 
  sudo systemctl enable containerd.service
 ```
-**Restart System**
+**System neustarten**
 ```
 sudo reboot
 ```
