@@ -125,7 +125,8 @@ pub async fn get_doors_of_request_id(
     let values = tbl_door::Entity::find()
         .from_raw_sql(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"select (tbl_door.*) from tbl_request
+            r#"
+            select (tbl_door.*) from tbl_request
             join tbl_door_to_request on tbl_request.request_id = tbl_door_to_request.request_id
             join tbl_door on tbl_door_to_request.door_id = tbl_door.door_id
             and tbl_request.request_id = $1
@@ -156,6 +157,7 @@ pub async fn get_building_complex(
         buildings.iter().map(|f| (f, &rooms).into()).collect();
     Ok(buildings)
 }
+/// Get Builidng by user_id with only authorized doors
 pub async fn get_building_by_user_id_with_only_authorized_doors(
     user_id: &Uuid,
     db: &DatabaseConnection,
@@ -164,9 +166,10 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
         .one(db)
         .await?;
     let Some(user) = user else { return Err(CrudError::NotFound) };
-
+    // get the whole building
     let buildings = get_building_complex(db).await?;
 
+    // get the actual owned doors
     let authorized_doors = match user.role_id {
         Some(val) => match val {
             // leader has all doors
@@ -175,10 +178,13 @@ pub async fn get_building_by_user_id_with_only_authorized_doors(
         },
         None => get_doors_of_user_id_without_temp(user_id, db).await?,
     };
-
+    // filter the object
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }
+/// Get Builidng by user_id and keycard_id with only authorized doors
+/// compare get_building_by_user_id_with_only_authorized_doors
+/// this is used for temp cards 
 pub async fn get_building_by_user_id_and_keycard_id_with_only_authorized_doors(
     user_id: &Uuid,
     keycard_id: &Uuid,
@@ -196,6 +202,8 @@ pub async fn get_building_by_user_id_and_keycard_id_with_only_authorized_doors(
     let filtered_buildings = get_complex_building_authorized(buildings, authorized_doors);
     Ok(filtered_buildings)
 }
+/// Get Builidng by user_id and request_id with only authorized doors
+/// compare get_building_by_user_id_with_only_authorized_doors
 pub async fn get_building_by_request_id_only_authorized_doors(
     request_id: &Uuid,
     db: &DatabaseConnection,

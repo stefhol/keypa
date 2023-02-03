@@ -30,11 +30,16 @@ import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { Rest } from './util/Rest';
 import { decodeToken } from './util/token';
+import { SidebarProvider } from './util/Provider/SidebarProvider';
+import { Sidebar } from './Components/Ui/Sidebar';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Header />,
+    element: <>
+      <Sidebar />
+      <Header />
+    </>,
     children: [
       {
         path: "/use-keycard",
@@ -183,14 +188,15 @@ i18next.init({ defaultNS: '1', resources: {}, lng: localStorage.getItem("languag
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <Default>
-
+    <SidebarProvider>
+      <Default>
       <QueryClientProvider client={queryClient}>
         <LoadingProvider>
           <RouterProvider router={router} />
         </LoadingProvider>
       </QueryClientProvider>
     </Default>
+    </SidebarProvider>
 
   </React.StrictMode>
 );

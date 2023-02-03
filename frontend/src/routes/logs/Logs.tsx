@@ -15,12 +15,12 @@ export const Logs: React.FC<LogsProps> = (props) => {
     const { data: keycardUsageHistory } = useQuery(["keycardUsageHistory"], Rest.getKeycardUsageHistory)
     const { data: logData } = useQuery(["logs"], Rest.getLogs)
     return (<>
-        {logData &&
-            <RequestLogs logData={logData} />
-        }
         {
             keycardUsageHistory &&
             <KeycardUsageHistoryFc keycardUsageHistory={keycardUsageHistory} />
+        }
+        {logData &&
+            <RequestLogs logData={logData} />
         }
     </>)
 }
@@ -72,7 +72,7 @@ export const RequestLogs: React.FC<RequestLogsProps> = ({ logData }) => {
                 data={logData}
                 columnFilter={{ value: columnFilters, set: setColumnFilters }}
                 filter={
-                    <div className="my-container">
+                    <>
                         {i18next.t("changed_by")}:
                         <select
                             value={columnFilters.find((val) => val.id === "changed_by")?.value as any} onChange={(e) => {
@@ -101,11 +101,11 @@ export const RequestLogs: React.FC<RequestLogsProps> = ({ logData }) => {
                                 {val.name}
                             </option>)}
                         </select>
-                    </div>
+                    </>
                 }
                 columns={createLogDefColumn()} rowAction={[]} />
 
-            <button onClick={e => {
+            <button className="outline contrast" onClick={e => {
                 e.preventDefault()
                 Rest.quickFetch("csv/logs", "GET").then(res => {
                     if (!res.ok) {
@@ -173,7 +173,7 @@ export const KeycardUsageHistoryFc: React.FC<KeycardUsageHistoryProps> = ({ keyc
                 data={keycardUsageHistory}
                 columnFilter={{ value: columnFilters, set: setColumnFilters }}
                 filter={
-                    <div>
+                    <>
                         {i18next.t("building")}:
                         <select value={filter.building_id} onChange={e => setFilter(prev => (
                             { ...prev, building_id: e.target.value }
@@ -205,11 +205,11 @@ export const KeycardUsageHistoryFc: React.FC<KeycardUsageHistoryProps> = ({ keyc
                             <option value={""}></option>
                             {[...new Set(keycardUsageHistory?.map(val => val.user_id))].map((val, idx) => <option key={idx} value={val}>{keycardUsageHistory?.find(f => f.user_id == val)?.username}</option>)}
                         </select>
-                    </div>
+                    </>
                 }
                 defaultHidden={KeycardUsageHistoryHiddenColumns}
                 columns={createKeycardUsageHistoryDefColumn()} rowAction={[]} />
-            <button onClick={e => {
+            <button className="outline contrast" onClick={e => {
                 e.preventDefault()
                 Rest.quickFetch("csv/keycard-usage-history", "GET").then(res => {
                     if (!res.ok) {

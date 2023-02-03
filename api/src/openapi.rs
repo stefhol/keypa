@@ -62,14 +62,13 @@ use crate::{crud, api};
     ),
     components(schemas(
         api::auth::Login,
-
         crud::door::GetDoor,
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
         crud::keycard::GetKeycard,
         crud::keycard::ChangeKeyboard,
-        api::keycard_usage_history::KeycardUsageHistory,
+        crud::keycard_usage_history::KeycardUsageHistory,
         crud::request::get::GetRequest,
         crud::request::get::RequestType,
         crud::request::create::CreateRequest,

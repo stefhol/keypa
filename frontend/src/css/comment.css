@@ -44,3 +44,23 @@
     border-left  : none;
     border-bottom: 15px solid transparent;
 }
+.comment-box {}
+
+@media screen and (min-width: 1700px) {
+    .comment-box {
+        margin: 0;
+        padding: 2rem;
+        font-size: smaller;
+        right: 0;
+        bottom: 0;
+        background-color: var(--card-sectionning-background-color);
+        border-radius: var(--border-radius);
+        background: var(--card-background-color);
+        box-shadow: var(--card-box-shadow);
+        position: fixed;
+    }
+}
+
+.comment-box>header {
+    margin: 0;
+}

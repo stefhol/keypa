@@ -328,9 +328,23 @@ pub async fn change_request(
         if let Some(user) = user {
             send_mail(Email {
                 email_to: user.email.to_string(),
-                message: format!("A Request from you has been changed"),
-                subject: format!("{}", "Change Request"),
+                message: format!("Ein Antrag wurde geändert"),
+                subject: format!("{}", "Antrag geändert"),
             })?;
+            if og_request.accept == false && request_model.accept {
+                send_mail(Email{
+                    email_to:user.email.to_string(),
+                    message: format!("Ihr Antrag wurde akzeptiert"),
+                    subject:format!("Akzeptierter Antrag")
+                })?;
+                if request_model.payed == Some(false) && request_model.keycard_id.is_some() {
+                    send_mail(Email{
+                    email_to:user.email.to_string(),
+                    message: format!("Senden Sie 5 Euro an die IBAN: DE49500105176555567288 mit dem Verwendungszweck: {}",request_model.keycard_id.unwrap()),
+                    subject:format!("Zahlungsinformationen Antrag")
+                })?;
+                }
+            }
         }
     }
     Ok(change_status)

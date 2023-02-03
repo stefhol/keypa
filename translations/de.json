@@ -23,6 +23,7 @@
     "filter": "Filter",
     "util": "Util",
     "temp": "Pfand",
+    "access": "Zugänge",
     "type_of_request": "Typ des Antrags",
     "access_request": "Zugangsantrag",
     "keycard_request": "Keycard Antrag",
@@ -113,5 +114,7 @@
     "go_to_page": "Gehe zu Seite",
     "of": "von",
     "show": "Zeige",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "payed": "Bezahlt",
+    "payment_info": "Senden Sie 5 Euro an die IBAN: DE49500105176555567288 mit dem Verwendungszweck: "
 }

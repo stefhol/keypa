@@ -10,6 +10,7 @@ import { useLoading } from "../../hooks/useLoading"
 import { Building, BuildingWithOwner } from "../../util/intefaces/Buildings"
 import { Request } from "../../util/intefaces/Request"
 import { Rest } from "../../util/Rest"
+import { transBool } from "../../util/trans"
 import { IndividualRoomWrapper } from "../user/User"
 export interface ChangeRequestProps { }
 const getRequest = async ({ queryKey }: { queryKey: string[] }) => {
@@ -115,105 +116,29 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                     {i18next.t("tel")}: {props.data.requester.tel}
                 </p>
             </div>
-
+            <div>
+                {typeof props?.data?.payed === "boolean" && <>
+                    <div>
+                        {i18next.t("payed")}: {transBool(props?.data?.payed)}
+                    </div>
+                    {!props?.data?.payed && <div>
+                        {i18next.t("payment_info")} {props?.data?.keycard_id}
+                    </div>}
+                </>}
+            </div>
             <div className="my-container">
                 <h2>{i18next.t("description")}</h2>
                 <p>
                     {props.data.description}
                 </p>
             </div>
-            <div className="my-container"><label>
-                {i18next.t("active_until")}:
-                <input
-                    type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker || !disabled)} />
-            </label></div>
-            {!disabled && <> {(props.data.request_type !== "keycard") && <div className="my-container">
-                <div className="my-container">
-                    <h2>{i18next.t("requested_individual_rooms")}</h2>
-                    <p>
-                        {props.data.additional_rooms || "Keine"}
-                    </p>
-
-                    {(is_worker || is_leader) ? <>
-                        <h2>
-                            {i18next.t("individual_rooms")}
-                        </h2>
-
-                        <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData.current}
-                            onChange={e => {
-                                setRooms(e.map(val =>
-                                    val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
-                            }}
-                        />
-                    </> : <>
-                        <h2>
-                                {i18next.t("individual_rooms")}
-
-                        </h2>
-                            <IndividualRoomWrapper buildings={fillBuildingWithOwner(props.building, props.data.doors)} />
-                    </>}
-                </div>
-                <div className="my-container">
-                    <h2>
-                        {i18next.t("requested_department")}
-                    </h2>
-                    {(departments && departmentsData) && departments.map((val, idx) => {
-                        const currentDepartment = departmentsData.find(dep => dep.department_id === val)
-                        return <div className="my-container" key={idx}>
-                            <label>
-                                <b>{currentDepartment?.name}</b>
-                                {(is_leader || is_worker) && <button onClick={e => {
-                                    e.preventDefault()
-                                    setDepartments(prev => {
-                                        return prev?.filter(f => f !== val)
-                                    })
-                                }}>X</button>}
-                            </label>
-                            {currentDepartment?.buildings.map(building => (
-                                <div key={building.building_id}>
-                                    <b>{building.name}:</b> {building.rooms.map(room => room.name).join(", ")}
-                                </div>
-                            ))}
-
-                        </div>
-                    })}
-                    {
-                        (departmentsData && (is_leader || is_worker)) &&
-                        <>
-                            <select value={addDepartmentOption}
-
-                                onChange={e => setAddDepartmentOption(e.target.value)}>
-                                <option value={""}></option>
-                                {departmentsData.map((val, idx) => <option value={val.department_id} key={idx}>
-                                    {val.name} {val.is_sensitive ? "Sensitiv" : ""}
-                                </option>)}
-                            </select>
-                            <button
-                                disabled={!addDepartmentOption}
-                                onClick={e => {
-                                    e.preventDefault()
-
-                                    setDepartments(prev => {
-                                        let newState = []
-                                        if (prev) {
-                                            newState = [...prev, addDepartmentOption]
-                                        } else {
-                                            newState = [addDepartmentOption]
-                                        }
-                                        return newState;
-                                    })
-                                    setAddDepartmentOption("")
-                                }}
-                            >{i18next.t("add_requested_department")}
-                            </button>
-                        </>
-                    }
-                </div>
-
-
-
-            </div>}
-                {(is_leader || is_worker) && <div className="my-container">
+            <div className="grid">
+                <label>
+                    {i18next.t("active_until")}:
+                    <input
+                        type={"date"} ref={dateElRef} onChange={e => setActiveUntil(e.target.valueAsDate)} disabled={!(is_leader || is_worker || !disabled)} />
+                </label>
+                {(is_leader || is_worker) &&
                     <label>
                         Status:
                         <select name="status"
@@ -242,20 +167,113 @@ export const ChangeRequestForm: React.FC<ChangeRequestFormProps> = (props) => {
                             <option value="3" >{i18next.t("status_pending")}</option>
                         </select>
                     </label>
+                }
+            </div>
+            {!disabled && <> {(props.data.request_type !== "keycard") && <div className="">
+                <details className="" open>
+                    <summary>
+                        <h2>{i18next.t("requested_individual_rooms")}</h2>
+                        {props.data.additional_rooms}
+                    </summary>
 
-                    <button>
+                    {(is_worker || is_leader) ? <>
+                        <h2>
+                            {i18next.t("individual_rooms")}
+                        </h2>
+
+                        <TreeView displayFilter selectionRef={{ current: {} } as any} data={treeData.current}
+                            onChange={e => {
+                                setRooms(e.map(val =>
+                                    val.children?.map(floor => floor?.children?.filter(room => room.value).map(room => room?.id || "") || []) || []).flat().flat())
+                            }}
+                        />
+                    </> : <>
+                        <h2>
+                                {i18next.t("individual_rooms")}
+
+                        </h2>
+                            <IndividualRoomWrapper buildings={fillBuildingWithOwner(props.building, props.data.doors)} />
+                    </>}
+                </details>
+                <details open className="my-container">
+                    <summary>
+                        <h2>{i18next.t("requested_department")}</h2>
+                    </summary>
+                    <div className="wrap">
+                        {(departments && departmentsData) && departments.map((val, idx) => {
+                            const currentDepartment = departmentsData.find(dep => dep.department_id === val)
+                            return <div className="my-container" key={idx}>
+                                <label>
+                                    <b>{currentDepartment?.name}</b>
+                                    {(is_leader || is_worker) && <button className="outline contrast red"
+                                        style={{ "width": "3rem" }}
+                                        onClick={e => {
+                                            e.preventDefault()
+                                            setDepartments(prev => {
+                                                return prev?.filter(f => f !== val)
+                                            })
+                                        }}>X</button>}
+                                </label>
+                                {currentDepartment?.buildings.map(building => (
+                                    <div key={building.building_id}>
+                                        <b>{building.name}:</b> {building.rooms.map(room => room.name).join(", ")}
+                                    </div>
+                                ))}
+
+                            </div>
+                        })}
+                    </div>
+                    {
+                        (departmentsData && (is_leader || is_worker)) &&
+                        <>
+                            <select value={addDepartmentOption}
+
+                                onChange={e => setAddDepartmentOption(e.target.value)}>
+                                <option value={""}></option>
+                                {departmentsData.map((val, idx) => <option value={val.department_id} key={idx}>
+                                    {val.name} {val.is_sensitive ? "Sensitiv" : ""}
+                                </option>)}
+                            </select>
+                            <button
+                                className="outline contrast"
+                                disabled={!addDepartmentOption}
+                                onClick={e => {
+                                    e.preventDefault()
+
+                                    setDepartments(prev => {
+                                        let newState = []
+                                        if (prev) {
+                                            newState = [...prev, addDepartmentOption]
+                                        } else {
+                                            newState = [addDepartmentOption]
+                                        }
+                                        return newState;
+                                    })
+                                    setAddDepartmentOption("")
+                                }}
+                            >{i18next.t("add_requested_department")}
+                            </button>
+                        </>
+                    }
+                </details>
+
+
+
+            </div>}
+                {(is_leader || is_worker) &&
+                    <button className="outline contrast" >
                         {i18next.t("send")}
-                    </button>
-                </div>}</>}
+                    </button>}
+            </>}
         </form>
 
-        {!disabled && <div className="my-container">
+        {!disabled &&
             <CommentView
                 requesterId={props.data.requester_id}
                 requestId={props.data.request_id}
 
             />
-        </div>}
+        }
     </>)
 }
 interface ChangeRequest {
@@ -267,6 +285,12 @@ interface ChangeRequest {
     pending?: boolean,
 }
 const send = async (requestId: string, data: ChangeRequest) => {
+    if (data.departments) {
+        data.departments = new Array(...new Set(data.departments))
+    }
+    if (data.rooms) {
+        data.rooms = new Array(...new Set(data.rooms))
+    }
     return await (await Rest.quickAdd(`request/${requestId}`, "POST", data)).json();
 }
 

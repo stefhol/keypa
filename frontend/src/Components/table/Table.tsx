@@ -148,19 +148,23 @@ export const Table: React.FC<ITableProps> = (props) => {
     })
 
     return (
-        <div className={`outer-table ${props.outerClassName || ""}`}>
+        <div className={`outer-table ${props.outerClassName || ""} grid`}>
             <figure>
                 <table>
                     <thead>
-                        <tr key={-1}><td colSpan={100}>
-                            <span>
-                                Suche: <DebouncedInput
-                                    value={globalFilter ?? ''}
-                                    onChange={value => setGlobalFilter(String(value))}
-                                    placeholder={i18next.t("search") || ""}
-                                />
-                            </span>
-                            {props.filter}
+                        <tr key={-1}><td colSpan={100} >
+                            <div className='table-filter'>
+                                <span >
+                                    Suche: <DebouncedInput
+                                        value={globalFilter ?? ''}
+                                        onChange={value => setGlobalFilter(String(value))}
+                                        placeholder={i18next.t("search") || ""}
+                                    />
+                                </span>
+                                <span>
+                                    {props.filter}
+                                </span>
+                            </div>
                         </td></tr>
                         {table.getHeaderGroups().map(headerGroup => (
                             <tr key={headerGroup.id}>
@@ -212,30 +216,30 @@ export const Table: React.FC<ITableProps> = (props) => {
                         ))}
                     </tfoot>
                 </table>
-                <div className="grid">
+                <div className="grid table-nav">
                     <button
-                        className="border rounded p-1"
+                        className="outline contrast"
                         onClick={() => table.setPageIndex(0)}
                         disabled={!table.getCanPreviousPage()}
                     >
                         {'<<'}
                     </button>
                     <button
-                        className="border rounded p-1"
+                        className="outline contrast"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
                         {'<'}
                     </button>
                     <button
-                        className="border rounded p-1"
+                        className="outline contrast"
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
                         {'>'}
                     </button>
                     <button
-                        className="border rounded p-1"
+                        className="outline contrast"
                         onClick={() => table.setPageIndex(table.getPageCount() - 1)}
                         disabled={!table.getCanNextPage()}
                     >

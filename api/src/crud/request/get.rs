@@ -38,6 +38,7 @@ pub struct GetRequest {
     pub departments: Option<Vec<Uuid>>,
     pub doors: Option<Vec<Uuid>>,
     pub is_sensitive: Option<bool>,
+    pub payed:Option<bool>
 }
 
 async fn query_is_request_sensitive(db: &DatabaseConnection) -> Result<Vec<Uuid>, CrudError> {
@@ -120,6 +121,7 @@ impl From<(&tbl_request::Model, &Vec<GetUser>, &Vec<Uuid>, &Vec<Uuid>)> for GetR
                     .iter()
                     .any(|f| f.to_owned() == request.request_id),
             ),
+            payed:request.payed,
         }
     }
 }
@@ -155,6 +157,7 @@ impl From<(&tbl_request_archive::Model, &Vec<GetUser>)> for GetRequest {
             doors: None,
             additional_rooms: request.additional_rooms.to_owned(),
             is_sensitive: Some(false),
+            payed:request.payed,
         }
     }
 }
@@ -287,7 +290,7 @@ pub async fn get_single_request(
             request.departments =
                 Some(request_department.iter().map(|f| f.department_id).collect());
             request.doors = Some(request_door.iter().map(|f| f.door_id).collect());
-
+            
             Ok(request)
         }
         None => Err(CrudError::NotFound),

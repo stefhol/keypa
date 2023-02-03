@@ -37,23 +37,23 @@ export const GlobalKeycardList: React.FC<GlobalKeycardListProps> = (props) => {
             outerClassName="absolute"
             columnFilter={{ value: columnFilters, set: setColumnFilters }}
             filter={
-                <span className="my-container">
+                <>
                     {i18next.t("show_only_expiraing_keycard")}
                     <input type={"checkbox"} checked={filterActiveUntil}
                         onChange={() => setFilterActiveUntil(prev => !prev)}
                     />
-                </span>
+                </>
             }
             rowAction={[
                 {
-                    element: <button>{i18next.t("contact_per_email")}</button>,
+                    element: <button className="outline contrast">{i18next.t("contact_per_email")}</button>,
                     onClick(rowIndex) {
                         if (data[rowIndex].request?.requester.email)
                             window.open(`mailto:${data[rowIndex].request?.requester.email}`);
                     },
                 },
                 {
-                    element: <button>{i18next.t("open_user")}</button>,
+                    element: <button className="outline contrast">{i18next.t("open_user")}</button>,
                     onClick(rowIndex) {
                         if (data[rowIndex].request?.requester_id)
                             navigate(`/user/${data[rowIndex].request?.requester_id}`)
