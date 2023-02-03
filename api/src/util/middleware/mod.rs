@@ -39,6 +39,7 @@ pub enum AuthenticationResult {
     NotAuthenticated,
 }
 impl AuthenticationResult {
+    /// Converts self to SecurityLevel
     pub fn to_sercurity_level(&self) -> SecurityLevel {
         return if let AuthenticationResult::Authenticated(val) = self {
             return if val.is_admin {
@@ -54,6 +55,8 @@ impl AuthenticationResult {
             SecurityLevel::External
         };
     }
+
+    /// Tests if the provided Authentication has atleast the SecurityLevel if not throw an Error 
     pub fn has_high_enough_security_level(
         &self,
         security_level: SecurityLevel,
@@ -61,6 +64,7 @@ impl AuthenticationResult {
         self.to_sercurity_level()
             .has_high_enough_security_level(security_level)
     }
+    /// Try to get the user_id out of the AuthenticationResult
     pub fn try_get_user_id(&self) -> Result<Uuid, CrudError> {
         match self {
             AuthenticationResult::Authenticated(val) => {

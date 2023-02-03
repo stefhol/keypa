@@ -7,7 +7,7 @@ use crate::util::error::CrudError;
 use chrono::{DateTime, Utc};
 use entities::model::{tbl_keycard, tbl_keycard_archive, tbl_request_log, tbl_user};
 use sea_orm::{
-    ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, IntoActiveModel, Set, Statement,
+    ActiveModelTrait, DatabaseConnection, DbBackend, EntityTrait, IntoActiveModel, Set, Statement, FromQueryResult,
 };
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
@@ -24,6 +24,7 @@ pub struct GetKeycard {
     pub given_out: Option<DateTime<Utc>>,
     pub keycard_type: Option<RequestType>,
     pub request: Option<GetRequest>,
+    pub active_until: Option<DateTime<Utc>>,
 }
 #[derive(Debug, Serialize, Deserialize, ToSchema)]
 pub struct ChangeKeyboard {
@@ -33,6 +34,7 @@ pub struct ChangeKeyboard {
     pub is_given_back: Option<bool>,
     pub is_given_out: Option<bool>,
 }
+
 impl From<&tbl_keycard::Model> for GetKeycard {
     fn from(model: &tbl_keycard::Model) -> Self {
         let keycard = model.clone();
@@ -47,6 +49,37 @@ impl From<&tbl_keycard::Model> for GetKeycard {
             given_out: keycard.given_out.map(|f| DateTime::from_utc(f, Utc)),
             keycard_type: None,
             request: None,
+            active_until:None
+        }
+    }
+}
+#[derive(FromQueryResult)]
+    struct KeycardQuery{
+        pub keycard_id: Uuid,
+        pub user_id: Uuid,
+        pub is_lost: bool,
+        pub is_locked: bool,
+        pub is_deactivated: bool,
+        pub is_given_back: bool,
+        pub request_id: Option<Uuid>,
+        pub given_out: Option<sea_orm::prelude::DateTime>,
+        pub active_until:Option<sea_orm::prelude::DateTime>
+    }
+impl From<&KeycardQuery> for GetKeycard {
+    fn from(model: &KeycardQuery) -> Self {
+        let keycard = model.clone();
+        Self {
+            keycard_id: keycard.keycard_id,
+            is_lost: keycard.is_lost,
+            is_locked: keycard.is_locked,
+            is_deactivated: keycard.is_deactivated,
+            is_given_back: keycard.is_given_back,
+            request_id: keycard.request_id,
+            user_id: keycard.user_id,
+            given_out: keycard.given_out.map(|f| DateTime::from_utc(f, Utc)),
+            keycard_type: None,
+            request: None,
+            active_until: keycard.active_until.map(|f| DateTime::from_utc(f, Utc)),
         }
     }
 }
@@ -55,10 +88,9 @@ async fn get_keycard_user_id_query(
     user_id: &Uuid,
 ) -> Result<Vec<GetKeycard>, CrudError> {
     let requests = crud::request::get::get_all_requests(db).await?;
-    let values = tbl_keycard::Entity::find()
-        .from_raw_sql(Statement::from_sql_and_values(
+    let values =  KeycardQuery::find_by_statement(Statement::from_sql_and_values(
             DbBackend::Postgres,
-            r#"select (tk.*) from tbl_user
+            r#"select (tk.*), active_until from tbl_user
             join tbl_request tr on tbl_user.user_id = tr.requester_id
             join tbl_keycard tk on tr.keycard_id = tk.keycard_id
             where tbl_user.user_id = $1
@@ -82,11 +114,10 @@ async fn get_single_keycard_keycard_id_query(
     db: &DatabaseConnection,
     keycard_id: &Uuid,
 ) -> Result<Option<GetKeycard>, CrudError> {
-    let keycard = tbl_keycard::Entity::find()
-        .from_raw_sql(Statement::from_sql_and_values(
+    let keycard = KeycardQuery::find_by_statement(Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"
-            select (tk.*) from tbl_request as tr
+            select (tk.*), active_until from tbl_request as tr
             join tbl_keycard tk on tr.keycard_id = tk.keycard_id
             where tr.accept = true
             and tr.active = true
@@ -102,6 +133,7 @@ async fn get_single_keycard_keycard_id_query(
             let request = crud::request::get::get_single_request(db, request_id).await?;
             keycard = keycard.map(|keycard| {
                 let mut keycard = keycard.clone();
+                keycard.request = Some(request.clone());
                 keycard.keycard_type = Some(request.request_type);
                 keycard
             })
@@ -246,8 +278,8 @@ pub async fn change_keycard(
             send_mail(
                 Email {
                     email_to: user.email.to_string(),
-                    message: format!("A Keycard from you has been changed"),
-                    subject: format!("{}", "Changed Keycard"),
+                    message: format!("Keycard wurde geändert"),
+                    subject: format!("{}", "Geänderte Keycard"),
                 },
             )?;
         }
@@ -294,8 +326,8 @@ pub async fn move_to_archive(
             send_mail(
                 Email {
                     email_to: user.email.to_string(),
-                    message: format!("A Keycard from you has been archived"),
-                    subject: format!("{}", "Archived Keycard"),
+                    message: format!("Keycard wurde archiviert"),
+                    subject: format!("{}", "Archivierte Keycard"),
                 },
             )?;
         }

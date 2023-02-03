@@ -21,7 +21,7 @@ export const Login: React.FC<LoginProps> = (props) => {
     }, []);
     const [error, setError] = React.useState("");
     const navigate = useNavigate()
-    return (<main className="login"
+    return (<main className="login container"
     >
         <p>{i18next.t("login")}</p>
         <form
@@ -41,7 +41,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     location.reload()
                 })
                     .catch(err => {
-                        console.log(err);
+                        console.error(err);
 
                         setError(i18next.t("failed_login") as string)
                     })
@@ -75,7 +75,7 @@ export const Login: React.FC<LoginProps> = (props) => {
                     }}
                 />
             </label>
-            <button>
+            <button className="outline contrast">
                 {i18next.t("login")}
             </button>
             <p>{error}</p>

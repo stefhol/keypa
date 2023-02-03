@@ -9,3 +9,4 @@ pub mod log;
 pub mod request;
 pub mod room;
 pub mod user;
+pub mod keycard_usage_history;

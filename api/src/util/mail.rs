@@ -4,7 +4,7 @@ use tracing::{info, error};
 
 
 use super::error::CrudError;
-
+/// Function that sends an email
 pub fn send_mail(mail: Email) -> Result<(), CrudError> {
     let email = Message::builder()
         .from("donotreply@system.net".parse().unwrap())

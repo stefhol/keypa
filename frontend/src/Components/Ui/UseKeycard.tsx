@@ -48,7 +48,7 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 if (res.ok) {
                     res.text().then(text => {
                         setStatus(text)
-                    }) 
+                    })
                 }
             })
         }}>
@@ -66,15 +66,15 @@ export const UseKeycard: React.FC<{}> = (props) => {
                 <select value={selectedKeycard} onChange={e => setSelectedKeycard(e.target.value)}>
                     <option value=""></option>
                     {filterdKeycardData?.map((val, idx) => <option key={idx} value={val.keycard_id}>
-                        {val.keycard_id}
+                        {display(val)}
                     </option>)}
                 </select>
                 <br />
             </label>
             <div>
-                    {selectedKeycard && display(filterdKeycardData?.find(val => val.keycard_id === selectedKeycard))
+                {selectedKeycard && display(filterdKeycardData?.find(val => val.keycard_id === selectedKeycard))
 
-                    }
+                }
             </div>
             <label>
                 Building:

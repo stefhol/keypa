@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
 import i18next from "i18next"
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
@@ -6,7 +7,7 @@ import { createKeycardDefColumn } from "../../Components/table/ColumnDef/Keycard
 import { createRequestDefColumn } from "../../Components/table/ColumnDef/Request"
 import { Table } from "../../Components/table/Table"
 import UserContext from "../../context/UserContext"
-import { Building } from "../../util/intefaces/Buildings"
+import { Building, BuildingWithOwner } from "../../util/intefaces/Buildings"
 import { Department } from "../../util/intefaces/Departments"
 import { Keycard } from "../../util/intefaces/Keycard"
 import { Request, User } from "../../util/intefaces/Request"
@@ -70,7 +71,7 @@ const getUserById = async ({ queryKey }: { queryKey: string[] }) => {
     return await Rest.getUserByUserId(userId)
 }
 export interface UserProps {
-    buildings: Building[]
+    buildings: BuildingWithOwner[]
     user: User
     isSelf: boolean
     department: Department[]
@@ -84,43 +85,56 @@ const UserFc: React.FC<UserProps> = (props) => {
     const { is_admin, is_leader, is_worker } = React.useContext(UserContext);
     return (<>
         <h1>
-            {i18next.t("user_area_of")} {props.user.name}
+            {props.user.name}
         </h1>
-        <div className="my-container">
-            <h2>{i18next.t("contact_info")}</h2>
+        <article className="my-container">
+            <h3>{i18next.t("contact_info")}</h3>
             <p>
                 {props.user.email}
             </p>
             <p>
                 {props.user.tel}
             </p>
-        </div>
-        {(!is_leader) ? <div className="my-container">
-            {props.isSelf && <button onClick={(e) => {
+        {(!is_leader) ? <>
+                {props.isSelf && <button className="outline contrast" onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request")
             }}>{i18next.t("create_new_request")}</button>
             }
-        </div> : <div className="my-container">
-            <button onClick={(e) => {
+        </> : <>
+                    <button className="outline contrast" onClick={(e) => {
                 e.preventDefault()
                 navigate("/request/add-request/keycard")
                 }}>{i18next.t("create_new_keycard")}</button>
-        </div>}
-        <div className="my-container">
-            <h2>{i18next.t("individual_rooms")}</h2>
-            <IndividualRoomWrapper buildings={props.buildings} />
-        </div>
-        <DepartmentWrapper departments={props.department} />
-        <div className="my-container">
-            <h2>{i18next.t("keycards")}</h2>
+        </>}
+        </article>
+
+
+        <details open>
+            <summary>
+                <h3>{i18next.t("access")}</h3>
+            </summary>
+            <div className="wrap">
+                <article>
+                    <header>
+                        {i18next.t("individual_rooms")}
+                    </header>
+                    <IndividualRoomWrapper buildings={props.buildings} />
+                </article>
+                <DepartmentWrapper departments={props.department} />
+            </div>
+        </details>
+        <TempKeycardAuthorizationView keycards={props.keycard} userId={props.isSelf ? undefined : props.user.user_id} />
+
+        <details open>
+            <summary><h3>{i18next.t("keycards")}</h3></summary>
             <>
 
                 <Table data={props.keycard}
                     rowAction={
                         [
                             {
-                                element: <button>{i18next.t("change")}</button>,
+                                element: <button className="outline contrast">{i18next.t("change")}</button>,
                                 onClick(idx) {
                                     navigate(`/keycard/change-request/${props.keycard?.[idx].keycard_id}`)
                                 },
@@ -131,48 +145,49 @@ const UserFc: React.FC<UserProps> = (props) => {
                     columns={createKeycardDefColumn()} />
 
             </>
-        </div>
-        <div className="my-container">
-            <h2>{i18next.t("approved_requests")}</h2>
+        </details>
+        <details open>
+            <summary><h3>{i18next.t("approved_requests")}</h3></summary>
             <Table
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.acceptedRequests}
-                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button className="outline contrast">{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.acceptedRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
-        </div>
-        <div className="my-container">
-            <h2>{i18next.t("pending_requests")}</h2>
+        </details>
+        <details open>
+            <summary>
+                <h3>{i18next.t("pending_requests")}</h3>
+            </summary>
             <Table
                 defaultHidden={["name"]}
                 columns={createRequestDefColumn()}
                 data={props.pendingRequests}
-                rowAction={[{ element: <button>{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
+                rowAction={[{ element: <button className="outline contrast">{i18next.t("open")}</button>, onClick: (rowIndex) => { navigate(`/request/change-request/${props.pendingRequests?.[rowIndex].request_id}`) } }]}
             // rowAction={ }
             />
-        </div>
+        </details>
     </>)
 }
 export interface DepartmentWrapperProps { departments: Department[] }
 export const DepartmentWrapper: React.FC<DepartmentWrapperProps> = (props) => {
 
     return (<>
-        <div className="my-container">
-            {props.departments.map((val, idx) =>
-                <div className="my-container" key={idx}>
-                    <h2>{val.name}</h2>
 
-                    {i18next.t("includes")}: {val.buildings.map((val, idx) => <div key={idx}>
-                        <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
-                    </div>)}
-                </div>
-            )}
-        </div>
+        {props.departments.map((val, idx) =>
+            <article key={idx}>
+                <header>{val.name}</header>
+
+                {i18next.t("includes")}: {val.buildings.map((val, idx) => <div key={idx}>
+                    <b>{val.name}:</b>{` ${val.rooms.map((val) => val.name).join(", ")} `}
+                </div>)}
+            </article>
+        )}
 
     </>)
 }
-export interface IndividualRoomWrapperProps { buildings: Building[] }
+export interface IndividualRoomWrapperProps { buildings: BuildingWithOwner[] }
 export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (props) => {
     const hasSomething = React.useMemo(() => !!props.buildings.find(val => val.rooms.find(val => val.doors.find(val => val.owner))), [props.buildings?.length])
     return (<>
@@ -182,6 +197,64 @@ export const IndividualRoomWrapper: React.FC<IndividualRoomWrapperProps> = (prop
                 <b>{val.name}:</b>{` ${val.rooms.filter(val => val.doors.find(val => val.owner)).map((val) => val.name).join(", ")} `}
             </div>)}
         </>}
+
+    </>)
+}
+export interface TempKeycardAuthorizationViewProps {
+    keycards: Keycard[]
+    userId?: string
+}
+export const TempKeycardAuthorizationView: React.FC<TempKeycardAuthorizationViewProps> = (props) => {
+
+    return (<>
+        {props.keycards.filter(val => val.keycard_type === 'temp').map((val, idx) => <TempKeycardSingle key={val.keycard_id} keycard={val} userId={props.userId} idx={idx} />)}
+    </>)
+}
+export interface TempKeycardSingleProps {
+    keycard: Keycard,
+    userId?: string
+    idx: number
+}
+export const TempKeycardSingle: React.FC<TempKeycardSingleProps> = (props) => {
+    const { data: keycard } = useQuery(["keycard", props.keycard.keycard_id], ({ queryKey }) => Rest.getSingleKeycard(queryKey[1] || ""))
+    const { data: departments } = useQuery(["user", props.userId ?? "self", "department", props.keycard.keycard_id], ({ queryKey }) => {
+        if (queryKey[1] === 'self') {
+            return Rest.getSelfDepartmentsWithKeycard(queryKey[3])
+        }
+        return Rest.getUserDepartmentsWithKeycards(queryKey[1], queryKey[3])
+    })
+
+    const { data: buildings } = useQuery(["user", props.userId ?? "self", "doors", props.keycard.keycard_id], ({ queryKey }) => {
+        if (queryKey[1] === 'self') {
+            return Rest.getSelfDoorsKeycard(queryKey[3])
+        }
+        return Rest.getDoorsByUserAndKeycard(queryKey[1], queryKey[3])
+    })
+
+    return (<>
+        {
+            (buildings && keycard && departments) &&
+            <details open>
+                <summary>
+                    <h3>{i18next.t("temp_keycard")} #{props.idx + 1}</h3>
+                        {props.keycard.active_until && <>{i18next.t("active_until")}: {format(new Date(props.keycard.active_until), "dd.MM.yyyy")}
+                        </>}
+                    </summary>
+
+                    <div className="wrap">
+                        <article>
+                            <header>
+                                {i18next.t("individual_rooms")}
+                            </header>
+                            <IndividualRoomWrapper
+                                buildings={buildings}
+                            />
+                        </article>
+                        <DepartmentWrapper departments={departments} />
+                    </div>
+
+                </details>
+        }
 
     </>)
 }

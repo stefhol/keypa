@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use crate::util::{error::CrudError, mail::{send_mail, Email, CREATE_COMMENT}};
+use crate::util::{error::CrudError, mail::{send_mail, Email}};
 
 use super::{
     user::{get_all_user, GetUser},
@@ -40,6 +40,7 @@ impl From<(&tbl_request_comment::Model, &Vec<GetUser>)> for GetComment {
         }
     }
 }
+/// get all comments from the given request id
 pub async fn get_comments_of_request_id(
     db: &DatabaseConnection,
     request_id: &Uuid,
@@ -51,6 +52,7 @@ pub async fn get_comments_of_request_id(
         .await?;
     Ok(model.iter().map(|f| GetComment::from((f, &user))).collect())
 }
+/// insert a comment into the request and send the email
 pub async fn insert_comment_into_request_id(
     db: &DatabaseConnection,
     user_id: &Uuid,
@@ -64,8 +66,8 @@ pub async fn insert_comment_into_request_id(
         send_mail(
             Email {
                 email_to: user.email.to_string(),
-                message: format!("There is a new Comment from {}", user.name),
-                subject: format!("{}", CREATE_COMMENT),
+                message: format!("Nutzer {} hat in Antrag {} einen Kommentar verfasst", user.name, request_id),
+                subject: format!("Neuer Kommentar in Antrag"),
             },
         )?;
     }

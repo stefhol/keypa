@@ -253,12 +253,13 @@ pub async fn change_request(
                         active_request.accept = Set(false);
                         active_request.reject = Set(true);
                         active_request.pending = Set(false);
+                        active_request.active = Set(false);
                     }
                     2 => {
                         active_request.accept = Set(false);
                         active_request.reject = Set(false);
                         active_request.pending = Set(true);
-                        active_request.active = Set(false);
+                        
                     }
                     _ => {}
                 }
@@ -266,7 +267,7 @@ pub async fn change_request(
                 log_vec.push(create_log_message(
                     worker_id,
                     &format!(
-                        "{}: {} accept = {}, reject = {}, pending {}",
+                        "{}: {} accept = {}, reject = {}, pending = {}",
                         CHANGE_REQUEST,
                         request_id.to_string(),
                         &ac.accept.unwrap(),
@@ -327,9 +328,23 @@ pub async fn change_request(
         if let Some(user) = user {
             send_mail(Email {
                 email_to: user.email.to_string(),
-                message: format!("A Request from you has been changed"),
-                subject: format!("{}", "Change Request"),
+                message: format!("Ein Antrag wurde geändert"),
+                subject: format!("{}", "Antrag geändert"),
             })?;
+            if og_request.accept == false && request_model.accept {
+                send_mail(Email{
+                    email_to:user.email.to_string(),
+                    message: format!("Ihr Antrag wurde akzeptiert"),
+                    subject:format!("Akzeptierter Antrag")
+                })?;
+                if request_model.payed == Some(false) && request_model.keycard_id.is_some() {
+                    send_mail(Email{
+                    email_to:user.email.to_string(),
+                    message: format!("Senden Sie 5 Euro an die IBAN: DE49500105176555567288 mit dem Verwendungszweck: {}",request_model.keycard_id.unwrap()),
+                    subject:format!("Zahlungsinformationen Antrag")
+                })?;
+                }
+            }
         }
     }
     Ok(change_status)

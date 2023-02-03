@@ -139,7 +139,7 @@ pub async fn query_sensitive_departments(db: &DatabaseConnection) -> Result<Vec<
     Ok(query_result.iter().map(|f| f.department_id).collect())
 }
 ///Get out of raw query results a tree of departments with buildings rooms and doors
-async fn query_of_user_id(
+async fn query_of_user_id_without_temp(
     db: &DatabaseConnection,
     user_id: &Uuid,
 ) -> Result<Vec<GetDepartment>, CrudError> {
@@ -156,6 +156,7 @@ async fn query_of_user_id(
         where tr.requester_id = $1
         and tr.active = true
         and tr.accept = true
+        and tr.keycard_id is NULL
         ;
         "#,
         vec![user_id.clone().into()],
@@ -170,12 +171,64 @@ async fn query_of_user_id(
         .map(|query| GetDepartment::from((query, &query_result, &sensitive_departments)))
         .collect())
 }
+///Get out of raw query results a tree of departments with buildings rooms and doors
+async fn query_of_user_id_with_keycard_id(
+    db: &DatabaseConnection,
+    user_id: &Uuid,
+    keycard_id: &Uuid,
+) -> Result<Vec<GetDepartment>, CrudError> {
+    let mut query_result: Vec<QueryResult> = QueryResult::find_by_statement(Statement::from_sql_and_values(
+        DbBackend::Postgres,
+        r#"
+        select distinct tbl_department.department_id, tbl_department.name as department_name, tbl_department.description as department_description, tbl_room.room_id, tbl_room.name as room_name, floor, is_sensitive, tbl_building.building_id,tbl_building.name as building_name, door_id  from tbl_department
+        join tbl_room_department on tbl_department.department_id = tbl_room_department.department_id
+        join tbl_room on tbl_room_department.room_id = tbl_room.room_id
+        join tbl_building on tbl_building.building_id = tbl_room.building_id
+        join tbl_door on tbl_room.room_id = tbl_door.room_id
+        join tbl_request_department trd on tbl_department.department_id = trd.department_id
+        join tbl_request tr on trd.request_id = tr.request_id
+        where tr.requester_id = $1
+        and tr.active = true
+        and tr.accept = true
+        and tr.keycard_id = $2
+        ;
+        "#,
+        vec![
+            user_id.clone().into(),
+            keycard_id.clone().into()
+        ],
+    ))
+    .all(db)
+    .await?;
+    let sensitive_departments = query_sensitive_departments(db).await?;
+    query_result.sort_by(|a, b| a.room_name.cmp(&b.room_name));
+    Ok(query_result
+        .iter()
+        .unique_by(|f| f.department_id)
+        .map(|query| GetDepartment::from((query, &query_result, &sensitive_departments)))
+        .collect())
+}
+/// get all departments in the db
 pub async fn get_department(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError> {
     Ok(query(db).await?)
 }
+/// get the departments in the possession of the user
+/// 
+/// Does not return the departments in a temp request
 pub async fn get_department_of_user_id(
     db: &DatabaseConnection,
     user_id: &Uuid,
 ) -> Result<Vec<GetDepartment>, CrudError> {
-    Ok(query_of_user_id(db, user_id).await?)
+    Ok(query_of_user_id_without_temp(db, user_id).await?)
+}
+/// get the departments in the possession of the user and a specific keycard 
+/// 
+/// This is used for temp keycards
+pub async fn get_department_of_user_id_and_keycard_id
+(
+    db: &DatabaseConnection,
+    user_id: &Uuid,
+    keycard_id: &Uuid,
+) -> Result<Vec<GetDepartment>, CrudError> {
+    Ok(query_of_user_id_with_keycard_id(db, user_id, keycard_id).await?)
 }

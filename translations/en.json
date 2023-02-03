@@ -12,7 +12,7 @@
     "myarea": "My Area",
     "managment": "Managment",
     "worker_managment": "Worker",
-    "leader_managmetn": "Leader",
+    "leader_managment": "Leader",
     "admin": "Admin",
     "keycard_overview": "Keycard Overview",
     "user_overview": "User Overview",
@@ -23,11 +23,13 @@
     "filter": "Filter",
     "util": "Util",
     "temp": "temp",
+    "access": "Access",
     "type_of_request": "Type of Request",
     "access_request": "Access Request",
     "keycard_request": "Keycard Request",
+    "temp_keycard": "Temp Keycard",
     "temp_keycard_request": "Temp Keycard Request",
-    "temp_keycard_request_info": "<h2>Attetntion: Money has to be payed before you can receive the card</h2><p>Payment Information are Emailed and are visible in the Overview</p>",
+    "temp_keycard_request_info": "Attention: Money has to be payed before you can receive the card",
     "demo_use_keycard": "Demo: Use Keycards",
     "search": "Search",
     "search_all_columns": "Search all columns",
@@ -112,5 +114,7 @@
     "go_to_page": "Go to Page",
     "of": "of",
     "show": "Show",
-    "open": "Open"
+    "open": "Open",
+    "payed": "Payed",
+    "payment_info": "Please send 5 Euro to the IBAN DE49500105176555567288 with the porpuse: "
 }

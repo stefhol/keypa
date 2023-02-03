@@ -1,3 +1,7 @@
+# Start 
+```
+cargo run --bin api
+```
 # Swagger Ui 
 http://localhost:8080/swagger-ui/
 # Spec

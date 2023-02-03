@@ -1,5 +1,5 @@
 import { LoginRequest } from "../routes/login/Login"
-import { Building } from "./intefaces/Buildings"
+import { Building, BuildingWithOwner } from "./intefaces/Buildings"
 import { Department } from "./intefaces/Departments"
 import { Keycard } from "./intefaces/Keycard"
 import { KeycardUsageHistory } from "./intefaces/KeycardUsageHistory"
@@ -33,6 +33,15 @@ export class Rest {
 
 
     }
+    static getSelfDepartmentsWithKeycard = async (keycard_id: string) => {
+        return await this.quickFetchJson<Department[]>(`self/department/${keycard_id}`, "GET")
+
+    }
+    static getUserDepartmentsWithKeycards = async (userId: string, keycard_id: string) => {
+        return await this.quickFetchJson<Department[]>(`users/${userId}/department/${keycard_id}`, "GET")
+
+
+    }
     static getDepartments = async () => {
         return await this.quickFetchJson<Department[]>("department", "GET")
 
@@ -44,7 +53,10 @@ export class Rest {
         return await this.quickFetch("logout", "GET")
     }
     static getSelfDoors = async () => {
-        return await this.quickFetchJson<Building[]>("self/doors", "GET")
+        return await this.quickFetchJson<BuildingWithOwner[]>("self/doors", "GET")
+    }
+    static getSelfDoorsKeycard = async (keycardId: string) => {
+        return await this.quickFetchJson<BuildingWithOwner[]>(`self/doors/${keycardId}`, "GET")
     }
 
     static getSelfKeycard = async () => {
@@ -64,7 +76,7 @@ export class Rest {
 
     }
     static getDoorsWithRequestId = async (requestId: string) => {
-        return await this.quickFetchJson<Building[]>(`request/${requestId}/doors`, "GET")
+        return await this.quickFetchJson<BuildingWithOwner[]>(`request/${requestId}/doors`, "GET")
     }
     static getSelf = async () => {
         return await this.quickFetchJson<User>("self", "GET")
@@ -100,7 +112,10 @@ export class Rest {
         return await this.quickFetchJson<Building[]>("buildings", "GET")
     }
     static getDoorsByUser = async (userId: string) => {
-        return await this.quickFetchJson<Building[]>(`users/${userId}/doors`, "GET")
+        return await this.quickFetchJson<BuildingWithOwner[]>(`users/${userId}/doors`, "GET")
+    }
+    static getDoorsByUserAndKeycard = async (userId: string, keycardId: string) => {
+        return await this.quickFetchJson<BuildingWithOwner[]>(`users/${userId}/doors/${keycardId}`, "GET")
     }
 
     static getSingleRequest = async (requestId: string, queryParams?: string) => {

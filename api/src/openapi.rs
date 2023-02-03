@@ -16,6 +16,8 @@ use crate::{crud, api};
         //key
         api::door::get_self_door,
         api::door::get_user_authorized_doors,
+        api::door::get_self_door_keycard,
+        api::door::get_user_authorized_doors_keycard,
         api::door::get_doors_of_door_group,
         //keycard
         api::keycard::get_self_keycard,
@@ -55,17 +57,18 @@ use crate::{crud, api};
         api::department::get_departments,
         api::department::get_departments_of_self,
         api::department::get_departments_of_user,
+        api::department::get_departments_of_self_and_keycard,
+        api::department::get_departments_of_user_and_keycard,
     ),
     components(schemas(
         api::auth::Login,
-
         crud::door::GetDoor,
         crud::room::GetRoom,
         crud::building::GetBuilding,
         crud::user::GetUser,
         crud::keycard::GetKeycard,
         crud::keycard::ChangeKeyboard,
-        api::keycard_usage_history::KeycardUsageHistory,
+        crud::keycard_usage_history::KeycardUsageHistory,
         crud::request::get::GetRequest,
         crud::request::get::RequestType,
         crud::request::create::CreateRequest,

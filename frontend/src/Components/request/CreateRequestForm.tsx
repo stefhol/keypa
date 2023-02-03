@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import i18next from "i18next";
 import React, { } from "react";
 import { useNavigate } from "react-router-dom";
@@ -9,8 +9,8 @@ import { Rest } from "../../util/Rest";
 interface ILocalObjectType<T> {
     [key: number]: T
 }
-function convertToArray<T>(obj: ILocalObjectType<T>) {
-    let arr = []
+function convertToArray<T>(obj: ILocalObjectType<T>): T[] {
+    let arr: T[] = []
     for (const key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             const element = obj[key];
@@ -18,7 +18,7 @@ function convertToArray<T>(obj: ILocalObjectType<T>) {
                 arr.push(element)
         }
     }
-    return arr
+    return new Array(...new Set(arr))
 }
 interface ILocalContext {
     departments: {
@@ -51,7 +51,7 @@ export const CreateKeycardRequestForm: React.FC<{ title: JSX.Element }> = (props
                 <input type={"date"} onChange={e => setActiveUntil(e.target.valueAsDate)}
                 />
             </label>
-            <button onClick={e => {
+            <button className="outline contrast" onClick={e => {
                 e.preventDefault()
                 send({
 
@@ -75,7 +75,7 @@ export const CreateRequestForm: React.FC<{
 }> = (props) => {
 
     const [activeUntil, setActiveUntil] = React.useState(null as Date | null);
-
+    const queryClient = useQueryClient()
     const departments = React.useRef({} as ILocalObjectType<string>);
     const [description, setDescription] = React.useState("");
     const rooms = React.useRef({} as ILocalObjectType<string[]>);
@@ -91,12 +91,30 @@ export const CreateRequestForm: React.FC<{
     return (<>
         <LocalContext.Provider value={{ departments: { value: departments.current }, doors: { value: rooms.current } }}>
 
-            <form>
+            <form onSubmit={e => {
+                e.preventDefault()
+                send({
+
+                    active_until: isLimitedInTime ? activeUntil?.toISOString() : null,
+                    create_keycard: props.createKeycard,
+                    departments: convertToArray(departments.current),
+                    description: description || undefined,
+                    rooms: convertToArray(rooms.current).flat() ?? undefined,
+                    other_rooms: otherRooms || null,
+                } as CreateRequest).then(res => {
+                    alert("Success")
+                    navigate("/user")
+
+                }).finally(() => {
+                    queryClient.invalidateQueries()
+                })
+            }}>
                 {props.title}
                 <label> {i18next.t("description")}:
                     <textarea
                         value={description}
                         onChange={e => setDescription(e.target.value)}
+                        required
                     />
                 </label>
                 <label>{i18next.t("limited_in_time")}
@@ -124,22 +142,7 @@ export const CreateRequestForm: React.FC<{
 
 
 
-                <button onClick={e => {
-                    e.preventDefault()
-                    send({
-
-                        active_until: isLimitedInTime ? activeUntil?.toISOString() : null,
-                        create_keycard: props.createKeycard,
-                        departments: convertToArray(departments.current),
-                        description: description || undefined,
-                        rooms: convertToArray(rooms.current).flat() ?? undefined,
-                        other_rooms: otherRooms || null,
-                    } as CreateRequest).then(res => {
-                        alert("Success")
-                        navigate("/user")
-
-                    })
-                }}>{i18next.t("send")}:</button>
+                <button className="outline contrast">{i18next.t("send")}:</button>
 
 
             </form>
@@ -176,7 +179,7 @@ const DepartmentGroupWrapper: React.FC<{}> = (props) => {
                 <>
                     {elements}
                 </>
-                <button onClick={e => {
+                <button className="outline contrast" onClick={e => {
                     e.preventDefault()
                     setCount(prev => {
                         let arr = [...prev]
@@ -193,16 +196,18 @@ const RoomSelectionWrapper: React.FC<{}> = (props) => {
     const [count, setCount] = React.useState([] as number[]);
     const { doors } = React.useContext(LocalContext);
     return (<>
-        <div className="my-container">
+        <div className="">
             <h2>{i18next.t("rooms")}</h2>
 
-            {data &&
-                count.map((_, idx) =>
-                    <RoomSelection key={idx} buildings={data} nmbr={idx} onChange={(e) => {
-                        doors.value[idx] = e
-                    }} />
-                )
-            }
+            <div className="wrap">
+                {data &&
+                    count.map((_, idx) =>
+                        <RoomSelection key={idx} buildings={data} nmbr={idx} onChange={(e) => {
+                            doors.value[idx] = e
+                        }} />
+                    )
+                }
+            </div>
 
             <button
                 onClick={e => {

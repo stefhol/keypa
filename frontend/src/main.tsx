@@ -30,11 +30,16 @@ import { UserBase } from './routes/user/UserBase';
 import { LoadingProvider } from './util/Provider/LoadingProvider';
 import { Rest } from './util/Rest';
 import { decodeToken } from './util/token';
+import { SidebarProvider } from './util/Provider/SidebarProvider';
+import { Sidebar } from './Components/Ui/Sidebar';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Header />,
+    element: <>
+      <Sidebar />
+      <Header />
+    </>,
     children: [
       {
         path: "/use-keycard",
@@ -142,12 +147,11 @@ const loadI18n = async () => {
     i18next.addResourceBundle(supportedLanguages[idx], "1", ressoucesBundles[idx])
   }
 }
-const queryClient = new QueryClient()
+const queryClient = new QueryClient({ defaultOptions: { queries: { refetchInterval: 60000 } } })
 const Default: React.FC<DefaultProps> = (props) => {
   const [ressourcesBundlesLoaded, setRessourcesBundlesLoaded] = React.useState(false);
   const callback = () => {
     const params = new window.URLSearchParams(document.cookie)
-    console.log(params);
 
     if (params.has("token") && (localStorage.getItem("save_token") === 'true' || sessionStorage.getItem("save_token") === "true")) {
       if (params.get("token")) {
@@ -184,14 +188,15 @@ i18next.init({ defaultNS: '1', resources: {}, lng: localStorage.getItem("languag
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    <Default>
-
+    <SidebarProvider>
+      <Default>
       <QueryClientProvider client={queryClient}>
         <LoadingProvider>
           <RouterProvider router={router} />
         </LoadingProvider>
       </QueryClientProvider>
     </Default>
+    </SidebarProvider>
 
   </React.StrictMode>
 );

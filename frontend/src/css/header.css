@@ -1,0 +1,77 @@
+nav button,
+nav button:hover,
+nav button:active,
+nav button:focus {
+    margin: 0;
+    padding: 0;
+    border: none;
+    outline: none;
+    background-color: transparent;
+}
+
+/* Fixed navbar */
+body nav {
+    box-shadow: 10px 1px 10px 1px rgba(10, 10, 10, 0.13);
+    z-index: 99;
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    padding: 0 var(--spacing);
+    /* width: 100%; */
+    background-color: var(--background-color);
+}
+
+body nav h1 {
+    margin-bottom: 0;
+    font-size: 1.25rem;
+    text-transform: uppercase;
+}
+
+.spacer {
+    width: 100%;
+}
+
+body nav a,
+body nav button {
+    color: var(--secondary);
+}
+
+/* Sidebar */
+amp-sidebar {
+    position: relative;
+    padding: 1rem;
+    background-color: var(--primary);
+    box-shadow: var(--card-box-shadow);
+
+
+}
+
+amp-sidebar button {
+    position: absolute;
+    top: var(--spacing);
+    right: var(--spacing);
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 2rem;
+    line-height: 1;
+}
+
+amp-sidebar aside {
+    min-width: 12rem;
+    margin-top: var(--typography-spacing-vertical);
+}
+
+amp-sidebar h3,
+amp-sidebar a,
+amp-sidebar a:hover,
+amp-sidebar a:active,
+amp-sidebar a:focus {
+    color: var(--primary-inverse);
+}
+
+/* Icons */
+amp-sidebar svg,
+body>nav svg {
+    height: 1rem;
+}

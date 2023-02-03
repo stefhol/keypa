@@ -179,8 +179,8 @@ pub async fn create_request(
         send_mail(
             Email {
                 email_to: user.email.to_string(),
-                message: format!("Your Request has been created"),
-                subject: format!("{}", "Create Request"),
+                message: format!("Sie haben einen neuen Antrag erstellt"),
+                subject: format!("{}", "Antrag erstellt"),
             },
         )?;
     }

@@ -23,9 +23,11 @@
     "filter": "Filter",
     "util": "Util",
     "temp": "Pfand",
+    "access": "Zugänge",
     "type_of_request": "Typ des Antrags",
     "access_request": "Zugangsantrag",
     "keycard_request": "Keycard Antrag",
+    "temp_keycard": "Pfand Keycard",
     "temp_keycard_request": "Pfand Keycard Antrag",
     "temp_keycard_request_info": "Hinweis: Pfand muss vor Abholung bezahtlt werden.   Zahlungsinformationen erscheinen im angenommenen Antrag",
     "demo_use_keycard": "Demo: Keycard Nutzen",
@@ -36,7 +38,7 @@
     "description": "Beschreibung",
     "active_until": "Aktiv bis",
     "requested_rooms": "Angefragte Räume",
-    "requested_individual_rooms": "Individuelle Räume",
+    "requested_individual_rooms": "Angefragte Individuelle Räume",
     "edit_rooms": "Räume bearbeiten",
     "select_rooms": "Räume auswählen",
     "choose_rooms_different_building": "Wähle Raum in anderen Gebäude aus",
@@ -69,7 +71,7 @@
     "approved_requests": "Akzeptierter Antrag",
     "pending_requests": "Ausstehender Antrag",
     "active": "Aktiv",
-    "show_only_expiraing_keycard": "Nur ablaufende Keycards anzeigen",
+    "show_only_expiraing_keycard": "Nur in kürze ablaufende Keycards anzeigen",
     "contact_per_email": "Per Email kontakieren",
     "email": "Email",
     "open_user": "Nutzer ansehen",
@@ -112,5 +114,7 @@
     "go_to_page": "Gehe zu Seite",
     "of": "von",
     "show": "Zeige",
-    "open": "Öffnen"
+    "open": "Öffnen",
+    "payed": "Bezahlt",
+    "payment_info": "Senden Sie 5 Euro an die IBAN: DE49500105176555567288 mit dem Verwendungszweck: "
 }

@@ -50,7 +50,7 @@ export const ShowAllUsers: React.FC<ShowAllUsersProps> = (props) => {
                     [
 
                         {
-                            element: <button>Nutzer anpassen</button>,
+                            element: <button className="outline contrast">Nutzer anpassen</button>,
                             onClick(idx) {
                                 navigate(`/user/${userData[idx].user_id}`)
                             },

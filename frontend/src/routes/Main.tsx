@@ -6,7 +6,7 @@ export interface MainProps { }
 
 export const Main: React.FC<MainProps> = (props) => {
 
-    return (<main>
+    return (<main className='container'>
         <LogoFull width={300} /><br />
         <p>
             {i18next.t("intro")}
