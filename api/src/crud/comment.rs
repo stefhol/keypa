@@ -40,6 +40,7 @@ impl From<(&tbl_request_comment::Model, &Vec<GetUser>)> for GetComment {
         }
     }
 }
+/// get all comments from the given request id
 pub async fn get_comments_of_request_id(
     db: &DatabaseConnection,
     request_id: &Uuid,
@@ -51,6 +52,7 @@ pub async fn get_comments_of_request_id(
         .await?;
     Ok(model.iter().map(|f| GetComment::from((f, &user))).collect())
 }
+/// insert a comment into the request and send the email
 pub async fn insert_comment_into_request_id(
     db: &DatabaseConnection,
     user_id: &Uuid,

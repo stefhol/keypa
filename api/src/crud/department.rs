@@ -208,15 +208,22 @@ async fn query_of_user_id_with_keycard_id(
         .map(|query| GetDepartment::from((query, &query_result, &sensitive_departments)))
         .collect())
 }
+/// get all departments in the db
 pub async fn get_department(db: &DatabaseConnection) -> Result<Vec<GetDepartment>, CrudError> {
     Ok(query(db).await?)
 }
+/// get the departments in the possession of the user
+/// 
+/// Does not return the departments in a temp request
 pub async fn get_department_of_user_id(
     db: &DatabaseConnection,
     user_id: &Uuid,
 ) -> Result<Vec<GetDepartment>, CrudError> {
     Ok(query_of_user_id_without_temp(db, user_id).await?)
 }
+/// get the departments in the possession of the user and a specific keycard 
+/// 
+/// This is used for temp keycards
 pub async fn get_department_of_user_id_and_keycard_id
 (
     db: &DatabaseConnection,

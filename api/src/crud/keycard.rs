@@ -114,8 +114,6 @@ async fn get_single_keycard_keycard_id_query(
     db: &DatabaseConnection,
     keycard_id: &Uuid,
 ) -> Result<Option<GetKeycard>, CrudError> {
-    
-
     let keycard = KeycardQuery::find_by_statement(Statement::from_sql_and_values(
             DbBackend::Postgres,
             r#"

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+import { format } from "date-fns"
 import i18next from "i18next"
 import React from "react"
 import { useNavigate, useParams } from "react-router-dom"
@@ -236,7 +237,8 @@ export const TempKeycardSingle: React.FC<TempKeycardSingleProps> = (props) => {
             <details open>
                 <summary>
                     <h3>{i18next.t("temp_keycard")} #{props.idx + 1}</h3>
-                    {props.keycard.active_until && <>{i18next.t("active_until")}: {keycard.request?.active_until}</>}
+                        {props.keycard.active_until && <>{i18next.t("active_until")}: {format(new Date(props.keycard.active_until), "dd.MM.yyyy")}
+                        </>}
                     </summary>
 
                     <div className="wrap">

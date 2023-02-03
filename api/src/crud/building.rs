@@ -101,6 +101,7 @@ async fn query(db: &DatabaseConnection) -> Result<Vec<GetBuilding>, CrudError> {
 pub async fn get_building(db: &DatabaseConnection) -> Result<Vec<GetBuilding>, CrudError> {
     query(db).await
 }
+/// Get building object without rooms 
 pub async fn get_building_without_rooms(
     db: &DatabaseConnection,
 ) -> Result<Vec<GetBuilding>, CrudError> {
