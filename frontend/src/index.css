@@ -113,11 +113,11 @@ input[type="checkbox"] {
   height: 1rem !important;
   width: 1rem !important;
   padding: 0 !important;
-  }
-  
-  header.simple {
-    display: flex;
-    align-items: baseline;
+}
+
+header.simple {
+  display: flex;
+  align-items: baseline;
 
 }
 
@@ -158,6 +158,7 @@ details[open] summary~* {
 button {
   max-width: 15rem;
   margin: 1rem;
+}
 button.red:hover {
   color: red;
 }

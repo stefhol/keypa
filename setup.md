@@ -5,7 +5,7 @@ Hier wird auf die
 [Offizielle Installation Anleitung verwiesen](https://docs.docker.com/engine/install/ubuntu/)
 
 Folgendes bezieht sich auf Ubuntu
-1. Set up the repository
+1. Einrichtung Repository
 ```
 sudo apt-get update
 
@@ -15,40 +15,40 @@ sudo apt-get install \
     gnupg \
     lsb-release
 ```
-2. Add Docker’s official GPG key:
+2. Hinzufuegen des Docker’s Offiziellen GPG Schluessel:
 ```
 sudo mkdir -p /etc/apt/keyrings
 
  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
 ```
-3. Use the following command to set up the repository:
+3. Repository Einrichten:
 ```
 echo \
   "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
-###  Install Docker Engine
+###  Docker Engine Installieren
 ```
 sudo apt-get update
 ```
-### Install Docker Engine, containerd, and Docker Compose.
+### Docker Engine, containerd, and Docker Compose Installieren
 ```
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
 ```
 
-### Post Installation Steps
-To run Docker without root privileges, see Run the Docker daemon as a non-root user (Rootless mode).
+### Zusaetliches 
+Docker ohne Root ausfuehren
 ```
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
-Add to Autostart
+Autostart
 ```
  sudo systemctl enable docker.service
 
  sudo systemctl enable containerd.service
 ```
-**Restart System**
+**System neustarten**
 ```
 sudo reboot
 ```
@@ -70,7 +70,7 @@ sudo docker login ghcr.io -u GITHUB_USERNAME -p GITHUB_TOKEN
 Fuer neue Versionen muss dieser Login Vorgang wiederholt werden.
 ###
 ## Finale Installation auf Server und Einrichtung
-Fuer die Installation kann ein docker-compose.yml Datei verwendet werden, ein Beispiel hierfuer ist in der Github Repository
+Fuer die Installation kann ein docker-compose.yml Datei verwendet werden, ein Beispiel hierfuer ist im Git Repository
 
 In dieser Beispiel Konfiguration wird die Datenbank mitgeliefert, diese ist nur lokal erreichbar.
 Der Keypa Server laeuft unter Port 80, sollte dieser belegt sein, kann das Ports Attribute veraendert werden.
@@ -141,7 +141,7 @@ sudo docker exec -it 2da1799bea58 sh
 ```
 Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt.
 
-### Aktualisierung von Keypa
+## Aktualisierung von Keypa
 Sollte eine neue Version zur Verfuegung stehen, wird das System auf Github ueber Github Actions aktualisiert und als Docker Image bereitgestellt. Dies geschieht automatisch falls ein neuer Commit in den Main Branch gepushed wird.
 
  Ob dies erfolgt ist kann [hier](https://github.com/Wirtschaftsinformatik-Passau/softwareprojekt-gruppe-1/actions/workflows/build_complete.yaml) eingesehen werden.
