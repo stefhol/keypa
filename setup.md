@@ -42,7 +42,7 @@ Docker ohne Root ausfuehren
 sudo groupadd docker
 sudo usermod -aG docker $USER
 ```
-Add to Autostart
+Autostart
 ```
  sudo systemctl enable docker.service
 
@@ -70,7 +70,7 @@ sudo docker login ghcr.io -u GITHUB_USERNAME -p GITHUB_TOKEN
 Fuer neue Versionen muss dieser Login Vorgang wiederholt werden.
 ###
 ## Finale Installation auf Server und Einrichtung
-Fuer die Installation kann ein docker-compose.yml Datei verwendet werden, ein Beispiel hierfuer ist in der Github Repository
+Fuer die Installation kann ein docker-compose.yml Datei verwendet werden, ein Beispiel hierfuer ist im Git Repository
 
 In dieser Beispiel Konfiguration wird die Datenbank mitgeliefert, diese ist nur lokal erreichbar.
 Der Keypa Server laeuft unter Port 80, sollte dieser belegt sein, kann das Ports Attribute veraendert werden.
@@ -141,7 +141,7 @@ sudo docker exec -it 2da1799bea58 sh
 ```
 Nun reicht es den Command `/usr/local/app/mock` auszufuehren und es wird eine Demo Raum Datenbank und Demo Nutzer Datenbank erstellt.
 
-### Aktualisierung von Keypa
+## Aktualisierung von Keypa
 Sollte eine neue Version zur Verfuegung stehen, wird das System auf Github ueber Github Actions aktualisiert und als Docker Image bereitgestellt. Dies geschieht automatisch falls ein neuer Commit in den Main Branch gepushed wird.
 
  Ob dies erfolgt ist kann [hier](https://github.com/Wirtschaftsinformatik-Passau/softwareprojekt-gruppe-1/actions/workflows/build_complete.yaml) eingesehen werden.
