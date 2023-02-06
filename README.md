@@ -33,11 +33,11 @@ Ordner mock enthaelt einen einfachen Datengenerator
 
 ### Zuständigkeiten
 
-Niko Klaiber: Projektleitung, Pflichtenheft, Projektmanagment, Kommunikation Kunde, Testen
-Stefan Höfler: Entwicklung, Pflichtenheft
-Korbinian Anzenberger: Pflichtenheft, Testen, Presaentationen
-Noah Bundschuh: Pflichtenheft, Testen, Presaentationen
-Maximilian Dörfler: Pflichtenheft, Testen, Presaentationen
+* Niko Klaiber: Projektleitung, Pflichtenheft, Projektmanagment, Kommunikation Kunde, Testen
+* Stefan Höfler: Entwicklung, Pflichtenheft
+* Korbinian Anzenberger: Pflichtenheft, Testen, Presaentationen
+* Noah Bundschuh: Pflichtenheft, Testen, Presaentationen
+* Maximilian Dörfler: Pflichtenheft, Testen, Presaentationen
 
 ## Guidelines zur Nutzung dieses Repositorys
 
