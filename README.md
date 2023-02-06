@@ -9,8 +9,8 @@ Schlüsselverwaltung für Universitäten
 Eine Schlüsselverwaltung für Universitäten ist ein System, das für den sicheren und effizienten Umgang mit den verschiedenen Schlüsseln auf dem Campus verantwortlich ist. Ziel ist es, den Zugang zu Gebäuden, Räumen und Einrichtungen zu kontrollieren und zu verwalten, um sicherzustellen, dass nur berechtigte Personen Zugang haben. Darüber hinaus trägt sie zur Meldung bei Verlusten und automatischer Sperrung bei ablaufenden Berechtigung.
 
 
-### Funktionen
-
+### Funktionen und Aufbau
+#### Aufbau
 * Ordner frontend enthaelt das gesamte Frontend
 * Ordner api enthaelt die REST API und die Logik der Anwendung
   * Aufteilung des Api Ordner in 2 Ordner Strukturen
@@ -18,17 +18,24 @@ Eine Schlüsselverwaltung für Universitäten ist ein System, das für den siche
   2. crud Verbindung mit der Datenbank und Verarbeiten, Speichern der angefragten Daten
 Ordner mock enthaelt einen einfachen Datengenerator
 
-
+#### Funktionen
+* Erstellen und Bearbeiten von Antraegen
+* Lueckenlose Auskunft ueber Antrag- und Kartennutzungsverlauf
+* Ausgabe von Keycards
+* Verwalten von Keycards
+* Rollensystem
+* Archivierung abgelaufener Antraege und Keycards
+* Responsive Design
 
 ## Team
 
 ### Vorstellung
 
-* nikoklaiber Niko Klaiber nilotrim@gmail.com
+* nikoklaiber Niko Klaiber nilotrim@gmail.com 103121
 * stefhol Stefan Höfler hoefle15@uni-passau.de 81703
 * kobeeeeeey Korbinian Anzenberger kobeeeeeey@gmail.com
-* noahbundschuh Noah Bundschuh noah.bundschuh@gmail.com
-* maxidoerfler Maximilian Dörfler maxidoerfler9@gmail.com
+* noahbundschuh Noah Bundschuh noah.bundschuh@gmail.com 77421
+* maxidoerfler Maximilian Dörfler maxidoerfler9@gmail.com 89620
 
 
 ### Zuständigkeiten
