@@ -11,13 +11,13 @@ Eine Schlüsselverwaltung für Universitäten ist ein System, das für den siche
 
 ### Funktionen
 
-Ordner frontend enthaelt das gesamte Frontend,
-Ordner api enthaelt die REST API und die Logik der Anwendung
-Aufteilung des Api Ordner in 2 Ordner Strukturen
-1. api Definition der Api als Swagger Dokumentation und Verbreitung als REST Schnittstelle
-2. crud Verbindung mit der Datenbank und Verarbeiten, Speichern der angefragten Daten
+* Ordner frontend enthaelt das gesamte Frontend
+* Ordner api enthaelt die REST API und die Logik der Anwendung
+  * Aufteilung des Api Ordner in 2 Ordner Strukturen
+  1. api Definition der Api als Swagger Dokumentation und Verbreitung als REST Schnittstelle
+  2. crud Verbindung mit der Datenbank und Verarbeiten, Speichern der angefragten Daten
 Ordner mock enthaelt einen einfachen Datengenerator
-[Beschreiben Sie die Funktionen ihrer Applikation. Beziehen Sie sich dabei auf Ihr Pflichtenheft und stellen Sie eine Verbindung zu den entsprechneden Files oder Directories her.]
+
 
 
 ## Team
