@@ -1,13 +1,22 @@
-# [Projekttitel]
+# Keypa
 
 ## Projektbeschreibung
 
+Schlüsselverwaltung für Universitäten
+
 ### Projektziele
 
-[Beschreiben Sie hier in einer kurzen Zusammenfassung den Hintergrund und die Ziele Ihrer Anwendung.]
+Eine Schlüsselverwaltung für Universitäten ist ein System, das für den sicheren und effizienten Umgang mit den verschiedenen Schlüsseln auf dem Campus verantwortlich ist. Ziel ist es, den Zugang zu Gebäuden, Räumen und Einrichtungen zu kontrollieren und zu verwalten, um sicherzustellen, dass nur berechtigte Personen Zugang haben. Darüber hinaus trägt sie zur Meldung bei Verlusten und automatischer Sperrung bei ablaufenden Berechtigung.
+
 
 ### Funktionen
 
+Ordner frontend enthaelt das gesamte Frontend,
+Ordner api enthaelt die REST API und die Logik der Anwendung
+Aufteilung des Api Ordner in 2 Ordner Strukturen
+1. api Definition der Api als Swagger Dokumentation und Verbreitung als REST Schnittstelle
+2. crud Verbindung mit der Datenbank und Verarbeiten, Speichern der angefragten Daten
+Ordner mock enthaelt einen einfachen Datengenerator
 [Beschreiben Sie die Funktionen ihrer Applikation. Beziehen Sie sich dabei auf Ihr Pflichtenheft und stellen Sie eine Verbindung zu den entsprechneden Files oder Directories her.]
 
 
@@ -15,11 +24,20 @@
 
 ### Vorstellung
 
-[Beschreiben Sie hier die einzelnen Teammitglieder mit Namen, E-Mail-Adresse und Github-Nutzernamen.]
+* nikoklaiber Niko Klaiber nilotrim@gmail.com
+* stefhol Stefan Höfler hoefle15@uni-passau.de 81703
+* kobeeeeeey Korbinian Anzenberger kobeeeeeey@gmail.com
+* noahbundschuh Noah Bundschuh noah.bundschuh@gmail.com
+* maxidoerfler Maximilian Dörfler maxidoerfler9@gmail.com
+
 
 ### Zuständigkeiten
 
-[Beschreiben Sie die Verteilung der Aufgaben und Zusändigkeiten innerhalb Ihres Teams.]
+Niko Klaiber: Projektleitung, Pflichtenheft, Projektmanagment, Kommunikation Kunde, Testen
+Stefan Höfler: Entwicklung, Pflichtenheft
+Korbinian Anzenberger: Pflichtenheft, Testen, Presaentationen
+Noah Bundschuh: Pflichtenheft, Testen, Presaentationen
+Maximilian Dörfler: Pflichtenheft, Testen, Presaentationen
 
 ## Guidelines zur Nutzung dieses Repositorys
 
