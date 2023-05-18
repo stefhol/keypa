@@ -1,10 +1,9 @@
-use utoipa::{OpenApi};
+use utoipa::OpenApi;
 
-
-use crate::{crud, api};
+use crate::{api, crud};
 #[derive(OpenApi)]
 #[openapi(
-    
+
     paths(
         //login
         api::auth::login,
@@ -25,7 +24,7 @@ use crate::{crud, api};
         api::keycard::get_user_keycard,
         api::keycard::get_single_request_keycard,
         api::keycard::change_keycard,
-        
+
         //requests
         api::request::get_self_requests,
         api::request::get_requests_from_user,
@@ -35,15 +34,15 @@ use crate::{crud, api};
         api::request::get_single_requests,
         api::request::create_requests,
         api::request::change_requests,
-        
-        
+
+
         // demo use keycard
         api::use_keycard::use_keycard,
-        
+
         // keycard usage history
         api::keycard_usage_history::get_keycard_usage_history,
         api::keycard_usage_history::get_csv_keycard_usage_history,
-        
+
         //buildings
         api::building::get_buldings,
         //comment
@@ -52,7 +51,7 @@ use crate::{crud, api};
         //logs
         api::log::get_logs,
         api::log::get_logs_as_csv,
-        
+
         //department
         api::department::get_departments,
         api::department::get_departments_of_self,

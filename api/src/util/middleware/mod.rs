@@ -56,7 +56,7 @@ impl AuthenticationResult {
         };
     }
 
-    /// Tests if the provided Authentication has atleast the SecurityLevel if not throw an Error 
+    /// Tests if the provided Authentication has atleast the SecurityLevel if not throw an Error
     pub fn has_high_enough_security_level(
         &self,
         security_level: SecurityLevel,

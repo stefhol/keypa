@@ -7,10 +7,7 @@ use sea_orm::DatabaseConnection;
 use uuid::Uuid;
 
 use crate::{
-    crud::{
-        self,
-        comment::InsertComment,
-    },
+    crud::{self, comment::InsertComment},
     util::{
         error::CrudError,
         middleware::{extractor::Authenticated, SecurityLevel},

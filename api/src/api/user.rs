@@ -18,6 +18,7 @@ use uuid::Uuid;
     (status = 500),
 )
 )]
+x
 #[get("/users")]
 pub async fn get_users(
     db: Data<DatabaseConnection>,

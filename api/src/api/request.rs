@@ -1,7 +1,7 @@
 use actix_web::{
-    get, put,
+    get, post, put,
     web::{Data, Json, Path, Query},
-    HttpResponse, post,
+    HttpResponse,
 };
 use sea_orm::DatabaseConnection;
 use serde::{Deserialize, Serialize};
@@ -12,8 +12,9 @@ use crate::{
     crud::{
         self,
         request::{
+            change::ChangeRequest,
             create::{create_request, CreateRequest},
-            get::RequestType, change::ChangeRequest,
+            get::RequestType,
         },
     },
     util::{
@@ -42,13 +43,33 @@ pub async fn get_self_requests(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let user_id = auth.try_get_user_id()?;
-    let request:Vec<_> = match &query.0.request_status {
+    let request: Vec<_> = match &query.0.request_status {
         Some(query) => match query {
-            RequestStatus::Pending => crud::request::get::get_all_pending_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
-            RequestStatus::Reject => crud::request::get::get_all_reject_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
-            RequestStatus::Accept => crud::request::get::get_all_accepted_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
+            RequestStatus::Pending => crud::request::get::get_all_pending_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
+            RequestStatus::Reject => crud::request::get::get_all_reject_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
+            RequestStatus::Accept => crud::request::get::get_all_accepted_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
         },
-        _ => crud::request::get::get_all_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
+        _ => crud::request::get::get_all_requests(&db)
+            .await?
+            .iter()
+            .filter(|f| f.requester_id == user_id.to_owned())
+            .cloned()
+            .collect(),
     };
     Ok(HttpResponse::Ok().json(request))
 }
@@ -71,16 +92,35 @@ pub async fn get_requests_from_user(
     user_id: Path<Uuid>,
     auth: Authenticated,
     query: Query<RequestQueryType>,
-    
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::Worker)?;
-    let request:Vec<_> = match &query.0.request_status {
+    let request: Vec<_> = match &query.0.request_status {
         Some(query) => match query {
-            RequestStatus::Pending => crud::request::get::get_all_pending_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
-            RequestStatus::Reject => crud::request::get::get_all_reject_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
-            RequestStatus::Accept => crud::request::get::get_all_accepted_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
+            RequestStatus::Pending => crud::request::get::get_all_pending_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
+            RequestStatus::Reject => crud::request::get::get_all_reject_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
+            RequestStatus::Accept => crud::request::get::get_all_accepted_requests(&db)
+                .await?
+                .iter()
+                .filter(|f| f.requester_id == user_id.to_owned())
+                .cloned()
+                .collect(),
         },
-        _ => crud::request::get::get_all_requests(&db).await?.iter().filter(|f|f.requester_id == user_id.to_owned()).cloned().collect(),
+        _ => crud::request::get::get_all_requests(&db)
+            .await?
+            .iter()
+            .filter(|f| f.requester_id == user_id.to_owned())
+            .cloned()
+            .collect(),
     };
     Ok(HttpResponse::Ok().json(request))
 }
@@ -93,9 +133,9 @@ pub struct RequestQuery {
 pub struct RequestQueryType {
     request_status: Option<RequestStatus>,
     request_type: Option<RequestType>,
-    is_sensitive:Option<bool>
+    is_sensitive: Option<bool>,
 }
-#[derive(Debug, Serialize, Deserialize,ToSchema, PartialEq, PartialOrd)]
+#[derive(Debug, Serialize, Deserialize, ToSchema, PartialEq, PartialOrd)]
 #[serde(rename_all = "lowercase")]
 pub enum RequestStatus {
     Pending,
@@ -134,7 +174,7 @@ pub async fn get_self_requests_from_request_id(
 #[utoipa::path(
     context_path = "/api/v1",
     params(RequestQuery,RequestQueryType),
-    
+
     responses(
     (status = 200, body = GetRequestWithComments),
     (status = 400),
@@ -187,13 +227,11 @@ pub async fn get_all_requests(
         },
         _ => crud::request::get::get_all_requests(&db).await?,
     };
-    
+
     let request = match &query.request_type {
         Some(request_type) => request
             .iter()
-            
             .filter(|f| &f.request_type == request_type)
-            
             .cloned()
             .collect(),
         _ => request,
@@ -202,28 +240,30 @@ pub async fn get_all_requests(
         Some(val) => request
             .iter()
             // filter because of query param
-        .filter(|f| {
-            f.is_sensitive == Some(val)
-        })
-        .cloned()
-        .collect(),
-        None => request
+            .filter(|f| f.is_sensitive == Some(val))
+            .cloned()
+            .collect(),
+        None => request,
     };
-    Ok(HttpResponse::Ok().json(request.iter()
-        // filter to only show is_sensitive true to leader
-    .filter(|f|{
-        if auth.to_sercurity_level() != SecurityLevel::Leader{
-            f.is_sensitive == Some(false)
-        }else{
-            true
-        }
-    }).collect::<Vec<_>>()))
+    Ok(HttpResponse::Ok().json(
+        request
+            .iter()
+            // filter to only show is_sensitive true to leader
+            .filter(|f| {
+                if auth.to_sercurity_level() != SecurityLevel::Leader {
+                    f.is_sensitive == Some(false)
+                } else {
+                    true
+                }
+            })
+            .collect::<Vec<_>>(),
+    ))
 }
 #[derive(Debug, Serialize, Deserialize, IntoParams)]
-pub struct IsRejectQuery{
-    status:Option<RequestStatus>
+pub struct IsRejectQuery {
+    status: Option<RequestStatus>,
 }
-    
+
 #[utoipa::path(
     context_path = "/api/v1",
     params(IsRejectQuery),
@@ -240,23 +280,20 @@ pub struct IsRejectQuery{
 pub async fn get_single_requests(
     db: Data<DatabaseConnection>,
     request_id: Path<Uuid>,
-    is_reject_query:Query<IsRejectQuery>,
+    is_reject_query: Query<IsRejectQuery>,
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    
+
     let request = match is_reject_query.0.status {
         Some(status) => {
             if status == RequestStatus::Reject {
                 crud::request::get::get_single_rejected_request(&db, &request_id).await?
-
-            }else{
+            } else {
                 crud::request::get::get_single_request(&db, &request_id).await?
             }
         }
-        _ => {
-            crud::request::get::get_single_request(&db, &request_id).await?
-        }
+        _ => crud::request::get::get_single_request(&db, &request_id).await?,
     };
 
     Ok(HttpResponse::Ok().json(request))
@@ -305,6 +342,13 @@ pub async fn change_requests(
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
     let worker_id = auth.try_get_user_id()?;
-    let result = crud::request::change::change_request(&db,&worker_id, &request_id, &request, auth.to_sercurity_level()).await?;
+    let result = crud::request::change::change_request(
+        &db,
+        &worker_id,
+        &request_id,
+        &request,
+        auth.to_sercurity_level(),
+    )
+    .await?;
     Ok(HttpResponse::Ok().json(result))
 }

@@ -26,7 +26,7 @@ pub async fn get_buldings(
     auth: Authenticated,
 ) -> actix_web::Result<HttpResponse, CrudError> {
     auth.has_high_enough_security_level(SecurityLevel::User)?;
-    
+
     let buildings = match auth.to_sercurity_level() {
         // user are allowed to see builidngs but not rooms
         SecurityLevel::User => crud::building::get_building_without_rooms(&db).await?,
